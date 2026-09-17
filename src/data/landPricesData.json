@@ -1,0 +1,82 @@
+{
+  "Punjab": {
+    "default": { "circleRatePerAcre": 1200000, "marketValuePerAcre": 2200000, "pricePerSqFt": 50.5, "irrigationPercentage": 98 },
+    "districts": {
+      "Ludhiana": { "circleRatePerAcre": 1800000, "marketValuePerAcre": 3200000, "pricePerSqFt": 73.5, "irrigationPercentage": 99 },
+      "Bathinda": { "circleRatePerAcre": 1000000, "marketValuePerAcre": 1800000, "pricePerSqFt": 41.3, "irrigationPercentage": 95 },
+      "Jalandhar": { "circleRatePerAcre": 1600000, "marketValuePerAcre": 2800000, "pricePerSqFt": 64.3, "irrigationPercentage": 99 }
+    }
+  },
+  "Haryana": {
+    "default": { "circleRatePerAcre": 1500000, "marketValuePerAcre": 2800000, "pricePerSqFt": 64.3, "irrigationPercentage": 90 },
+    "districts": {
+      "Karnal": { "circleRatePerAcre": 2000000, "marketValuePerAcre": 3800000, "pricePerSqFt": 87.2, "irrigationPercentage": 99 },
+      "Hisar": { "circleRatePerAcre": 1100000, "marketValuePerAcre": 1900000, "pricePerSqFt": 43.6, "irrigationPercentage": 85 }
+    }
+  },
+  "Maharashtra": {
+    "default": { "circleRatePerAcre": 450000, "marketValuePerAcre": 1100000, "pricePerSqFt": 25.3, "irrigationPercentage": 22 },
+    "districts": {
+      "Pune": { "circleRatePerAcre": 1200000, "marketValuePerAcre": 3500000, "pricePerSqFt": 80.3, "irrigationPercentage": 45 },
+      "Nagpur": { "circleRatePerAcre": 500000, "marketValuePerAcre": 1200000, "pricePerSqFt": 27.5, "irrigationPercentage": 28 },
+      "Nashik": { "circleRatePerAcre": 800000, "marketValuePerAcre": 2200000, "pricePerSqFt": 50.5, "irrigationPercentage": 38 }
+    }
+  },
+  "Madhya Pradesh": {
+    "default": { "circleRatePerAcre": 350000, "marketValuePerAcre": 850000, "pricePerSqFt": 19.5, "irrigationPercentage": 48 },
+    "districts": {
+      "Indore": { "circleRatePerAcre": 900000, "marketValuePerAcre": 2400000, "pricePerSqFt": 55.1, "irrigationPercentage": 60 },
+      "Ujjain": { "circleRatePerAcre": 600000, "marketValuePerAcre": 1400000, "pricePerSqFt": 32.1, "irrigationPercentage": 55 }
+    }
+  },
+  "Uttar Pradesh": {
+    "default": { "circleRatePerAcre": 650000, "marketValuePerAcre": 1500000, "pricePerSqFt": 34.4, "irrigationPercentage": 86 },
+    "districts": {
+      "Muzaffarnagar": { "circleRatePerAcre": 1400000, "marketValuePerAcre": 2800000, "pricePerSqFt": 64.3, "irrigationPercentage": 98 },
+      "Varanasi": { "circleRatePerAcre": 950000, "marketValuePerAcre": 2200000, "pricePerSqFt": 50.5, "irrigationPercentage": 88 }
+    }
+  },
+  "Telangana": {
+    "default": { "circleRatePerAcre": 550000, "marketValuePerAcre": 1400000, "pricePerSqFt": 32.1, "irrigationPercentage": 48 },
+    "districts": {
+      "Warangal": { "circleRatePerAcre": 650000, "marketValuePerAcre": 1600000, "pricePerSqFt": 36.7, "irrigationPercentage": 52 },
+      "Nalgonda": { "circleRatePerAcre": 500000, "marketValuePerAcre": 1300000, "pricePerSqFt": 29.8, "irrigationPercentage": 45 }
+    }
+  },
+  "Andhra Pradesh": {
+    "default": { "circleRatePerAcre": 600000, "marketValuePerAcre": 1600000, "pricePerSqFt": 36.7, "irrigationPercentage": 50 },
+    "districts": {
+      "Guntur": { "circleRatePerAcre": 1100000, "marketValuePerAcre": 2600000, "pricePerSqFt": 59.7, "irrigationPercentage": 65 },
+      "Krishna": { "circleRatePerAcre": 1200000, "marketValuePerAcre": 2900000, "pricePerSqFt": 66.6, "irrigationPercentage": 75 }
+    }
+  },
+  "Karnataka": {
+    "default": { "circleRatePerAcre": 500000, "marketValuePerAcre": 1300000, "pricePerSqFt": 29.8, "irrigationPercentage": 35 },
+    "districts": {
+      "Shimoga": { "circleRatePerAcre": 750000, "marketValuePerAcre": 1800000, "pricePerSqFt": 41.3, "irrigationPercentage": 45 },
+      "Belgaum": { "circleRatePerAcre": 650000, "marketValuePerAcre": 1500000, "pricePerSqFt": 34.4, "irrigationPercentage": 42 }
+    }
+  },
+  "Gujarat": {
+    "default": { "circleRatePerAcre": 500000, "marketValuePerAcre": 1400000, "pricePerSqFt": 32.1, "irrigationPercentage": 52 },
+    "districts": {
+      "Rajkot": { "circleRatePerAcre": 650000, "marketValuePerAcre": 1700000, "pricePerSqFt": 39.0, "irrigationPercentage": 55 },
+      "Anand": { "circleRatePerAcre": 900000, "marketValuePerAcre": 2300000, "pricePerSqFt": 52.8, "irrigationPercentage": 75 }
+    }
+  },
+  "West Bengal": {
+    "default": { "circleRatePerAcre": 400000, "marketValuePerAcre": 1000000, "pricePerSqFt": 23.0, "irrigationPercentage": 62 },
+    "districts": {
+      "Burdwan": { "circleRatePerAcre": 650000, "marketValuePerAcre": 1500000, "pricePerSqFt": 34.4, "irrigationPercentage": 82 }
+    }
+  },
+  "Odisha": {
+    "default": { "circleRatePerAcre": 300000, "marketValuePerAcre": 750000, "pricePerSqFt": 17.2, "irrigationPercentage": 32 },
+    "districts": {
+      "Cuttack": { "circleRatePerAcre": 500000, "marketValuePerAcre": 1200000, "pricePerSqFt": 27.5, "irrigationPercentage": 55 }
+    }
+  },
+  "General": {
+    "default": { "circleRatePerAcre": 400000, "marketValuePerAcre": 1000000, "pricePerSqFt": 23.0, "irrigationPercentage": 45 }
+  }
+}
