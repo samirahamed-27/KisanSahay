@@ -9,17 +9,18 @@ const state = {
   currentTab: 'home',
   currentLang: localStorage.getItem('kisansahay_lang') || 'en',
   currentLoanTab: 'active', // 'active' | 'ended' | 'all'
-  schemes: [],
+  schemes: (typeof window !== 'undefined' && window.KISAN_SCHEMES_DATA) ? window.KISAN_SCHEMES_DATA : [],
   loans: [],
   loanSummary: {
     totalBorrowed: 0,
-    totalPaid: 950000,
-    totalDue: 4218304,
-    totalMonthlyEmi: 76183,
-    activeCount: 5,
-    endedCount: 2,
-    allCount: 7
+    totalPaid: 0,
+    totalDue: 0,
+    totalMonthlyEmi: 0,
+    activeCount: 0,
+    endedCount: 0,
+    allCount: 0
   },
+  userFarmProfile: null,
   selectedScheme: null,
   activeSpeech: null,
   isSpeaking: false,
@@ -86,6 +87,10 @@ const el = {
   addLoanClose: document.getElementById('add-loan-close'),
   btnCancelAddLoan: document.getElementById('btn-cancel-add-loan'),
   createLoanForm: document.getElementById('create-loan-form'),
+  newLoanSchemeSelect: document.getElementById('new-loan-scheme-select'),
+  modalFarmDetailsBadge: document.getElementById('modal-farm-details-badge'),
+  modalFarmDetailsText: document.getElementById('modal-farm-details-text'),
+  linkFillFarmDetails: document.getElementById('link-fill-farm-details'),
 
   checklistModal: document.getElementById('checklist-modal'),
   checklistModalClose: document.getElementById('checklist-modal-close'),
@@ -295,24 +300,133 @@ function setupLoanTabs() {
 
   if (el.btnOpenAddLoan) {
     el.btnOpenAddLoan.addEventListener('click', () => {
-      el.addLoanModal.classList.add('active');
+      openAddLoanModalManually();
     });
   }
 }
 
+window.openAddLoanModalManually = function() {
+  if (el.modalFarmDetailsBadge) el.modalFarmDetailsBadge.style.display = 'none';
+  if (el.newLoanSchemeSelect) el.newLoanSchemeSelect.value = '';
+  if (el.createLoanForm) el.createLoanForm.reset();
+  const paidField = document.getElementById('new-paid-amount');
+  if (paidField) paidField.value = 0;
+  const statusField = document.getElementById('new-loan-status');
+  if (statusField) statusField.value = 'Active';
+  if (el.addLoanModal) el.addLoanModal.classList.add('active');
+};
+
+function enrichLoanClient(loan) {
+  const principal = Number(loan.principalAmount || loan.totalAmount) || 0;
+  const rate = Number(loan.interestRate) || 0;
+  const tenure = Math.max(1, Number(loan.tenureMonths) || 12);
+  
+  let totalPayable = Number(loan.totalWithInterest);
+  if (!totalPayable || totalPayable < principal) {
+    if (rate === 0) {
+      totalPayable = principal;
+    } else {
+      totalPayable = Math.round(principal * (1 + (rate * (tenure / 12)) / 100));
+    }
+  }
+
+  const paid = Number(loan.paidAmount) || 0;
+  const due = Math.max(0, totalPayable - paid);
+  const percentPaid = totalPayable > 0 ? Math.min(100, Math.round((paid / totalPayable) * 100)) : 100;
+  
+  let emi = Number(loan.monthlyEmi || loan.emiAmount) || 0;
+  if (!emi) {
+    if (rate === 0) {
+      emi = Math.round(totalPayable / tenure);
+    } else {
+      const monthlyRate = rate / 12 / 100;
+      emi = Math.round((principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / (Math.pow(1 + monthlyRate, tenure) - 1));
+    }
+  }
+
+  let emisLeft = typeof loan.emisLeft === 'number' ? loan.emisLeft : (emi > 0 ? Math.ceil(due / emi) : 0);
+  if (due === 0) emisLeft = 0;
+
+  const isEnded = (loan.status && loan.status.toLowerCase() === 'ended') || due === 0;
+  const status = isEnded ? 'Ended' : 'Active';
+
+  return {
+    ...loan,
+    id: loan.id || ('loan-' + Date.now()),
+    principalAmount: principal,
+    totalAmount: principal,
+    totalWithInterest: totalPayable,
+    paidAmount: paid,
+    dueAmount: due,
+    monthlyEmi: isEnded ? 0 : emi,
+    emiAmount: isEnded ? 0 : emi,
+    emisLeft,
+    percentPaid,
+    status,
+    isFullyPaid: due === 0
+  };
+}
+
+function recalculateLoanSummary() {
+  const enriched = state.loans.map(enrichLoanClient);
+  state.loans = enriched;
+  const activeLoans = enriched.filter(l => l.status === 'Active' && l.dueAmount > 0);
+  const endedLoans = enriched.filter(l => l.status === 'Ended' || l.dueAmount === 0);
+
+  state.loanSummary = {
+    totalBorrowed: activeLoans.reduce((acc, l) => acc + (l.principalAmount || 0), 0),
+    totalPaid: activeLoans.reduce((acc, l) => acc + (l.paidAmount || 0), 0),
+    totalDue: activeLoans.reduce((acc, l) => acc + (l.dueAmount || 0), 0),
+    totalMonthlyEmi: activeLoans.reduce((acc, l) => acc + (l.monthlyEmi || 0), 0),
+    activeCount: activeLoans.length,
+    endedCount: endedLoans.length,
+    allCount: enriched.length
+  };
+}
+
 async function loadLoans() {
+  // Clear any legacy dummy loan caches if present in browser storage
+  try {
+    const rawLocal = localStorage.getItem('kisansahay_loans');
+    if (rawLocal) {
+      const parsed = JSON.parse(rawLocal);
+      if (Array.isArray(parsed) && parsed.some(p => p.id === 'loan-1' && p.schemeName && p.schemeName.includes('Kisan Credit Card (KCC)'))) {
+        localStorage.removeItem('kisansahay_loans');
+      }
+    }
+  } catch (e) {}
+
   try {
     const res = await fetch('/api/loans');
-    const json = await res.json();
-    if (json.success) {
-      state.loans = json.data;
-      state.loanSummary = json.summary;
-      updateLoanSummaryUI();
-      renderLoansList();
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        state.loans = (json.data || []).map(enrichLoanClient);
+        if (json.summary && json.data.length > 0) {
+          state.loanSummary = json.summary;
+        } else {
+          recalculateLoanSummary();
+        }
+        localStorage.setItem('kisansahay_loans', JSON.stringify(state.loans));
+        updateLoanSummaryUI();
+        renderLoansList();
+        return;
+      }
     }
   } catch (err) {
-    console.error('Failed to load loans:', err);
+    console.warn('Backend API loans unreachable, checking local storage:', err);
   }
+
+  // Fallback to local storage (for VS Code Live Server port 5500)
+  try {
+    const rawLocal = localStorage.getItem('kisansahay_loans');
+    state.loans = rawLocal ? JSON.parse(rawLocal).map(enrichLoanClient) : [];
+  } catch (e) {
+    state.loans = [];
+  }
+  recalculateLoanSummary();
+  updateLoanSummaryUI();
+  renderLoansList();
 }
 
 function updateLoanSummaryUI() {
@@ -344,12 +458,20 @@ function renderLoansList() {
   if (filtered.length === 0) {
     const msg = state.currentLoanTab === 'ended' ? t('emptyEndedLoans') : t('emptyActiveLoans');
     el.loansCardsGrid.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: #ffffff; border-radius: var(--radius-md); border: 1.5px dashed var(--border-color);">
-        <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">💳</div>
-        <p style="color: #64748b; font-size: 1.05rem; font-weight: 600;">${msg}</p>
-        <button class="btn-add-loan-top" style="margin-top: 1rem;" onclick="el.addLoanModal.classList.add('active')">
-          ${t('btnAddLoan')}
-        </button>
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: var(--radius-md); border: 1.5px dashed var(--border-color);">
+        <div style="font-size: 2.8rem; margin-bottom: 0.8rem;">💳</div>
+        <p style="color: #0f172a; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">${msg}</p>
+        <p style="color: #64748b; font-size: 0.95rem; max-width: 520px; margin: 0 auto 1.6rem auto; line-height: 1.5;">
+          ${state.currentLoanTab === 'ended' ? 'You have no completed or closed loans on record.' : 'No active running loans. Fill your farm details in Check Eligibility to choose a subsidized loan, or add a loan manually.'}
+        </p>
+        <div style="display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap;">
+          <button class="btn-hero-primary" style="padding: 0.65rem 1.5rem; font-size: 0.92rem;" onclick="switchView('eligibility')">
+            🌾 Check Eligibility & Choose Loan
+          </button>
+          <button class="btn-add-loan-top" style="padding: 0.65rem 1.5rem; font-size: 0.92rem;" onclick="openAddLoanModalManually()">
+            ➕ Add Loan Manually
+          </button>
+        </div>
       </div>
     `;
     return;
@@ -474,24 +596,46 @@ function setupModals() {
       e.preventDefault();
       const loanId = el.payLoanId.value;
       const amount = Number(el.payAmountInput.value) || 0;
-      const note = el.payNoteInput.value.trim() || 'Payment made';
+      const note = el.payNoteInput.value.trim() || 'Direct bank payment';
+
+      if (!loanId || amount <= 0) {
+        showToast('Please enter a valid payment amount');
+        return;
+      }
+
+      const loan = state.loans.find(l => l.id === loanId);
+      if (!loan) return;
+
+      loan.paidAmount = (loan.paidAmount || 0) + amount;
+      loan.payments = loan.payments || [];
+      loan.payments.unshift({
+        date: new Date().toISOString().split('T')[0],
+        amount,
+        note
+      });
+
+      const updated = enrichLoanClient(loan);
+      Object.assign(loan, updated);
 
       try {
-        const res = await fetch(`/api/loans/${loanId}/payment`, {
+        await fetch(`/api/loans/${loanId}/payment`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount, note })
         });
-        const data = await res.json();
-        if (data.success) {
-          el.paymentModal.classList.remove('active');
-          showToast(data.message);
-          await loadLoans();
-          speakText(`Payment of ${formatINR(amount)} recorded. Remaining balance is ${formatINR(data.data.dueAmount)}.`);
-        }
       } catch (err) {
-        console.error('Payment error:', err);
+        console.warn('Backend payment save offline, saved locally:', err);
       }
+
+      localStorage.setItem('kisansahay_loans', JSON.stringify(state.loans));
+      recalculateLoanSummary();
+      updateLoanSummaryUI();
+      renderLoansList();
+
+      el.paymentModal.classList.remove('active');
+      el.recordPaymentForm.reset();
+      showToast(`Payment of ${formatINR(amount)} successfully recorded!`);
+      speakText(`Payment of ${formatINR(amount)} recorded. Remaining balance is ${formatINR(loan.dueAmount)}.`);
     });
   }
 
@@ -501,6 +645,39 @@ function setupModals() {
   }
   if (el.btnCancelAddLoan) {
     el.btnCancelAddLoan.addEventListener('click', () => el.addLoanModal.classList.remove('active'));
+  }
+
+  // Scheme Dropdown change listener
+  if (el.newLoanSchemeSelect) {
+    el.newLoanSchemeSelect.addEventListener('change', () => {
+      const opt = el.newLoanSchemeSelect.selectedOptions[0];
+      if (!opt || !opt.value) return;
+
+      const name = opt.getAttribute('data-name');
+      const rate = opt.getAttribute('data-rate');
+      const tenure = opt.getAttribute('data-tenure');
+      const amount = opt.getAttribute('data-amount');
+
+      if (name) document.getElementById('new-loan-name').value = name;
+      if (rate) document.getElementById('new-interest-rate').value = rate;
+      if (tenure) document.getElementById('new-tenure-months').value = tenure;
+      if (amount) document.getElementById('new-loan-amount').value = amount;
+
+      const bankField = document.getElementById('new-bank-name');
+      if (bankField && !bankField.value.trim()) {
+        bankField.value = opt.value === 'aif' || opt.value === 'ahidf' ? 'Commercial Bank / NABARD' : 'State Bank of India / Gramin Bank';
+      }
+    });
+  }
+
+  // Helper link to Check Eligibility
+  if (el.linkFillFarmDetails) {
+    el.linkFillFarmDetails.addEventListener('click', (e) => {
+      e.preventDefault();
+      el.addLoanModal.classList.remove('active');
+      switchView('eligibility');
+      if (el.cropInput) el.cropInput.focus();
+    });
   }
 
   // Add Loan Submit
@@ -515,30 +692,43 @@ function setupModals() {
       const tenureMonths = Number(document.getElementById('new-tenure-months').value) || 60;
       const status = document.getElementById('new-loan-status').value;
 
+      const newLoanData = enrichLoanClient({
+        id: 'loan-' + Date.now(),
+        schemeName: name,
+        schemeSub: bank ? `${bank} - Agri Loan` : 'Agri Loan',
+        bankName: bank || 'State Bank of India',
+        principalAmount: totalAmount,
+        totalAmount,
+        paidAmount,
+        interestRate,
+        tenureMonths,
+        status,
+        createdAt: new Date().toISOString()
+      });
+
       try {
-        const res = await fetch('/api/loans', {
+        await fetch('/api/loans', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            schemeName: name,
-            bankName: bank,
-            principalAmount: totalAmount,
-            paidAmount,
-            interestRate,
-            tenureMonths,
-            status
-          })
+          body: JSON.stringify(newLoanData)
         });
-        const data = await res.json();
-        if (data.success) {
-          el.addLoanModal.classList.remove('active');
-          el.createLoanForm.reset();
-          showToast('New loan successfully added to your tracker!');
-          await loadLoans();
-        }
       } catch (err) {
-        console.error('Failed to create loan:', err);
+        console.warn('Backend unavailable, loan saved locally:', err);
       }
+
+      state.loans.unshift(newLoanData);
+      localStorage.setItem('kisansahay_loans', JSON.stringify(state.loans));
+      recalculateLoanSummary();
+      updateLoanSummaryUI();
+      renderLoansList();
+
+      el.addLoanModal.classList.remove('active');
+      el.createLoanForm.reset();
+      if (el.modalFarmDetailsBadge) el.modalFarmDetailsBadge.style.display = 'none';
+
+      showToast(`🎉 ${name} added! Tracking monthly EMIs.`);
+      speakText(`${name} has been added to your loan tracker.`);
+      switchView('loans');
     });
   }
 
@@ -552,8 +742,8 @@ function setupModals() {
   if (el.btnTrackFromChecklist) {
     el.btnTrackFromChecklist.addEventListener('click', () => {
       if (state.selectedScheme) {
-        applySchemeToTracker(state.selectedScheme.id);
         el.checklistModal.classList.remove('active');
+        chooseLoanFromEligibility(state.selectedScheme.id);
       }
     });
   }
@@ -562,15 +752,19 @@ function setupModals() {
 // Delete Loan
 window.deleteLoan = async function(loanId) {
   if (!confirm('Are you sure you want to remove this loan record from your tracker?')) return;
-  try {
-    const res = await fetch(`/api/loans/${loanId}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (data.success) {
-      showToast('Loan removed from tracker');
-      await loadLoans();
+  const idx = state.loans.findIndex(l => l.id === loanId);
+  if (idx !== -1) {
+    state.loans.splice(idx, 1);
+    try {
+      await fetch(`/api/loans/${loanId}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('Backend delete failed, deleted locally:', err);
     }
-  } catch (err) {
-    console.error('Delete loan error:', err);
+    localStorage.setItem('kisansahay_loans', JSON.stringify(state.loans));
+    recalculateLoanSummary();
+    updateLoanSummaryUI();
+    renderLoansList();
+    showToast('Loan removed from tracker');
   }
 };
 
@@ -586,15 +780,22 @@ window.viewLoanLedger = function(loanId) {
 // ==========================================================================
 
 async function loadSchemes() {
+  if (window.KISAN_SCHEMES_DATA && (!state.schemes || state.schemes.length === 0)) {
+    state.schemes = window.KISAN_SCHEMES_DATA;
+    renderSchemesGrid(state.schemes);
+  }
+
   try {
     const res = await fetch('/api/schemes');
-    const json = await res.json();
-    if (json.success) {
-      state.schemes = json.data;
-      renderSchemesGrid(state.schemes);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        state.schemes = json.data;
+        renderSchemesGrid(state.schemes);
+      }
     }
   } catch (err) {
-    console.error('Failed to load schemes:', err);
+    console.warn('API /api/schemes offline, using embedded schemes data:', err);
   }
 }
 
@@ -695,11 +896,16 @@ function renderSchemesGrid(schemes) {
           ${highlightsHtml}
         </div>
 
-        <!-- View Details Button -->
-        <button class="btn-view-details ${themeColor}" onclick="openChecklist('${scheme.id}')">
-          <span>${t('viewDetails')}</span>
-          <span>→</span>
-        </button>
+        <!-- Actions: Choose Loan & View Checklist -->
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem;">
+          <button class="btn-view-details ${themeColor}" style="flex: 1;" onclick="chooseLoanFromEligibility('${scheme.id}')">
+            <span>🌾 Choose Loan</span>
+            <span>+</span>
+          </button>
+          <button class="btn-icon-secondary" style="width: 42px; height: 38px; border-radius: var(--radius-sm); font-size: 0.95rem;" title="Document Checklist" onclick="openChecklist('${scheme.id}')">
+            📋
+          </button>
+        </div>
       </div>
     `;
 
@@ -732,40 +938,162 @@ window.openChecklist = function(schemeId) {
   el.checklistModal.classList.add('active');
 };
 
-// One-Click Apply & Add to Loan Tracker
-window.applySchemeToTracker = async function(schemeId) {
+// Choose Loan & Configure from Eligibility Flow
+window.chooseLoanFromEligibility = function(schemeId) {
   const scheme = state.schemes.find(s => s.id === schemeId);
   if (!scheme) return;
 
-  const defaultPrincipal = scheme.id === 'pm-kisan' ? 6000 : (scheme.id === 'miss' ? 300000 : (scheme.id === 'aif' ? 2000000 : 500000));
-  const defaultRate = scheme.effectiveRate || scheme.baseRate || 7.0;
+  // Make sure farm profile is collected
+  const profile = state.userFarmProfile || {
+    cropType: el.cropInput ? el.cropInput.value.trim() : 'Crop Cultivation',
+    annualIncome: el.incomeInput ? (Number(el.incomeInput.value) || 150000) : 150000,
+    district: el.districtInput ? el.districtInput.value.trim() : '',
+    landOwnership: el.landSelect ? el.landSelect.value : 'owner',
+    mainActivity: el.activitySelect ? el.activitySelect.value : 'crop'
+  };
 
-  try {
-    const res = await fetch('/api/loans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        schemeId: scheme.id,
-        schemeName: scheme.name,
-        schemeSub: `${scheme.shortName} - Loan`,
-        bankName: 'Gramin Kisan Cooperative Bank',
-        principalAmount: defaultPrincipal,
-        paidAmount: 0,
-        interestRate: defaultRate,
-        tenureMonths: 60,
-        status: 'Active'
-      })
-    });
-    const data = await res.json();
-    if (data.success) {
-      showToast(`${scheme.shortName} added to My Loans & EMIs!`);
-      await loadLoans();
-      switchView('loans');
-    }
-  } catch (err) {
-    console.error('Failed to apply scheme:', err);
+  // Show the farm profile badge in the modal
+  if (el.modalFarmDetailsBadge && el.modalFarmDetailsText) {
+    el.modalFarmDetailsBadge.style.display = 'block';
+    const activityName = profile.mainActivity === 'crop' ? 'Crop Cultivation' : (profile.mainActivity === 'dairy' ? 'Dairy Farming' : (profile.mainActivity === 'poultry' ? 'Poultry & Allied' : 'Agri Infrastructure'));
+    const landType = (profile.landOwnership || 'OWNER').toUpperCase();
+    const loc = profile.district ? ` in ${profile.district}` : '';
+    el.modalFarmDetailsText.innerHTML = `<strong>${activityName}</strong> • ${profile.cropType || 'Crops'} • ${landType} Farmer${loc}`;
   }
+
+  // Pre-fill modal fields
+  if (el.newLoanSchemeSelect) {
+    const matchingOption = Array.from(el.newLoanSchemeSelect.options).find(o => o.value === scheme.id);
+    if (matchingOption) {
+      el.newLoanSchemeSelect.value = scheme.id;
+    } else {
+      el.newLoanSchemeSelect.value = 'custom';
+    }
+  }
+
+  const nameInput = document.getElementById('new-loan-name');
+  const bankInput = document.getElementById('new-bank-name');
+  const amountInput = document.getElementById('new-loan-amount');
+  const rateInput = document.getElementById('new-interest-rate');
+  const tenureInput = document.getElementById('new-tenure-months');
+  const paidInput = document.getElementById('new-paid-amount');
+  const statusSelect = document.getElementById('new-loan-status');
+
+  if (nameInput) nameInput.value = scheme.name;
+  if (bankInput) bankInput.value = `${scheme.category.includes('INFRA') ? 'Commercial Bank / NABARD' : 'State Bank of India / Gramin Bank'} ${profile.district ? '(' + profile.district + ')' : ''}`.trim();
+  
+  // Set recommended amount based on scheme
+  let recommendedAmount = 300000;
+  if (scheme.id === 'aif') recommendedAmount = 2000000;
+  else if (scheme.id === 'ahidf') recommendedAmount = 1000000;
+  else if (scheme.id === 'smam') recommendedAmount = 500000;
+  else if (scheme.id === 'pm-kusum') recommendedAmount = 250000;
+  else if (scheme.id === 'pmfme') recommendedAmount = 500000;
+  else if (scheme.id === 'pm-kisan') recommendedAmount = 6000;
+  else if (scheme.maxLimit) recommendedAmount = Math.min(scheme.maxLimit, 300000);
+
+  if (amountInput) amountInput.value = recommendedAmount;
+  if (rateInput) rateInput.value = scheme.effectiveRate || scheme.baseRate || 4.0;
+  if (tenureInput) tenureInput.value = (scheme.id === 'aif' || scheme.id === 'ahidf') ? 72 : (scheme.id === 'smam' ? 48 : 60);
+  if (paidInput) paidInput.value = 0;
+  if (statusSelect) statusSelect.value = 'Active';
+
+  // Open modal and focus on amount
+  el.addLoanModal.classList.add('active');
+  if (amountInput) amountInput.focus();
+
+  showToast(`Pre-filled loan details for ${scheme.shortName || scheme.name}. Review & confirm!`);
 };
+
+// Backward-compatible alias
+window.applySchemeToTracker = function(schemeId) {
+  chooseLoanFromEligibility(schemeId);
+};
+
+// Client-side Eligibility Evaluation Engine (Runs seamlessly on Live Server port 5500)
+function evaluateEligibilityClient(userInput, schemesList) {
+  const {
+    cropType = '',
+    annualIncome = 0,
+    district = '',
+    landOwnership = 'owner',
+    mainActivity = 'crop',
+    hasKcc = 'yes',
+    hasAadhaar = 'yes'
+  } = userInput;
+
+  const normalizedCrop = String(cropType).trim().toLowerCase();
+  const income = Number(annualIncome) || 0;
+  const isAadhaarLinked = String(hasAadhaar).toLowerCase() === 'yes' || hasAadhaar === true;
+  const isKccHolder = String(hasKcc).toLowerCase() === 'yes' || hasKcc === true;
+
+  return (schemesList || []).map(scheme => {
+    let eligible = true;
+    const reasons = [];
+    const warnings = [];
+
+    // 1. Aadhaar check
+    if (scheme.eligibility && scheme.eligibility.requiresAadhaar && !isAadhaarLinked) {
+      eligible = false;
+      warnings.push('Aadhaar linking is mandatory for this scheme and interest subvention.');
+    } else {
+      reasons.push('Aadhaar is linked with bank account for direct benefit transfer (DBT).');
+    }
+
+    // 2. Land Ownership / Farmer Category check
+    const allowedTypes = scheme.eligibility ? scheme.eligibility.farmerTypes || [] : ['all'];
+    if (!allowedTypes.includes(landOwnership) && !allowedTypes.includes('all')) {
+      if (scheme.id === 'pm-kisan' && landOwnership !== 'owner') {
+        eligible = false;
+        warnings.push('PM-KISAN requires cultivable land in your own name; tenant and leaseholder farmers are not covered.');
+      } else if ((landOwnership === 'tenant' || landOwnership === 'sharecropper') && (scheme.id === 'kcc' || scheme.id === 'miss')) {
+        reasons.push('Eligible under tenant farmer & Joint Liability Group (JLG) guidelines.');
+        warnings.push('Bank branch will require a registered tenancy agreement or local cultivation certificate.');
+      } else if (scheme.id === 'aif' || scheme.id === 'ahidf') {
+        reasons.push('Eligible as landholder, agri-enterprise, or farmer group member.');
+      }
+    } else {
+      reasons.push(`Matched landholding status: ${landOwnership.toUpperCase()}`);
+    }
+
+    // 3. Activity / Crop check
+    if (scheme.id === 'ahidf' && mainActivity !== 'dairy' && mainActivity !== 'poultry' && !['dairy', 'meat', 'feed', 'cattle', 'milk'].some(k => normalizedCrop.includes(k))) {
+      warnings.push('Specialized for dairy, animal husbandry, and feed processing infrastructure.');
+    } else if (scheme.id === 'pm-kusum' && mainActivity === 'infra') {
+      reasons.push('Solar pump installation qualifies for 60% capital subsidy.');
+    } else if (scheme.id === 'smam') {
+      reasons.push('40-50% subsidy available for tractors and farm machinery.');
+    } else {
+      reasons.push(`Supports activity: ${cropType || mainActivity.toUpperCase()}`);
+    }
+
+    // 4. KCC synergy
+    if (scheme.id === 'miss' || scheme.id === 'kcc') {
+      if (isKccHolder) {
+        reasons.push('Active KCC holder: eligible for immediate 3% prompt repayment subvention (4% net rate).');
+      } else {
+        warnings.push('Must be applied through or linked with a Kisan Credit Card (KCC) account.');
+      }
+    }
+
+    // 5. Income Exclusions
+    if (scheme.id === 'pm-kisan' && income > 2500000) {
+      warnings.push('Higher income tax payers are excluded under statutory PM-KISAN guidelines.');
+    }
+
+    let badge = eligible ? 'Eligible' : 'Conditional / Review Needed';
+    let subventionNote = scheme.highlights ? scheme.highlights[0] : (scheme.tagline || 'Government Supported Credit Facility');
+
+    return {
+      scheme,
+      eligible,
+      badge,
+      reasons,
+      warnings,
+      subventionNote
+    };
+  });
+}
 
 // ==========================================================================
 // Eligibility Engine (Matching Screenshot 4)
@@ -781,44 +1109,65 @@ function setupEligibility() {
 }
 
 async function checkEligibility() {
-  const cropType = el.cropInput.value.trim() || 'Rice, Wheat';
-  const annualIncome = Number(el.incomeInput.value) || 150000;
-  const district = el.districtInput.value.trim() || 'Pune';
-  const landOwnership = el.landSelect.value || 'owner';
-  const mainActivity = el.activitySelect.value || 'crop';
-  const hasKcc = el.kccSelect.value || 'yes';
-  const hasAadhaar = el.aadhaarSelect.value || 'yes';
+  const cropType = el.cropInput ? (el.cropInput.value.trim() || 'Rice, Wheat') : 'Rice, Wheat';
+  const annualIncome = el.incomeInput ? (Number(el.incomeInput.value) || 150000) : 150000;
+  const district = el.districtInput ? (el.districtInput.value.trim() || 'My District') : 'My District';
+  const landOwnership = el.landSelect ? (el.landSelect.value || 'owner') : 'owner';
+  const mainActivity = el.activitySelect ? (el.activitySelect.value || 'crop') : 'crop';
+  const hasKcc = el.kccSelect ? (el.kccSelect.value || 'yes') : 'yes';
+  const hasAadhaar = el.aadhaarSelect ? (el.aadhaarSelect.value || 'yes') : 'yes';
+
+  state.userFarmProfile = {
+    cropType,
+    annualIncome,
+    district,
+    landOwnership,
+    mainActivity,
+    hasKcc,
+    hasAadhaar
+  };
 
   try {
-    el.btnSubmitEligibility.disabled = true;
-    el.btnSubmitEligibility.innerHTML = '<span>⏳</span> Evaluating...';
-
-    const res = await fetch('/api/eligibility', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cropType,
-        annualIncome,
-        district,
-        landOwnership,
-        mainActivity,
-        hasKcc,
-        hasAadhaar
-      })
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      renderEligibilityResults(data.results);
-      const eligibleCount = data.results.filter(r => r.eligible).length;
-      showToast(`Matched with ${eligibleCount} eligible government schemes!`);
-      speakText(`Found ${eligibleCount} government schemes matching your farm profile.`);
+    if (el.btnSubmitEligibility) {
+      el.btnSubmitEligibility.disabled = true;
+      el.btnSubmitEligibility.innerHTML = '<span>⏳</span> Evaluating...';
     }
+
+    let results = null;
+
+    try {
+      const res = await fetch('/api/eligibility', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.userFarmProfile)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.results)) {
+          results = data.results;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Backend /api/eligibility unreachable, evaluating locally:', apiErr);
+    }
+
+    // Fallback if backend API is not responding (e.g. VS Code Live Server port 5500)
+    if (!results) {
+      results = evaluateEligibilityClient(state.userFarmProfile, state.schemes);
+    }
+
+    renderEligibilityResults(results);
+    const eligibleCount = results.filter(r => r.eligible).length;
+    showToast(`Matched with ${eligibleCount} eligible government schemes!`);
+    speakText(`Found ${eligibleCount} government schemes matching your farm profile.`);
+
   } catch (err) {
     console.error('Eligibility evaluation error:', err);
   } finally {
-    el.btnSubmitEligibility.disabled = false;
-    el.btnSubmitEligibility.innerHTML = `<span>🔍</span> <span>${t('btnCheckElig')}</span>`;
+    if (el.btnSubmitEligibility) {
+      el.btnSubmitEligibility.disabled = false;
+      el.btnSubmitEligibility.innerHTML = `<span>🔍</span> <span>${t('btnCheckElig')}</span>`;
+    }
   }
 }
 
@@ -864,12 +1213,12 @@ function renderEligibilityResults(results) {
       ${warningsHtml}
       <div style="margin-bottom: 1rem;">${reasonsHtml}</div>
 
-      <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
-        <button class="btn-icon-secondary" style="width: auto; padding: 0.5rem 1rem; border-radius: var(--radius-pill); font-size: 0.85rem;" onclick="openChecklist('${scheme.id}')">
-          📋 ${t('docChecklistTitle')}
+      <div style="display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center;">
+        <button class="btn-add-payment-action" style="flex: initial; padding: 0.6rem 1.4rem; font-size: 0.9rem; font-weight: 700; background: linear-gradient(135deg, #15803d, #16a34a); box-shadow: 0 4px 12px rgba(22,163,74,0.25);" onclick="chooseLoanFromEligibility('${scheme.id}')">
+          🌾 Choose This Loan & Apply
         </button>
-        <button class="btn-add-payment-action" style="flex: initial; padding: 0.5rem 1.2rem; font-size: 0.85rem;" onclick="applySchemeToTracker('${scheme.id}')">
-          ➕ ${t('btnAddToTracker')}
+        <button class="btn-icon-secondary" style="width: auto; padding: 0.6rem 1.2rem; border-radius: var(--radius-pill); font-size: 0.85rem;" onclick="openChecklist('${scheme.id}')">
+          📋 ${t('docChecklistTitle')}
         </button>
       </div>
     `;
