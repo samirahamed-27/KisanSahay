@@ -40,30 +40,55 @@ function writeJson(filePath, data) {
 
 // Calculate loan financials dynamically
 function enrichLoan(loan) {
-  const total = Number(loan.totalAmount) || 0;
-  const paid = Number(loan.paidAmount) || 0;
-  const due = Math.max(0, total - paid);
-  const percentPaid = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
-  
-  // Calculate approximate monthly EMI based on remaining principal, interest rate & tenure
+  const principal = Number(loan.principalAmount || loan.totalAmount) || 0;
   const rate = Number(loan.interestRate) || 0;
   const tenure = Math.max(1, Number(loan.tenureMonths) || 12);
-  let emi = 0;
-
-  if (rate === 0) {
-    emi = Math.round(total / tenure);
-  } else {
-    const monthlyRate = rate / 12 / 100;
-    emi = Math.round((total * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / (Math.pow(1 + monthlyRate, tenure) - 1));
+  
+  // Calculate total with interest if not explicitly defined
+  let totalPayable = Number(loan.totalWithInterest);
+  if (!totalPayable || totalPayable < principal) {
+    if (rate === 0) {
+      totalPayable = principal;
+    } else {
+      // Standard simple/amortized approximate interest
+      totalPayable = Math.round(principal * (1 + (rate * (tenure / 12)) / 100));
+    }
   }
+
+  const paid = Number(loan.paidAmount) || 0;
+  const due = Math.max(0, totalPayable - paid);
+  const percentPaid = totalPayable > 0 ? Math.min(100, Math.round((paid / totalPayable) * 100)) : 100;
+  
+  // Monthly EMI
+  let emi = Number(loan.monthlyEmi || loan.emiAmount) || 0;
+  if (!emi) {
+    if (rate === 0) {
+      emi = Math.round(totalPayable / tenure);
+    } else {
+      const monthlyRate = rate / 12 / 100;
+      emi = Math.round((principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / (Math.pow(1 + monthlyRate, tenure) - 1));
+    }
+  }
+
+  // EMIs left
+  let emisLeft = typeof loan.emisLeft === 'number' ? loan.emisLeft : (emi > 0 ? Math.ceil(due / emi) : 0);
+  if (due === 0) emisLeft = 0;
+
+  const isEnded = (loan.status && loan.status.toLowerCase() === 'ended') || due === 0;
+  const status = isEnded ? 'Ended' : 'Active';
 
   return {
     ...loan,
-    totalAmount: total,
+    principalAmount: principal,
+    totalAmount: principal,
+    totalWithInterest: totalPayable,
     paidAmount: paid,
     dueAmount: due,
+    monthlyEmi: isEnded ? 0 : emi,
+    emiAmount: isEnded ? 0 : emi,
+    emisLeft,
     percentPaid,
-    emiAmount: loan.emiAmount || emi,
+    status,
     isFullyPaid: due === 0
   };
 }
@@ -72,9 +97,31 @@ function enrichLoan(loan) {
 // REST API ROUTES
 // -------------------------------------------------------------
 
-// 1. Get all schemes from database
+// 1. Get all schemes (supports search & category filters)
 app.get('/api/schemes', (req, res) => {
-  const schemes = readJson(SCHEMES_FILE, []);
+  const { search = '', category = 'all' } = req.query;
+  let schemes = readJson(SCHEMES_FILE, []);
+
+  if (search.trim()) {
+    const q = search.trim().toLowerCase();
+    schemes = schemes.filter(s => 
+      s.name.toLowerCase().includes(q) ||
+      s.shortName.toLowerCase().includes(q) ||
+      (s.tagline && s.tagline.toLowerCase().includes(q)) ||
+      (s.category && s.category.toLowerCase().includes(q))
+    );
+  }
+
+  if (category && category !== 'all') {
+    schemes = schemes.filter(s => {
+      if (category === 'crop') return s.id === 'kcc' || s.id === 'miss' || s.id === 'pmfby';
+      if (category === 'infra') return s.id === 'aif' || s.id === 'ahidf' || s.id === 'smam';
+      if (category === 'income') return s.id === 'pm-kisan' || s.id === 'pm-kmy';
+      if (category === 'more') return ['pm-kusum', 'pmfme', 'acabc'].includes(s.id);
+      return true;
+    });
+  }
+
   res.json({ success: true, count: schemes.length, data: schemes });
 });
 
@@ -93,15 +140,18 @@ app.post('/api/eligibility', (req, res) => {
   const {
     cropType = '',
     annualIncome = 0,
-    landSize = 0,
-    farmerType = 'owner', // 'owner', 'tenant', 'sharecropper', 'entrepreneur'
-    hasAadhaar = true
+    district = '',
+    landOwnership = 'owner', // 'owner', 'tenant', 'sharecropper', 'leaseholder'
+    mainActivity = 'crop', // 'crop', 'dairy', 'poultry', 'fisheries', 'infra'
+    hasKcc = 'yes',
+    hasAadhaar = 'yes'
   } = req.body;
 
   const schemes = readJson(SCHEMES_FILE, []);
   const normalizedCrop = String(cropType).trim().toLowerCase();
   const income = Number(annualIncome) || 0;
-  const land = Number(landSize) || 0;
+  const isAadhaarLinked = String(hasAadhaar).toLowerCase() === 'yes' || hasAadhaar === true;
+  const isKccHolder = String(hasKcc).toLowerCase() === 'yes' || hasKcc === true;
 
   const results = schemes.map(scheme => {
     let eligible = true;
@@ -109,78 +159,61 @@ app.post('/api/eligibility', (req, res) => {
     const warnings = [];
 
     // 1. Aadhaar check
-    if (scheme.eligibility.requiresAadhaar && !hasAadhaar) {
+    if (scheme.eligibility && scheme.eligibility.requiresAadhaar && !isAadhaarLinked) {
       eligible = false;
       warnings.push('Aadhaar linking is mandatory for this scheme and interest subvention.');
+    } else {
+      reasons.push('Aadhaar is linked with bank account for direct subvention.');
     }
 
-    // 2. Farmer type check
-    const allowedTypes = scheme.eligibility.farmerTypes || [];
-    if (!allowedTypes.includes(farmerType) && !allowedTypes.includes('all')) {
-      if (scheme.id === 'pm-kisan' && farmerType !== 'owner') {
+    // 2. Land Ownership / Farmer Category check
+    const allowedTypes = scheme.eligibility ? scheme.eligibility.farmerTypes || [] : ['all'];
+    if (!allowedTypes.includes(landOwnership) && !allowedTypes.includes('all')) {
+      if (scheme.id === 'pm-kisan' && landOwnership !== 'owner') {
         eligible = false;
-        warnings.push('PM-KISAN requires cultivable land in your own name; tenant and landless farmers are not eligible.');
-      } else if (farmerType === 'tenant' && (scheme.id === 'kcc' || scheme.id === 'miss')) {
-        // Tenant is eligible under policy, but note limitation
-        reasons.push('Eligible under KCC / MISS guidelines.');
-        warnings.push('Key Limitation: Formal land records/tenancy agreement may be requested by bank branches.');
+        warnings.push('PM-KISAN requires cultivable land in your own name; tenant and leaseholder farmers are not covered.');
+      } else if ((landOwnership === 'tenant' || landOwnership === 'sharecropper') && (scheme.id === 'kcc' || scheme.id === 'miss')) {
+        reasons.push('Eligible under tenant farmer & Joint Liability Group (JLG) guidelines.');
+        warnings.push('Bank branch will require a registered tenancy agreement or local cultivation certificate.');
       } else if (scheme.id === 'aif' || scheme.id === 'ahidf') {
-        if (farmerType === 'owner' || farmerType === 'entrepreneur' || farmerType === 'fpo') {
-          reasons.push('Eligible as agricultural landholder / entrepreneur / FPO.');
-        } else {
-          warnings.push('Requires project registration or FPO/enterprise affiliation.');
-        }
+        reasons.push('Eligible as landholder, enterprise, or farmer group member.');
       }
     } else {
-      reasons.push(`Matched farmer category: ${farmerType.toUpperCase()}`);
+      reasons.push(`Matched landholding status: ${landOwnership.toUpperCase()}`);
     }
 
-    // 3. Crop / Activity matching
-    const schemeCrops = scheme.eligibility.crops || [];
-    const isAllCrop = schemeCrops.includes('all');
-    const matchesCrop = isAllCrop || schemeCrops.some(c => normalizedCrop.includes(c) || c.includes(normalizedCrop));
+    // 3. Activity / Crop check
+    if (scheme.id === 'ahidf' && mainActivity !== 'dairy' && mainActivity !== 'poultry' && !['dairy', 'meat', 'feed', 'cattle', 'milk'].some(k => normalizedCrop.includes(k))) {
+      warnings.push('Specialized for dairy, animal husbandry, and feed processing infrastructure.');
+    } else if (scheme.id === 'pm-kusum' && mainActivity === 'infra') {
+      reasons.push('Solar pump installation qualifies for 60% capital subsidy.');
+    } else if (scheme.id === 'smam') {
+      reasons.push('40-50% subsidy available for tractors and farm machinery.');
+    } else {
+      reasons.push(`Supports activity: ${cropType || mainActivity.toUpperCase()}`);
+    }
 
-    if (matchesCrop) {
-      reasons.push(`Supports crop/activity: ${cropType || 'General Agriculture'}`);
-    } else if (scheme.id === 'ahidf') {
-      if (['dairy', 'meat', 'feed', 'cattle', 'livestock', 'milk'].some(k => normalizedCrop.includes(k))) {
-        reasons.push('Qualifies for Dairy & Animal Husbandry infrastructure subvention.');
+    // 4. KCC synergy
+    if (scheme.id === 'miss') {
+      if (isKccHolder) {
+        reasons.push('Active KCC holder: eligible for immediate 3% prompt repayment subvention (4% net rate).');
       } else {
-        warnings.push('AHIDF is specialized for dairy, meat, and animal feed value addition.');
+        warnings.push('Must be applied through or linked with a Kisan Credit Card (KCC) account.');
       }
     }
 
-    // 4. Land size check
-    if (scheme.eligibility.minLand > 0 && land < scheme.eligibility.minLand) {
-      if (scheme.id === 'pm-kisan') {
-        eligible = false;
-        warnings.push('Requires agricultural land ownership recorded in revenue records.');
-      }
-    }
-
-    // 5. Income check / PM-KISAN exclusions
+    // 5. Income Exclusions
     if (scheme.id === 'pm-kisan' && income > 2500000) {
-      warnings.push('Exclusion rule: Income tax payers and high income individuals are excluded from PM-KISAN.');
+      warnings.push('Higher income tax payers are excluded under statutory PM-KISAN guidelines.');
     }
 
-    // Determine eligibility status & rate summary
-    let badge = 'Eligible';
-    let subventionNote = '';
-
-    if (scheme.id === 'miss' || scheme.id === 'kcc') {
-      subventionNote = 'Get loans at 4% effective interest (7% base - 3% prompt repayment incentive)';
-    } else if (scheme.id === 'pm-kisan') {
-      subventionNote = 'Receive ₹6,000 yearly in 3 direct bank transfers of ₹2,000';
-    } else if (scheme.id === 'aif') {
-      subventionNote = '3% interest subvention for loans up to ₹2 Crore + Credit Guarantee';
-    } else if (scheme.id === 'ahidf') {
-      subventionNote = 'Up to 90% project cost financing, 3% interest relief for 8 years + 2 yr moratorium';
-    }
+    let badge = eligible ? 'Eligible' : 'Conditional / Review Needed';
+    let subventionNote = scheme.highlights ? scheme.highlights[0] : scheme.tagline;
 
     return {
       scheme,
       eligible,
-      badge: eligible ? 'Eligible' : 'Conditional / Review Needed',
+      badge,
       reasons,
       warnings,
       subventionNote
@@ -189,36 +222,57 @@ app.post('/api/eligibility', (req, res) => {
 
   res.json({
     success: true,
-    userInput: { cropType, annualIncome: income, landSize: land, farmerType, hasAadhaar },
+    userInput: { cropType, annualIncome: income, district, landOwnership, mainActivity, hasKcc, hasAadhaar },
     results
   });
 });
 
-// 4. Get all active loans & summary
+// 4. Get all loans (supports ?status=active|ended|all)
 app.get('/api/loans', (req, res) => {
-  const loans = readJson(LOANS_FILE, []).map(enrichLoan);
-  
-  const summary = loans.reduce((acc, l) => {
-    acc.totalBorrowed += l.totalAmount;
+  const { status = 'all' } = req.query;
+  const rawLoans = readJson(LOANS_FILE, []);
+  const enrichedLoans = rawLoans.map(enrichLoan);
+
+  const activeLoans = enrichedLoans.filter(l => l.status === 'Active');
+  const endedLoans = enrichedLoans.filter(l => l.status === 'Ended');
+
+  // Compute metrics specifically for active running loans (matching Screenshot 1)
+  const summary = activeLoans.reduce((acc, l) => {
+    acc.totalBorrowed += l.principalAmount || l.totalAmount;
     acc.totalPaid += l.paidAmount;
     acc.totalDue += l.dueAmount;
-    acc.totalMonthlyEmi += l.dueAmount > 0 ? (l.emiAmount || 0) : 0;
+    acc.totalMonthlyEmi += l.monthlyEmi || 0;
     return acc;
-  }, { totalBorrowed: 0, totalPaid: 0, totalDue: 0, totalMonthlyEmi: 0, activeCount: loans.filter(l => l.dueAmount > 0).length });
+  }, {
+    totalBorrowed: 0,
+    totalPaid: 0,
+    totalDue: 0,
+    totalMonthlyEmi: 0,
+    activeCount: activeLoans.length,
+    endedCount: endedLoans.length,
+    allCount: enrichedLoans.length
+  });
+
+  let filtered = enrichedLoans;
+  if (status === 'active') {
+    filtered = activeLoans;
+  } else if (status === 'ended') {
+    filtered = endedLoans;
+  }
 
   res.json({
     success: true,
-    count: loans.length,
+    count: filtered.length,
     summary,
-    data: loans
+    data: filtered
   });
 });
 
-// 5. Update amount already paid or record payment on a loan
+// 5. Record Payment on a Loan (farmer pays money)
 app.put('/api/loans/:id/payment', (req, res) => {
   const { id } = req.params;
-  const { paidAmount, paymentIncrement = 0, note = 'Online / Mandi payment' } = req.body;
-  
+  const { amount = 0, paidAmount, note = 'Farmer payment made' } = req.body;
+
   const loans = readJson(LOANS_FILE, []);
   const index = loans.findIndex(l => l.id === id);
 
@@ -227,21 +281,43 @@ app.put('/api/loans/:id/payment', (req, res) => {
   }
 
   const loan = loans[index];
-  
+  const total = Number(loan.totalWithInterest || loan.totalAmount || loan.principalAmount) || 0;
+  let currentPaid = Number(loan.paidAmount) || 0;
+
+  let addedPayment = 0;
   if (typeof paidAmount !== 'undefined') {
-    // Explicit paid amount set by user
-    loan.paidAmount = Math.max(0, Math.min(loan.totalAmount, Number(paidAmount) || 0));
-  } else if (paymentIncrement > 0) {
-    // Additional payment added
-    loan.paidAmount = Math.min(loan.totalAmount, (loan.paidAmount || 0) + Number(paymentIncrement));
+    // Explicit paid amount
+    const targetPaid = Math.max(0, Math.min(total, Number(paidAmount) || 0));
+    addedPayment = Math.max(0, targetPaid - currentPaid);
+    loan.paidAmount = targetPaid;
+  } else if (amount > 0) {
+    addedPayment = Number(amount);
+    loan.paidAmount = Math.min(total, currentPaid + addedPayment);
   }
 
-  // Record history
+  // Recalculate due
+  loan.dueAmount = Math.max(0, total - loan.paidAmount);
+
+  // Recalculate EMIs left
+  const emi = Number(loan.monthlyEmi || loan.emiAmount) || 1;
+  loan.emisLeft = loan.dueAmount > 0 ? Math.ceil(loan.dueAmount / emi) : 0;
+
+  // Auto-mark as Ended if fully paid
+  if (loan.dueAmount === 0) {
+    loan.status = 'Ended';
+    loan.completedDate = new Date().toISOString().split('T')[0];
+    loan.monthlyEmi = 0;
+    loan.emisLeft = 0;
+  } else {
+    loan.status = 'Active';
+  }
+
+  // Record payment in ledger
   if (!loan.payments) loan.payments = [];
   loan.payments.unshift({
     id: 'pay-' + Date.now(),
     date: new Date().toISOString().split('T')[0],
-    amount: paymentIncrement > 0 ? Number(paymentIncrement) : Number(paidAmount),
+    amount: addedPayment > 0 ? addedPayment : Number(loan.paidAmount),
     note
   });
 
@@ -250,52 +326,111 @@ app.put('/api/loans/:id/payment', (req, res) => {
 
   res.json({
     success: true,
-    message: 'Payment updated successfully',
+    message: loan.dueAmount === 0 ? '🎉 Loan paid in full! Moved to Ended Loans.' : 'Payment recorded successfully',
     data: enrichLoan(loan)
   });
 });
 
-// 6. Add a new loan or scheme to track
+// 6. Toggle or Update Loan Status (Active <-> Ended)
+app.put('/api/loans/:id/status', (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const loans = readJson(LOANS_FILE, []);
+  const index = loans.findIndex(l => l.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ success: false, message: 'Loan not found' });
+  }
+
+  const loan = loans[index];
+  const newStatus = status === 'Ended' ? 'Ended' : 'Active';
+  loan.status = newStatus;
+  
+  if (newStatus === 'Ended') {
+    loan.completedDate = new Date().toISOString().split('T')[0];
+    loan.monthlyEmi = 0;
+    loan.emisLeft = 0;
+  }
+
+  loans[index] = loan;
+  writeJson(LOANS_FILE, loans);
+
+  res.json({
+    success: true,
+    message: `Loan status updated to ${newStatus}`,
+    data: enrichLoan(loan)
+  });
+});
+
+// 7. Add a new Loan / Scheme to Tracker
 app.post('/api/loans', (req, res) => {
   const {
     schemeId = 'custom',
     schemeName = 'Custom Agriculture Loan',
-    bankName = 'Gramin Bank',
-    accountNumber = '•••• 1234',
+    schemeSub = 'Agri Loan',
+    bankName = 'State Bank of India',
+    accountNumber = '•••• ' + Math.floor(1000 + Math.random() * 9000),
     cropOrPurpose = 'Crop Cultivation',
-    totalAmount = 50000,
+    principalAmount = 100000,
+    totalAmount,
+    totalWithInterest,
     paidAmount = 0,
-    interestRate = 4.0,
-    tenureMonths = 12,
-    installmentType = 'Monthly',
+    interestRate = 7.0,
+    tenureMonths = 36,
+    status = 'Active',
     dueDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   } = req.body;
 
+  const principal = Number(principalAmount || totalAmount) || 100000;
+  const rate = Number(interestRate) || 7.0;
+  const tenure = Math.max(1, Number(tenureMonths) || 12);
+
+  // Amortized EMI & Total payable
+  const monthlyRate = rate / 12 / 100;
+  let emi = 0;
+  let totalPayable = Number(totalWithInterest);
+
+  if (rate === 0) {
+    emi = Math.round(principal / tenure);
+    if (!totalPayable) totalPayable = principal;
+  } else {
+    emi = Math.round((principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / (Math.pow(1 + monthlyRate, tenure) - 1));
+    if (!totalPayable) totalPayable = emi * tenure;
+  }
+
+  const paid = Math.max(0, Number(paidAmount) || 0);
+  const due = Math.max(0, totalPayable - paid);
+  const emisLeft = due > 0 ? Math.ceil(due / emi) : 0;
+  const finalStatus = due === 0 ? 'Ended' : (status === 'Ended' ? 'Ended' : 'Active');
+
   const loans = readJson(LOANS_FILE, []);
-  
+
   const newLoan = {
     id: 'loan-' + Date.now(),
     schemeId,
     schemeName,
+    schemeSub: schemeSub || `${schemeName.slice(0, 8)} - Loan`,
     bankName,
     accountNumber,
     cropOrPurpose,
     sanctionDate: new Date().toISOString().split('T')[0],
-    totalAmount: Number(totalAmount) || 0,
-    paidAmount: Number(paidAmount) || 0,
-    interestRate: Number(interestRate) || 4.0,
-    baseRate: 7.0,
-    promptIncentive: 3.0,
-    tenureMonths: Number(tenureMonths) || 12,
-    installmentType,
+    principalAmount: principal,
+    totalAmount: principal,
+    totalWithInterest: totalPayable,
+    paidAmount: paid,
+    dueAmount: due,
+    monthlyEmi: emi,
+    emisLeft,
+    interestRate: rate,
+    tenureMonths: tenure,
+    status: finalStatus,
     dueDate,
-    status: 'Active',
-    incentiveStatus: 'Prompt Repayment Eligible (3% Subsidy)',
-    payments: paidAmount > 0 ? [{
+    payments: paid > 0 ? [{
       id: 'pay-initial',
       date: new Date().toISOString().split('T')[0],
-      amount: Number(paidAmount),
-      note: 'Initial paid amount recorded'
+      amount: paid,
+      note: 'Initial down payment or installments recorded'
     }] : []
   };
 
@@ -309,7 +444,7 @@ app.post('/api/loans', (req, res) => {
   });
 });
 
-// 7. Delete a loan
+// 8. Delete a loan
 app.delete('/api/loans/:id', (req, res) => {
   let loans = readJson(LOANS_FILE, []);
   const initialLen = loans.length;
@@ -330,5 +465,5 @@ app.use((req, res) => {
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`🌾 KisanSahay Node Server is running on http://localhost:${PORT}`);
+  console.log(`🌾 KisanSahay Server running on http://localhost:${PORT}`);
 });
