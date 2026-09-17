@@ -1,0 +1,26 @@
+{
+  "name": "kisansahay",
+  "version": "1.0.0",
+  "description": "Accessible Agricultural Finance & Loan Management Portal for Indian Farmers",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "kisan",
+    "farmers",
+    "agriculture",
+    "mcp",
+    "loans",
+    "kcc",
+    "miss",
+    "pm-kisan",
+    "aif"
+  ],
+  "author": "KisanSahay Team",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
