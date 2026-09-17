@@ -1,12 +1,255 @@
 [
   {
+    "id": "miss",
+    "name": "Modified Interest Subvention Scheme",
+    "shortName": "MISS",
+    "category": "CROP LOAN",
+    "icon": "🌾",
+    "badge": "Crop Loan",
+    "badgeColor": "green",
+    "tagline": "A short-term working capital loan scheme for crop cultivation and allied activities, accessed primarily through the Kisan Credit Card (KCC). Provides affordable credit for seeds, fertilizer, and input costs.",
+    "baseRate": 7.0,
+    "effectiveRate": 4.0,
+    "promptIncentive": 3.0,
+    "maxLimit": 300000,
+    "alliedLimit": 200000,
+    "highlights": [
+      "7% base, 4% effective on timely repayment",
+      "Up to ₹3 lakh (₹2 lakh for allied-only activities)"
+    ],
+    "collateralFreeLimit": 200000,
+    "eligibility": {
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper",
+        "shg",
+        "jlg"
+      ],
+      "crops": [
+        "all",
+        "wheat",
+        "paddy",
+        "rice",
+        "cotton",
+        "sugarcane",
+        "pulses",
+        "oilseeds",
+        "maize",
+        "dairy",
+        "fisheries"
+      ],
+      "maxIncome": null,
+      "minLand": 0,
+      "requiresAadhaar": true
+    },
+    "whatItIs": "A short-term working capital loan scheme for crop cultivation and allied activities, accessed primarily through the Kisan Credit Card (KCC). Provides affordable credit for seeds, fertilizer, and input costs.",
+    "benefits": "Provides 1.5% interest subvention to lending institutions and 3% prompt repayment incentive to farmers, bringing effective interest rate down to 4% per annum. Also provides post-harvest storage loans against negotiable warehouse receipts for up to 6 months.",
+    "pros": [
+      "Ultra-low effective 4% interest rate on timely repayment",
+      "Protects farmers from predatory informal moneylenders charging 24%+",
+      "Covers seeds, fertilizers, pesticides, labor, and harvesting",
+      "Includes post-harvest storage credit against warehouse receipts"
+    ],
+    "cons": [
+      "Capped at ₹3 lakh for crops (₹2 lakh for animal husbandry/fisheries)",
+      "Strict deadline: 3% subvention is lost if repayment is delayed by even one day",
+      "Requires active Aadhaar linkage and KCC account"
+    ],
+    "documents": [
+      {
+        "id": "doc-aadhaar",
+        "name": "Aadhaar Card",
+        "required": true,
+        "desc": "Mandatory for interest subvention DBT"
+      },
+      {
+        "id": "doc-kcc",
+        "name": "Active KCC Account Proof",
+        "required": true,
+        "desc": "Facility routed through Kisan Credit Card"
+      },
+      {
+        "id": "doc-land",
+        "name": "Land Record / Cultivation Proof",
+        "required": true,
+        "desc": "Khasra/Khatauni or tenancy agreement"
+      },
+      {
+        "id": "doc-sowing",
+        "name": "Crop Sowing Declaration Form",
+        "required": true,
+        "desc": "Details of crops sown in the current agricultural season"
+      }
+    ]
+  },
+  {
+    "id": "aif",
+    "name": "Agriculture Infrastructure Fund",
+    "shortName": "AIF",
+    "category": "INFRASTRUCTURE LOAN",
+    "icon": "🏭",
+    "badge": "Infrastructure Loan",
+    "badgeColor": "orange",
+    "tagline": "A medium-to-long-term debt financing facility for building post-harvest infrastructure like warehouses, cold storage, and primary processing units. Helps farmers add value to their produce.",
+    "baseRate": 9.0,
+    "effectiveRate": 6.0,
+    "promptIncentive": 3.0,
+    "maxLimit": 20000000,
+    "highlights": [
+      "3% interest subvention per annum",
+      "Up to ₹2 crore per project"
+    ],
+    "collateralFreeLimit": 20000000,
+    "eligibility": {
+      "farmerTypes": [
+        "owner",
+        "entrepreneur",
+        "fpo",
+        "pacs",
+        "shg",
+        "startup"
+      ],
+      "crops": [
+        "all",
+        "processing",
+        "cold-storage",
+        "warehousing",
+        "primary-processing",
+        "sorting-grading"
+      ],
+      "maxIncome": null,
+      "minLand": 0,
+      "requiresAadhaar": true
+    },
+    "whatItIs": "A medium-to-long-term debt financing facility for building post-harvest infrastructure like warehouses, cold storage, and primary processing units. Helps farmers add value to their produce.",
+    "benefits": "Provides 3% interest subvention per annum up to a limit of ₹2 crore for a maximum tenure of 7 years. In addition, credit guarantee coverage is available under CGTMSE for loans up to ₹2 crore without requiring third-party collateral.",
+    "pros": [
+      "Substantial interest subvention of 3% per annum for up to 7 years",
+      "Credit guarantee fee paid by the Central Government under CGTMSE",
+      "Moratorium period of minimum 6 months up to 2 years",
+      "Eligible for warehouses, silos, cold chains, assaying units, and solar rooftops"
+    ],
+    "cons": [
+      "Focus is on post-harvest infrastructure rather than operational crop inputs",
+      "Requires a Detailed Project Report (DPR) and bank techno-economic appraisal",
+      "Ceiling capped at ₹2 crore per individual project location"
+    ],
+    "documents": [
+      {
+        "id": "doc-dpr",
+        "name": "Detailed Project Report (DPR)",
+        "required": true,
+        "desc": "Technical and financial viability analysis"
+      },
+      {
+        "id": "doc-land-title",
+        "name": "Land Title Deed / Registered Long-Term Lease",
+        "required": true,
+        "desc": "Proof of site ownership or minimum 10-15 year lease"
+      },
+      {
+        "id": "doc-aadhaar-pan",
+        "name": "Aadhaar & PAN of Promoters / Farmer",
+        "required": true,
+        "desc": "KYC identification documents"
+      },
+      {
+        "id": "doc-bank-statement",
+        "name": "Bank Account Statements (Past 12 Months)",
+        "required": true,
+        "desc": "Financial statement of applicant or entity"
+      }
+    ]
+  },
+  {
+    "id": "ahidf",
+    "name": "Animal Husbandry Infrastructure Development Fund",
+    "shortName": "AHIDF",
+    "category": "INFRASTRUCTURE LOAN",
+    "icon": "🐄",
+    "badge": "Infrastructure Loan",
+    "badgeColor": "red-orange",
+    "tagline": "A specialized fund for medium-to-long-term debt to build processing and value-addition infrastructure in the dairy, meat, and animal feed sectors. Creates rural employment and builds cold-chain capacity.",
+    "baseRate": 8.5,
+    "effectiveRate": 5.5,
+    "promptIncentive": 3.0,
+    "maxLimit": 100000000,
+    "highlights": [
+      "3% per annum for 8 years",
+      "Up to 90% of project cost, no upper ceiling"
+    ],
+    "collateralFreeLimit": 0,
+    "eligibility": {
+      "farmerTypes": [
+        "owner",
+        "entrepreneur",
+        "fpo",
+        "msme",
+        "shg",
+        "dairy-cooperative"
+      ],
+      "crops": [
+        "dairy",
+        "meat",
+        "animal-feed",
+        "poultry",
+        "cattle",
+        "milk"
+      ],
+      "maxIncome": null,
+      "minLand": 0,
+      "requiresAadhaar": true
+    },
+    "whatItIs": "A specialized fund for medium-to-long-term debt to build processing and value-addition infrastructure in the dairy, meat, and animal feed sectors. Creates rural employment and builds cold-chain capacity.",
+    "benefits": "Provides 3% interest subvention for 8 years and up to 90% loan financing of eligible project cost with no upper financial ceiling. Also offers 25% credit guarantee support through NABARD for MSMEs.",
+    "pros": [
+      "No upper limit on total loan amount for enterprise-scale projects",
+      "3% interest subvention for an extended period of 8 years",
+      "Finances up to 90% of total project cost (only 10% promoter contribution needed)",
+      "2-year moratorium on principal repayment provides time to set up operations"
+    ],
+    "cons": [
+      "Term loan exclusively meant for processing machinery and sheds, not working capital",
+      "Requires detailed engineering estimates and local statutory clearances",
+      "Primarily targeted at dairy plants, feed manufacturing, and cold chain units"
+    ],
+    "documents": [
+      {
+        "id": "doc-ahidf-dpr",
+        "name": "Detailed Techno-Economic Feasibility Report",
+        "required": true,
+        "desc": "Project engineering, equipment list and cash flows"
+      },
+      {
+        "id": "doc-land-clearance",
+        "name": "Site Ownership / Lease Deed & Clearances",
+        "required": true,
+        "desc": "Proof of industrial/agri land and conversion clearance"
+      },
+      {
+        "id": "doc-kyc",
+        "name": "Aadhaar, PAN & Udyam/FPO Registration",
+        "required": true,
+        "desc": "Enterprise and promoter identity verification"
+      },
+      {
+        "id": "doc-statutory",
+        "name": "FSSAI / Pollution Control Consent (if applicable)",
+        "required": false,
+        "desc": "Environmental clearances for processing units"
+      }
+    ]
+  },
+  {
     "id": "kcc",
-    "name": "Kisan Credit Card (KCC)",
+    "name": "Kisan Credit Card",
     "shortName": "KCC",
-    "category": "Credit Card & Working Capital",
+    "category": "CROP LOAN",
     "icon": "💳",
-    "badge": "Single Window Credit",
-    "tagline": "Affordable institutional credit for crop cultivation and allied activities",
+    "badge": "Crop Loan",
+    "badgeColor": "green",
+    "tagline": "A single-window credit facility providing farmers with timely and affordable institutional credit for crop cultivation and allied activities, including dairy, poultry, and fisheries. Over 7.7 crore active accounts nationwide.",
     "baseRate": 7.0,
     "effectiveRate": 4.0,
     "promptIncentive": 3.0,
@@ -16,392 +259,589 @@
       "allied": 200000,
       "fisheries": 500000
     },
+    "highlights": [
+      "7% base, 4% effective on timely repayment",
+      "Up to ₹3 lakh (₹2 lakh for allied-only, ₹5 lakh for fisheries)"
+    ],
     "collateralFreeLimit": 200000,
-    "collateralHypothecationLimit": 300000,
     "eligibility": {
-      "farmerTypes": ["owner", "tenant", "sharecropper", "shg", "jlg"],
-      "crops": ["wheat", "paddy", "rice", "cotton", "sugarcane", "pulses", "vegetables", "fruits", "dairy", "poultry", "fisheries", "all"],
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper",
+        "shg",
+        "jlg"
+      ],
+      "crops": [
+        "all",
+        "wheat",
+        "paddy",
+        "rice",
+        "cotton",
+        "sugarcane",
+        "pulses",
+        "vegetables",
+        "fruits",
+        "dairy",
+        "poultry",
+        "fisheries"
+      ],
       "maxIncome": null,
       "minLand": 0,
       "requiresAadhaar": true
     },
-    "whatItIs": "A single-window credit facility providing farmers with timely and affordable institutional credit for crop cultivation and allied activities, including dairy, poultry, and fisheries, through a Kisan Credit Card (KCC).",
-    "benefits": "Provides affordable short-term credit for seeds, fertilizer, and other input costs, as well as post-harvest expenses and household consumption needs. The effective 4% rate is dramatically lower than informal moneylender rates (often 24%+), preventing debt traps. It also covers investment credit for farm equipment, livestock, and allied infrastructure.",
+    "whatItIs": "A single-window credit facility providing farmers with timely and affordable institutional credit for crop cultivation and allied activities, including dairy, poultry, and fisheries. Over 7.7 crore active accounts nationwide.",
+    "benefits": "Revolving cash credit line with flexible withdrawals using RuPay debit card at ATMs and mandis. Low 4% net interest upon annual prompt settlement. Includes in-built crop insurance linkage and personal accident insurance.",
     "pros": [
-      "Very low effective interest rate (4% per annum)",
-      "Single-window flexibility for both short-term working capital and investment credit",
-      "Covers allied activities like dairy, poultry, and fisheries",
-      "Wide network of 457 banks onboarded with over 7.7 crore active accounts",
-      "Collateral-free up to ₹2 lakh (up to ₹3 lakh with crop tie-up)"
+      "Revolving credit facility — withdraw and repay as crops are harvested and sold",
+      "Low 4% effective interest on timely repayment",
+      "Collateral-free loan up to ₹1.60 lakh (raised to ₹2 lakh by RBI without collateral)",
+      "Covers animal husbandry, dairy, poultry, and inland/marine fisheries"
     ],
     "cons": [
-      "The 3% prompt repayment incentive is forfeited if repayment is even one day late",
-      "Aadhaar linkage with bank account is compulsory",
-      "Small and marginal farmers may still find the application process document-heavy"
+      "Must renew and clear interest once every 12 months to maintain 4% rate",
+      "Tenant farmers require local tenancy agreements or JLG group guarantees",
+      "Compulsory Aadhaar seeding required"
     ],
-    "keyLimitation": "A government panel noted that tenant farmers and landless farmers (roughly 35-40% of all farmers) often struggle to access this scheme because they lack formal land records, pushing them back to informal lenders. To address this, NABARD has initiated CBDC-based pilots in Andhra Pradesh and Odisha.",
     "documents": [
-      {"id": "doc-aadhaar", "name": "Aadhaar Card (Linked with Mobile)", "required": true, "desc": "Mandatory proof of identity for interest subvention"},
-      {"id": "doc-land", "name": "Land Record (Khasra / Khatauni / Patta / Tenancy)", "required": true, "desc": "Copy of land ownership or registered tenancy agreement"},
-      {"id": "doc-bank", "name": "Bank Passbook with IFSC", "required": true, "desc": "Aadhaar-seeded savings account passbook"},
-      {"id": "doc-photo", "name": "2 Recent Passport Size Photographs", "required": true, "desc": "Required for application form and card issue"},
-      {"id": "doc-kcc-form", "name": "Duly Filled KCC Loan Application Form", "required": true, "desc": "Available at any authorized rural branch"}
-    ]
-  },
-  {
-    "id": "miss",
-    "name": "Modified Interest Subvention Scheme (MISS)",
-    "shortName": "MISS",
-    "category": "Short-Term Crop Loan",
-    "icon": "🌾",
-    "badge": "Subsidized 4% Loan",
-    "tagline": "Short-term working capital loan with prompt repayment interest relief",
-    "baseRate": 7.0,
-    "effectiveRate": 4.0,
-    "promptIncentive": 3.0,
-    "maxLimit": 300000,
-    "subLimits": {
-      "allied": 200000
-    },
-    "collateralFreeLimit": 200000,
-    "collateralHypothecationLimit": 300000,
-    "eligibility": {
-      "farmerTypes": ["owner", "tenant", "sharecropper", "shg", "jlg"],
-      "crops": ["wheat", "paddy", "rice", "cotton", "sugarcane", "pulses", "oilseeds", "maize", "dairy", "fisheries", "all"],
-      "maxIncome": null,
-      "minLand": 0,
-      "requiresAadhaar": true
-    },
-    "whatItIs": "A short-term working capital loan scheme for crop cultivation and allied activities, accessed primarily through the Kisan Credit Card (KCC).",
-    "benefits": "It provides affordable short-term credit for seeds, fertilizer, and other input costs. The effective 4% rate is dramatically lower than informal moneylender rates (often 24%+), preventing debt traps. The scheme also covers post-harvest storage against warehouse receipts, helping farmers avoid distress sales.",
-    "pros": [
-      "Very low effective interest rate (4%) upon prompt repayment",
-      "Covers crop cultivation as well as allied activities like dairy and fisheries",
-      "Helps stabilize farmer incomes and protects against informal moneylenders",
-      "Includes post-harvest storage against negotiable warehouse receipts for up to 6 months"
-    ],
-    "cons": [
-      "Benefits are strictly capped at ₹3 lakh (₹2 lakh for allied-only)",
-      "You lose the 3% incentive if repayment is even one day late",
-      "Aadhaar linkage with bank account is compulsory"
-    ],
-    "keyLimitation": "A government panel has noted that tenant farmers and landless farmers (roughly 35-40% of all farmers) often struggle to access this scheme because they lack formal land records, pushing them back to informal lenders.",
-    "documents": [
-      {"id": "doc-aadhaar", "name": "Aadhaar Card", "required": true, "desc": "Mandatory for interest subvention verification"},
-      {"id": "doc-land", "name": "Land Record / Cultivation Proof", "required": true, "desc": "Proof of agricultural land holding or tenancy agreement"},
-      {"id": "doc-kcc", "name": "Active KCC Account Proof", "required": true, "desc": "Loan must be routed through active Kisan Credit Card"},
-      {"id": "doc-crop-decl", "name": "Crop Sowing Declaration Form", "required": true, "desc": "Details of crops cultivated in current season"}
+      {
+        "id": "doc-aadhaar",
+        "name": "Aadhaar Card",
+        "required": true,
+        "desc": "Identity verification and DBT subvention seeding"
+      },
+      {
+        "id": "doc-land",
+        "name": "Land Record (Khasra / Khatauni / Patta)",
+        "required": true,
+        "desc": "Documentary proof of agricultural landholding"
+      },
+      {
+        "id": "doc-bank",
+        "name": "Bank Passbook with Photo",
+        "required": true,
+        "desc": "Existing savings account passbook with IFSC code"
+      },
+      {
+        "id": "doc-photos",
+        "name": "2 Passport Size Photographs",
+        "required": true,
+        "desc": "Required for application form and RuPay Kisan Card"
+      }
     ]
   },
   {
     "id": "pm-kisan",
-    "name": "PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)",
+    "name": "Pradhan Mantri Kisan Samman Nidhi",
     "shortName": "PM-KISAN",
-    "category": "Direct Income Support",
+    "category": "INCOME SUPPORT",
     "icon": "💰",
-    "badge": "Direct Cash Transfer",
-    "tagline": "₹6,000 yearly income support paid in 3 equal instalments of ₹2,000",
+    "badge": "Income Support",
+    "badgeColor": "teal",
+    "tagline": "A central sector scheme providing direct income support of ₹6,000 per year to landholding farmer families, transferred in three equal instalments of ₹2,000 into Aadhaar-seeded bank accounts via Direct Benefit Transfer (DBT).",
     "baseRate": 0,
     "effectiveRate": 0,
     "promptIncentive": 0,
     "maxLimit": 6000,
-    "subLimits": {
-      "perInstallment": 2000,
-      "installmentsPerYear": 3
-    },
+    "highlights": [
+      "Not a loan — direct income support",
+      "₹6,000 per year (₹2,000 x 3 instalments)"
+    ],
     "collateralFreeLimit": 0,
-    "collateralHypothecationLimit": 0,
     "eligibility": {
-      "farmerTypes": ["owner"],
-      "crops": ["all", "wheat", "paddy", "rice", "cotton", "sugarcane", "pulses", "vegetables", "fruits"],
+      "farmerTypes": [
+        "owner"
+      ],
+      "crops": [
+        "all"
+      ],
       "maxIncome": null,
       "minLand": 0.01,
       "requiresAadhaar": true,
-      "exclusions": ["income tax payers", "institutional landholders", "constitutional posts", "serving/retired govt staff", "pensioners >= 10000/mo", "registered professionals (doctors, engineers, lawyers, CAs)"]
+      "exclusions": [
+        "income tax payers",
+        "institutional landholders",
+        "constitutional posts",
+        "serving/retired govt staff",
+        "pensioners >= 10000/mo"
+      ]
     },
-    "whatItIs": "A central sector scheme launched in February 2019 to supplement the financial needs of landholding farmer families through direct income support of ₹6,000 per year, transferred in three equal instalments of ₹2,000 into Aadhaar-seeded bank accounts via Direct Benefit Transfer (DBT).",
-    "benefits": "It provides direct cash support to farmers for agricultural inputs like seeds, fertilizers, and pesticides, as well as household expenses such as education and medical costs. A NITI Aayog evaluation showed over 92% of beneficiaries used the assistance for essential agricultural inputs, and approximately 85% reported an increase in agricultural income.",
+    "whatItIs": "A central sector scheme providing direct income support of ₹6,000 per year to landholding farmer families, transferred in three equal instalments of ₹2,000 into Aadhaar-seeded bank accounts via Direct Benefit Transfer (DBT).",
+    "benefits": "100% grant funding transferred directly to the farmer's bank account with zero middlemen. Provides immediate cash liquidity ahead of sowing seasons (April-July, August-November, December-March) for seeds, fertilizer, and household needs.",
     "pros": [
-      "Direct benefit transfer (DBT) directly into bank account eliminates intermediaries and leakage",
-      "Significant scale with over 9.49 crore beneficiaries in the 23rd instalment",
-      "Women farmers have received more than ₹1.06 lakh crore (nearly 1 in 4 beneficiaries)",
-      "Extended till 2030-31 with a robust ₹3.15 lakh crore outlay",
-      "100% grant funding — no loan repayment required"
+      "Direct grant with 0% interest and no repayment obligation",
+      "Transferred directly into bank account via DBT eliminating leakage",
+      "Over 11 crore farmer families supported nationwide",
+      "Facilitates easy KCC approval when registered under PM-KISAN database"
     ],
     "cons": [
-      "The amount has remained fixed at ₹6,000 since inception in 2019 despite inflation",
-      "Digital divide leaves some eligible farmers excluded due to online portal difficulties",
-      "Payments blocked for over 73 lakh beneficiaries due to pending mandatory requirements (land seeding, Aadhaar seeding, e-KYC)"
+      "Strictly limited to landowning farmers; tenant/landless farmers not covered",
+      "Fixed at ₹6,000 per year regardless of landholding size",
+      "Requires biometric or OTP-based e-KYC and land seeding on the portal"
     ],
-    "keyLimitation": "Farmer leaders have noted that ₹6,000 a year is a 'token gesture' that doesn't solve structural farm problems. Thousands of eligible farmers remain excluded due to digital barriers, and parliamentary committees have questioned why payout hasn't adjusted for inflation.",
     "documents": [
-      {"id": "doc-aadhaar", "name": "Aadhaar Card", "required": true, "desc": "Aadhaar seeding is compulsory for DBT payout"},
-      {"id": "doc-land-rec", "name": "Updated Land Record (Khasra / Khatauni / Jamabandi)", "required": true, "desc": "Cultivable land must be in the applicant's name with land seeding completed"},
-      {"id": "doc-bank-dbt", "name": "NPCI-Mapped Bank Passbook", "required": true, "desc": "Bank account linked with Aadhaar and NPCI DBT enabled"},
-      {"id": "doc-ekyc", "name": "e-KYC Completion Verification", "required": true, "desc": "Biometric or Aadhaar OTP e-KYC on PM-Kisan portal"}
+      {
+        "id": "doc-aadhaar",
+        "name": "Aadhaar Card",
+        "required": true,
+        "desc": "Mandatory for Aadhaar-based DBT transfers"
+      },
+      {
+        "id": "doc-land",
+        "name": "Land Record (RoR / Jamabandi / Khasra)",
+        "required": true,
+        "desc": "Cultivable land registered in applicant's name"
+      },
+      {
+        "id": "doc-bank",
+        "name": "Aadhaar & NPCI Mapped Bank Account",
+        "required": true,
+        "desc": "Bank passbook showing NPCI DBT mapping active"
+      },
+      {
+        "id": "doc-ekyc",
+        "name": "e-KYC Completion on PM-KISAN Portal",
+        "required": true,
+        "desc": "Biometric or mobile OTP authenticated KYC"
+      }
     ]
   },
   {
-    "id": "aif",
-    "name": "Agriculture Infrastructure Fund (AIF)",
-    "shortName": "AIF",
-    "category": "Post-Harvest Infrastructure",
-    "icon": "🏭",
-    "badge": "Infrastructure Financing",
-    "tagline": "Medium-to-long term debt up to ₹2 Crore with 3% interest subvention",
-    "baseRate": 9.0,
-    "effectiveRate": 6.0,
-    "promptIncentive": 3.0,
-    "maxLimit": 20000000,
-    "subLimits": {
-      "subventionCap": 20000000
-    },
-    "collateralFreeLimit": 20000000,
-    "collateralHypothecationLimit": 20000000,
-    "eligibility": {
-      "farmerTypes": ["owner", "entrepreneur", "fpo", "pacs", "startup"],
-      "crops": ["all", "processing", "cold-storage", "warehousing", "primary-processing"],
-      "maxIncome": null,
-      "minLand": 0,
-      "requiresAadhaar": true
-    },
-    "whatItIs": "A medium-to-long-term debt financing facility for building post-harvest infrastructure like warehouses, cold storage, silos, sorting/grading units, and primary processing units.",
-    "benefits": "It helps farmers add value to their produce. Instead of selling raw crops at low prices during harvest glut, they can store, process, and market them strategically. This reduces the 15-20% post-harvest losses in India and lets farmers capture more of the final consumer price.",
-    "pros": [
-      "Large loan ceiling of up to ₹2 crore per eligible project",
-      "Significant 3% per annum interest subvention on the loan",
-      "Credit guarantee coverage under CGTMSE solves the collateral problem for up to ₹2 crore",
-      "Supports a wide range of infrastructure from packhouses to custom hiring centers"
-    ],
-    "cons": [
-      "The ₹2 crore cap is considered insufficient for large projects like complete cold chain networks",
-      "Working capital is not covered, leading to temporarily underutilized assets",
-      "Awareness among local bank branch officials is low, causing approval delays"
-    ],
-    "keyLimitation": "Active demand from farmer organizations to raise the subvention ceiling to ₹5 crore. Lack of working capital financing within the fund restricts newly built facilities until operations stabilize.",
-    "documents": [
-      {"id": "doc-dpr", "name": "Detailed Project Report (DPR)", "required": true, "desc": "Technical and financial viability report of infrastructure"},
-      {"id": "doc-land-title", "name": "Land Title Deed / 15-Year Lease Agreement", "required": true, "desc": "Proof of ownership or long-term lease for the project site"},
-      {"id": "doc-entity", "name": "Entity Registration / FPO / PACS Certificate", "required": true, "desc": "Registration certificate for legal entities or farmer KYC"},
-      {"id": "doc-pan-aadhaar", "name": "PAN Card & Aadhaar Card", "required": true, "desc": "Identity and tax proof of promoters / applicant"},
-      {"id": "doc-bank-stmt", "name": "Bank Statement (Last 6-12 Months)", "required": true, "desc": "Financial history of the applicant / FPO"}
-    ]
-  },
-  {
-    "id": "ahidf",
-    "name": "Animal Husbandry Infrastructure Development Fund (AHIDF)",
-    "shortName": "AHIDF",
-    "category": "Dairy & Animal Husbandry",
-    "icon": "🐄",
-    "badge": "90% Project Financing",
-    "tagline": "Up to 90% project cost with 3% interest subvention & 2-year moratorium",
-    "baseRate": 8.5,
-    "effectiveRate": 5.5,
-    "promptIncentive": 3.0,
-    "maxLimit": 100000000,
-    "subLimits": {
-      "projectCostFinancedPercent": 90,
-      "subventionYears": 8,
-      "moratoriumYears": 2
-    },
-    "collateralFreeLimit": 0,
-    "collateralHypothecationLimit": 0,
-    "eligibility": {
-      "farmerTypes": ["entrepreneur", "fpo", "msme", "private_co", "section8"],
-      "crops": ["dairy", "meat", "animal-feed", "poultry"],
-      "maxIncome": null,
-      "minLand": 0,
-      "requiresAadhaar": true
-    },
-    "whatItIs": "A specialized fund for medium-to-long-term debt to build processing and value-addition infrastructure in the dairy, meat, and animal feed sectors.",
-    "benefits": "This scheme encourages investment in value addition. By setting up dairy or meat processing units, it creates an organized market for milk and meat, improving price realization for farmers. It also generates rural employment and builds essential cold-chain and animal feed processing capacity.",
-    "pros": [
-      "No upper limit on the loan amount for large-scale enterprise projects",
-      "Long 8-year interest subvention period of 3% per annum",
-      "High financing coverage of up to 90% of total project cost",
-      "2-year moratorium on principal repayment provides essential breathing room",
-      "25% credit guarantee coverage for MSME category projects"
-    ],
-    "cons": [
-      "It is exclusively a term loan, not meant for working capital",
-      "Focus is on processing infrastructure, so small farmers may not benefit directly unless grouped into an FPO",
-      "Application process requires a comprehensive Detailed Project Report (DPR) and is relatively complex"
-    ],
-    "keyLimitation": "High documentation and techno-economic appraisal hurdles make it difficult for grassroots smallholder farmers to access without professional consultancy or FPO federations.",
-    "documents": [
-      {"id": "doc-dpr-ahidf", "name": "Detailed Techno-Economic Feasibility Report (DPR)", "required": true, "desc": "Comprehensive engineering and financial projection report"},
-      {"id": "doc-land-site", "name": "Proof of Land Possession / Industrial Clearance", "required": true, "desc": "Non-agricultural clearance / land conversion and ownership papers"},
-      {"id": "doc-msme-fpo", "name": "Udyam Registration / FPO Incorporation Certificate", "required": true, "desc": "Proof of enterprise registration under MSME / ROC"},
-      {"id": "doc-promoter-kyc", "name": "Promoter Aadhaar, PAN & Net Worth Certificate", "required": true, "desc": "CA certified net worth and identity proofs"},
-      {"id": "doc-statutory", "name": "Pollution Control & FSSAI Clearances (if applicable)", "required": false, "desc": "Environmental consent to establish for meat/dairy plants"}
-    ]
-  },
-  {
-    "id": "pmfme",
-    "name": "PM Formalisation of Micro Food Processing Enterprises (PMFME)",
-    "shortName": "PMFME",
-    "category": "Food Processing Credit",
-    "icon": "🥫",
-    "badge": "35% Credit-Linked Subsidy",
-    "tagline": "Upgrade a small food-processing unit with bank credit and subsidy support",
-    "baseRate": 10.0,
-    "effectiveRate": 10.0,
+    "id": "pmfby",
+    "name": "Pradhan Mantri Fasal Bima Yojana",
+    "shortName": "PMFBY",
+    "category": "CROP INSURANCE & CREDIT",
+    "icon": "🛡️",
+    "badge": "Crop Insurance",
+    "badgeColor": "green",
+    "tagline": "Comprehensive crop insurance scheme protecting farmers against unforeseen weather events, pests, and natural calamities with subsidized premium rates.",
+    "baseRate": 2.0,
+    "effectiveRate": 1.5,
     "promptIncentive": 0,
     "maxLimit": 1000000,
-    "subLimits": {"creditLinkedSubsidyPercent": 35, "maximumSubsidy": 350000},
-    "collateralFreeLimit": 0,
-    "collateralHypothecationLimit": 1000000,
+    "highlights": [
+      "Only 1.5% - 2% farmer premium, rest covered by Govt",
+      "Automatic claim settlement directly into bank account"
+    ],
+    "collateralFreeLimit": 1000000,
     "eligibility": {
-      "farmerTypes": ["owner", "entrepreneur", "fpo", "shg", "jlg", "msme"],
-      "crops": ["all", "processing", "food-processing", "dairy", "poultry", "fisheries"],
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "crops": [
+        "all",
+        "wheat",
+        "rice",
+        "cotton",
+        "soybean",
+        "pulses",
+        "horticulture",
+        "oilseeds"
+      ],
       "maxIncome": null,
       "minLand": 0,
       "requiresAadhaar": true
     },
-    "whatItIs": "A credit-linked subsidy programme that helps individual micro food-processing units, SHGs, FPOs and cooperatives upgrade equipment, packaging, branding and quality systems.",
-    "benefits": "The subsidy reduces the effective project burden while a bank loan finances eligible machinery and business improvements. It is useful for farmer groups that want to process their own crops instead of selling only raw produce.",
+    "whatItIs": "A comprehensive national crop insurance scheme providing comprehensive financial support to farmers suffering crop loss/damage arising out of unforeseen weather events.",
+    "benefits": "Farmers pay a uniform maximum premium of only 2% for Kharif food and oilseed crops, 1.5% for Rabi crops, and 5% for annual commercial/horticultural crops. The entire remaining premium is subsidized equally by Central and State Governments.",
     "pros": [
-      "Credit-linked subsidy of 35% of eligible project cost, subject to the scheme ceiling",
-      "Supports individual units as well as SHGs, FPOs and cooperatives",
-      "Helps improve value realisation, packaging and market access"
+      "Shields farmers from total loss during drought, flood, hailstorm, or pest attacks",
+      "Protects farmer credit rating and prevents loan default during crop failure",
+      "Covers prevented sowing, mid-season adversity, and post-harvest losses",
+      "Claim compensation credited directly to Aadhaar-seeded bank account"
     ],
     "cons": [
-      "Applicant must contribute a share of the project cost",
-      "Loan approval and subsidy release depend on bank appraisal and scheme verification",
-      "A viable food-processing project and applicable licences are required"
+      "Assessment unit is often village/gram panchayat level rather than individual field",
+      "Intimation of localized damage must be lodged within 72 hours via crop insurance app",
+      "Coverage applies strictly to notified crops in notified areas"
     ],
-    "keyLimitation": "The support is for eligible micro food-processing projects, not unrestricted cash or crop cultivation expenses. Confirm current application windows and eligible products with the district nodal agency.",
     "documents": [
-      {"id": "doc-pmfme-project", "name": "Project Report and Cost Estimates", "required": true, "desc": "Business plan, machinery quotations and projected cash flows"},
-      {"id": "doc-pmfme-kyc", "name": "Aadhaar, PAN and Bank Account Proof", "required": true, "desc": "Identity and banking documents for applicant or group"},
-      {"id": "doc-pmfme-entity", "name": "Udyam / FPO / SHG / Cooperative Registration", "required": false, "desc": "Entity proof where the application is made by a group or enterprise"},
-      {"id": "doc-pmfme-land", "name": "Premises Ownership or Lease Proof", "required": true, "desc": "Proof of the place where processing will be carried out"}
+      {
+        "id": "doc-aadhaar",
+        "name": "Aadhaar Card",
+        "required": true,
+        "desc": "Mandatory identity proof"
+      },
+      {
+        "id": "doc-land",
+        "name": "Land Record / Tenancy Agreement",
+        "required": true,
+        "desc": "Proof of agricultural land or tenancy agreement"
+      },
+      {
+        "id": "doc-sowing-cert",
+        "name": "Sowing Certificate / Patwari Verification",
+        "required": true,
+        "desc": "Verification of crop sown in current season"
+      },
+      {
+        "id": "doc-bank",
+        "name": "Bank Passbook Copy",
+        "required": true,
+        "desc": "Account details for receiving claim compensation"
+      }
+    ]
+  },
+  {
+    "id": "smam",
+    "name": "Sub-Mission on Agricultural Mechanization",
+    "shortName": "SMAM",
+    "category": "EQUIPMENT & TRACTOR LOAN",
+    "icon": "🚜",
+    "badge": "Machinery Subsidy",
+    "badgeColor": "orange",
+    "tagline": "Financial assistance and bank credit facilitation for purchasing tractors, power tillers, rotavators, and setting up Custom Hiring Centres (CHC).",
+    "baseRate": 8.0,
+    "effectiveRate": 8.0,
+    "promptIncentive": 0,
+    "maxLimit": 1000000,
+    "highlights": [
+      "40% to 50% capital subsidy on farm machinery",
+      "Up to ₹10 Lakh subsidy for Custom Hiring Centres"
+    ],
+    "collateralFreeLimit": 500000,
+    "eligibility": {
+      "farmerTypes": [
+        "owner",
+        "entrepreneur",
+        "shg",
+        "fpo",
+        "pacs"
+      ],
+      "crops": [
+        "all"
+      ],
+      "maxIncome": null,
+      "minLand": 0,
+      "requiresAadhaar": true
+    },
+    "whatItIs": "A flagship central scheme aimed at increasing farm power availability and modern farm equipment access among small and marginal farmers with up to 40-50% subsidy.",
+    "benefits": "Provides individual farmers with 40% to 50% direct subsidy on agricultural equipment like tractors, combine harvesters, laser levellers, and seed drills. Also provides 40% financial assistance up to ₹10 Lakh to set up Custom Hiring Centres.",
+    "pros": [
+      "Substantial direct capital subsidy reduces tractor and machinery cost by half",
+      "Special higher subsidy rates for SC/ST, women, and small/marginal farmers",
+      "Allows rural youth to earn rental income by setting up Custom Hiring Centres",
+      "Bank loan easily sanctioned for the remaining 50% amount with government tie-up"
+    ],
+    "cons": [
+      "Annual budget quotas per district require applying early during notification windows",
+      "Machinery must be purchased strictly from empanelled certified manufacturers",
+      "Requires geotagged inspection of machinery before subsidy disbursement"
+    ],
+    "documents": [
+      {
+        "id": "doc-aadhaar",
+        "name": "Aadhaar Card",
+        "required": true,
+        "desc": "Identification and DBT linkage"
+      },
+      {
+        "id": "doc-land",
+        "name": "Land Record (Khatiyan / Khasra)",
+        "required": true,
+        "desc": "Proof of cultivable landholding"
+      },
+      {
+        "id": "doc-bank",
+        "name": "Bank Passbook / Cancelled Cheque",
+        "required": true,
+        "desc": "Bank account for subsidy credit"
+      },
+      {
+        "id": "doc-tractor-quote",
+        "name": "Dealer Quotation for Machinery",
+        "required": true,
+        "desc": "Official quotation from an empanelled equipment vendor"
+      }
     ]
   },
   {
     "id": "pm-kusum",
-    "name": "PM-KUSUM",
+    "name": "PM-KUSUM Solar Pump Scheme",
     "shortName": "PM-KUSUM",
-    "category": "Solar Irrigation Finance",
+    "category": "SOLAR IRRIGATION & LOAN",
     "icon": "☀️",
-    "badge": "Solar Pump Subsidy",
-    "tagline": "Reduce irrigation costs with a subsidised solar pump and bank finance",
+    "badge": "Solar Irrigation",
+    "badgeColor": "orange",
+    "tagline": "Empowering farmers with stand-alone solar agriculture pumps and solarization of existing grid pumps with up to 60% total subsidy.",
+    "baseRate": 8.0,
+    "effectiveRate": 8.0,
+    "promptIncentive": 0,
+    "maxLimit": 500000,
+    "highlights": [
+      "60% combined Central & State subsidy",
+      "30% bank loan facility, only 10% farmer share"
+    ],
+    "collateralFreeLimit": 500000,
+    "eligibility": {
+      "farmerTypes": [
+        "owner",
+        "fpo",
+        "pacs"
+      ],
+      "crops": [
+        "all",
+        "irrigation",
+        "horticulture"
+      ],
+      "maxIncome": null,
+      "minLand": 0,
+      "requiresAadhaar": true
+    },
+    "whatItIs": "A major renewable energy scheme providing subsidized stand-alone solar agricultural water pumps (up to 7.5 HP) and solarization of grid-connected agricultural pumps.",
+    "benefits": "Farmers receive 30% Central Financial Assistance and 30% State Government subsidy, paying only 10% upfront. The remaining 30% can be financed via accessible bank loans, eliminating costly recurring diesel and electricity bills.",
+    "pros": [
+      "Replaces expensive diesel irrigation with free solar power for 25+ years",
+      "Total 60% direct subsidy significantly slashes capital cost",
+      "Can sell surplus power back to state electricity boards for additional income",
+      "Provides reliable daytime irrigation without dependence on nocturnal power supply"
+    ],
+    "cons": [
+      "Vendor installation must follow state renewable agency waiting list",
+      "Farmer must provide proof of verified water source (borewell/canal)",
+      "Strict restrictions against drilling new unauthorized borewells in dark zones"
+    ],
+    "documents": [
+      {
+        "id": "doc-aadhaar",
+        "name": "Aadhaar Card",
+        "required": true,
+        "desc": "Identity verification"
+      },
+      {
+        "id": "doc-land",
+        "name": "Land Record (Jamabandi)",
+        "required": true,
+        "desc": "Proof of agricultural land for pump installation"
+      },
+      {
+        "id": "doc-water",
+        "name": "Water Source Declaration",
+        "required": true,
+        "desc": "Affidavit or certificate proving borewell or open water source"
+      },
+      {
+        "id": "doc-bank",
+        "name": "Bank Account Details",
+        "required": true,
+        "desc": "Aadhaar seeded bank account for loan and subsidy processing"
+      }
+    ]
+  },
+  {
+    "id": "pmfme",
+    "name": "PM Formalisation of Micro Food Processing Enterprises",
+    "shortName": "PMFME",
+    "category": "FOOD PROCESSING CREDIT",
+    "icon": "🥫",
+    "badge": "Food Processing",
+    "badgeColor": "teal",
+    "tagline": "Financial, technical, and business support for setting up or upgrading micro food-processing units with 35% credit-linked capital subsidy.",
+    "baseRate": 9.5,
+    "effectiveRate": 9.5,
+    "promptIncentive": 0,
+    "maxLimit": 1000000,
+    "highlights": [
+      "35% credit-linked capital subsidy up to ₹10 Lakh",
+      "Supports individual farmers, FPOs, and SHGs"
+    ],
+    "collateralFreeLimit": 1000000,
+    "eligibility": {
+      "farmerTypes": [
+        "owner",
+        "entrepreneur",
+        "fpo",
+        "shg",
+        "msme"
+      ],
+      "crops": [
+        "all",
+        "fruits",
+        "vegetables",
+        "spices",
+        "millets",
+        "pulses",
+        "dairy"
+      ],
+      "maxIncome": null,
+      "minLand": 0,
+      "requiresAadhaar": true
+    },
+    "whatItIs": "A credit-linked subsidy scheme under Aatmanirbhar Bharat that helps individual farmers, SHGs, and FPOs set up food processing, packaging, and branding units.",
+    "benefits": "Provides 35% credit-linked capital subsidy with a ceiling of ₹10 lakh per unit. Helps farmers transition from selling raw agricultural produce at distress prices to value-added branded products (flour, oil, pickles, spices, juice).",
+    "pros": [
+      "Direct 35% capital subsidy credited against loan principal",
+      "Special support under One District One Product (ODOP) framework",
+      "Includes marketing, packaging, food testing, and FSSAI licensing support",
+      "Seed capital of ₹40,000 provided per SHG member for working capital"
+    ],
+    "cons": [
+      "Must be linked to commercial bank loan appraisal",
+      "Applicant must contribute minimum 10% of project cost from own funds",
+      "Requires basic premises and electricity connection for machinery"
+    ],
+    "documents": [
+      {
+        "id": "doc-project",
+        "name": "Micro-Enterprise Project Proposal",
+        "required": true,
+        "desc": "Cost estimates for processing machinery"
+      },
+      {
+        "id": "doc-aadhaar-pan",
+        "name": "Aadhaar & PAN Card",
+        "required": true,
+        "desc": "Identity and tax proof"
+      },
+      {
+        "id": "doc-premises",
+        "name": "Premises Ownership or Rent Agreement",
+        "required": true,
+        "desc": "Proof of unit setup location"
+      },
+      {
+        "id": "doc-bank",
+        "name": "Bank Passbook / Statements",
+        "required": true,
+        "desc": "Applicant financial records"
+      }
+    ]
+  },
+  {
+    "id": "acabc",
+    "name": "Agri-Clinics & Agri-Business Centres",
+    "shortName": "ACABC",
+    "category": "AGRI-ENTREPRENEUR LOAN",
+    "icon": "🔬",
+    "badge": "Agri-Business Loan",
+    "badgeColor": "green",
+    "tagline": "Loans up to ₹20 Lakh for individuals and up to ₹1 Crore for groups with 36% to 44% composite subsidy to establish agricultural clinics and retail hubs.",
     "baseRate": 8.5,
     "effectiveRate": 8.5,
     "promptIncentive": 0,
-    "maxLimit": 500000,
-    "subLimits": {"centralFinancialAssistancePercent": 30, "stateSupportPercent": 30},
-    "collateralFreeLimit": 0,
-    "collateralHypothecationLimit": 500000,
+    "maxLimit": 2000000,
+    "highlights": [
+      "36% composite subsidy (44% for women & SC/ST)",
+      "Free 45-day residential training by MANAGE"
+    ],
+    "collateralFreeLimit": 2000000,
     "eligibility": {
-      "farmerTypes": ["owner", "fpo", "pacs", "entrepreneur"],
-      "crops": ["all", "irrigation", "solar", "horticulture"],
+      "farmerTypes": [
+        "owner",
+        "entrepreneur",
+        "graduate",
+        "fpo"
+      ],
+      "crops": [
+        "all"
+      ],
       "maxIncome": null,
       "minLand": 0,
       "requiresAadhaar": true
     },
-    "whatItIs": "A renewable-energy support scheme covering decentralised solar plants, stand-alone solar agriculture pumps and solarisation of existing grid-connected pumps.",
-    "benefits": "The combined subsidy and institutional finance can reduce the upfront cost of solar irrigation, lower diesel or electricity expenses and improve irrigation reliability. Farmers may also earn from surplus power where the state implementation model allows it.",
+    "whatItIs": "A joint initiative by Ministry of Agriculture and NABARD to provide bank finance and massive composite subsidies for setting up agri-clinics, soil testing labs, input centers, and veterinary dispensaries.",
+    "benefits": "Individual ceiling up to ₹20 lakh (₹25 lakh for extremely qualified cases) and group ceiling up to ₹100 lakh (for groups of 5+). Government provides 36% back-ended capital subsidy for general category and 44% for women, SC/ST, and Northeastern regions.",
     "pros": [
-      "Central and state assistance can substantially reduce the farmer contribution",
-      "Cuts recurring diesel or grid-electricity costs for irrigation",
-      "Can be implemented for individual farmers, cooperatives and farmer groups"
+      "Very high 36% to 44% composite subsidy provided through NABARD",
+      "Free 45-day residential technical and management training",
+      "Covers 32+ viable farm businesses including custom hiring, seed processing, and soil labs",
+      "Collateral-free loans up to ₹5 lakh under RBI Priority Sector norms"
     ],
     "cons": [
-      "Availability, subsidy share and beneficiary selection vary by state",
-      "The farmer must arrange the remaining contribution or loan amount",
-      "Pump capacity, land records and grid connectivity conditions apply"
+      "Applicant must hold a degree/diploma in agriculture or allied subjects",
+      "Mandatory completion of MANAGE training course before loan sanction",
+      "Subsidy is back-ended and adjusted after satisfactory project operation"
     ],
-    "keyLimitation": "PM-KUSUM is implemented through state agencies and approved vendors, so the exact subsidy, loan terms and application route must be checked with the state renewable-energy or agriculture department.",
     "documents": [
-      {"id": "doc-kusum-land", "name": "Land Ownership / Cultivation Record", "required": true, "desc": "Proof of agricultural land and proposed pump location"},
-      {"id": "doc-kusum-kyc", "name": "Aadhaar, PAN and Bank Passbook", "required": true, "desc": "Identity and bank details for subsidy and loan processing"},
-      {"id": "doc-kusum-water", "name": "Water Source / Irrigation Declaration", "required": true, "desc": "Details of the borewell, water source or existing pump"},
-      {"id": "doc-kusum-quotation", "name": "Approved Vendor Quotation", "required": true, "desc": "System specification and cost from an approved vendor"}
+      {
+        "id": "doc-edu",
+        "name": "Agriculture Degree / Diploma Certificate",
+        "required": true,
+        "desc": "Educational qualification proof"
+      },
+      {
+        "id": "doc-manage",
+        "name": "MANAGE Training Completion Certificate",
+        "required": true,
+        "desc": "Proof of 45-day residential agri-clinic training"
+      },
+      {
+        "id": "doc-dpr",
+        "name": "Detailed Business Plan (DPR)",
+        "required": true,
+        "desc": "Financial and technical projections"
+      },
+      {
+        "id": "doc-kyc",
+        "name": "Aadhaar, PAN & Bank Details",
+        "required": true,
+        "desc": "Standard KYC verification"
+      }
     ]
   },
   {
-    "id": "fpo-credit-guarantee",
-    "name": "FPO Credit Guarantee Scheme",
-    "shortName": "FPO Credit Guarantee",
-    "category": "FPO Business Credit",
-    "icon": "🤝",
-    "badge": "Collateral Support",
-    "tagline": "Help Farmer Producer Organisations access working capital and term loans",
-    "baseRate": 10.0,
-    "effectiveRate": 10.0,
+    "id": "pm-kmy",
+    "name": "Pradhan Mantri Kisan Maandhan Yojana",
+    "shortName": "PM-KMY",
+    "category": "PENSION & SOCIAL SECURITY",
+    "icon": "👴",
+    "badge": "Farmer Pension",
+    "badgeColor": "teal",
+    "tagline": "Voluntary and contributory old-age pension scheme providing an assured minimum pension of ₹3,000 per month to small and marginal farmers upon reaching 60 years.",
+    "baseRate": 0,
+    "effectiveRate": 0,
     "promptIncentive": 0,
-    "maxLimit": 20000000,
-    "subLimits": {"creditGuaranteeCoverage": "As per eligible lender and scheme norms"},
-    "collateralFreeLimit": 20000000,
-    "collateralHypothecationLimit": 20000000,
-    "eligibility": {
-      "farmerTypes": ["fpo", "entrepreneur", "pacs", "shg"],
-      "crops": ["all", "aggregation", "storage", "processing", "marketing"],
-      "maxIncome": null,
-      "minLand": 0,
-      "requiresAadhaar": true
-    },
-    "whatItIs": "Credit guarantee support that makes it easier for eligible Farmer Producer Organisations and producer groups to obtain collateral-light working capital and investment loans from banks.",
-    "benefits": "The guarantee reduces lender risk, helping farmer organisations finance aggregation, storage, input supply, transport, processing and marketing. Members can access stronger institutional credit by applying through their FPO rather than individually.",
-    "pros": [
-      "Improves access to bank credit when an FPO has limited collateral",
-      "Can support both working capital and business infrastructure",
-      "Encourages collective purchase, storage and sale of farm produce"
+    "maxLimit": 36000,
+    "highlights": [
+      "Assured ₹3,000 monthly pension for life",
+      "50% contribution paid by Central Government"
     ],
-    "cons": [
-      "Only a registered and properly governed producer organisation can apply",
-      "The guarantee does not remove repayment responsibility or bank appraisal",
-      "Audited accounts, resolutions and a viable business plan are normally required"
-    ],
-    "keyLimitation": "Guarantee coverage, eligible borrower limits and fees depend on the active government or lender guidelines. The FPO should confirm terms with a participating bank or the relevant implementing agency.",
-    "documents": [
-      {"id": "doc-fpo-registration", "name": "FPO Registration and PAN", "required": true, "desc": "Certificate of incorporation, PAN and governing documents"},
-      {"id": "doc-fpo-resolution", "name": "Board Resolution for Borrowing", "required": true, "desc": "Authorisation to apply for and use the credit facility"},
-      {"id": "doc-fpo-financials", "name": "Audited Financial Statements and Bank Statements", "required": true, "desc": "Financial track record and existing borrowing details"},
-      {"id": "doc-fpo-plan", "name": "Business Plan / Detailed Project Report", "required": true, "desc": "Purpose, cash flow, member base and repayment plan"}
-    ]
-  },
-  {
-    "id": "nlm-entrepreneurship",
-    "name": "National Livestock Mission (NLM) Entrepreneurship Development",
-    "shortName": "NLM",
-    "category": "Livestock Enterprise Credit",
-    "icon": "🐑",
-    "badge": "Capital Subsidy",
-    "tagline": "Start or expand a sheep, goat, piggery, poultry or feed enterprise",
-    "baseRate": 9.0,
-    "effectiveRate": 9.0,
-    "promptIncentive": 0,
-    "maxLimit": 5000000,
-    "subLimits": {"capitalSubsidyPercent": 50},
     "collateralFreeLimit": 0,
-    "collateralHypothecationLimit": 5000000,
     "eligibility": {
-      "farmerTypes": ["owner", "entrepreneur", "fpo", "shg", "msme"],
-      "crops": ["poultry", "sheep", "goat", "piggery", "feed", "livestock"],
+      "farmerTypes": [
+        "owner"
+      ],
+      "crops": [
+        "all"
+      ],
       "maxIncome": null,
-      "minLand": 0,
+      "minLand": 0.01,
       "requiresAadhaar": true
     },
-    "whatItIs": "An entrepreneurship support programme that combines bank finance with capital subsidy for eligible livestock, poultry, piggery, sheep and goat, and feed or fodder enterprises.",
-    "benefits": "It helps farmers diversify beyond crop income and build income-generating livestock infrastructure. The subsidy can reduce the project cost while the bank loan covers the balance, subject to technical appraisal.",
+    "whatItIs": "A social security scheme for small and marginal farmers (entry age 18-40 years) that provides ₹3,000 monthly pension on attaining 60 years of age.",
+    "benefits": "The farmer contributes between ₹55 to ₹200 monthly depending on entry age, and the Central Government contributes an equal matching 50% amount into the Pension Fund managed by LIC.",
     "pros": [
-      "Supports multiple livestock and feed enterprise models",
-      "Capital subsidy can reduce the amount financed by the promoter",
-      "Suitable for individual entrepreneurs, SHGs and FPO-linked projects"
+      "Guaranteed lifetime social security and financial independence in old age",
+      "Equal 50% matching monthly contribution deposited by Central Govt",
+      "Monthly contribution can be auto-debited directly from PM-KISAN instalments",
+      "Family pension of 50% (₹1,500/month) transferred to spouse upon beneficiary death"
     ],
     "cons": [
-      "Beneficiary contribution and bank appraisal are required",
-      "Projects need technical planning, animal-health arrangements and market linkage",
-      "Subsidy release follows implementation and verification conditions"
+      "Only for small and marginal farmers with cultivable land up to 2 hectares",
+      "Entry age capped strictly between 18 and 40 years",
+      "Beneficiaries covered under EPFO/NPS/ESIC are excluded"
     ],
-    "keyLimitation": "The applicable subsidy ceiling and eligible activities can change with programme guidelines and state implementation. Obtain the current project list from the state animal-husbandry department before borrowing.",
     "documents": [
-      {"id": "doc-nlm-project", "name": "Livestock Enterprise Project Report", "required": true, "desc": "Breed, capacity, shed, feed, veterinary and cash-flow plan"},
-      {"id": "doc-nlm-land", "name": "Land / Lease and Site Proof", "required": true, "desc": "Proof of suitable land or a valid lease for the unit"},
-      {"id": "doc-nlm-kyc", "name": "Aadhaar, PAN and Bank Passbook", "required": true, "desc": "Identity and banking documents for loan and subsidy processing"},
-      {"id": "doc-nlm-clearance", "name": "Local Permissions and Quotations", "required": false, "desc": "Local body permissions and equipment or animal quotations where applicable"}
+      {
+        "id": "doc-aadhaar",
+        "name": "Aadhaar Card",
+        "required": true,
+        "desc": "Mandatory identity document"
+      },
+      {
+        "id": "doc-bank",
+        "name": "Savings Bank Account Passbook",
+        "required": true,
+        "desc": "Bank account for monthly auto-debit and pension credit"
+      },
+      {
+        "id": "doc-land",
+        "name": "Khasra / Khatauni Copy",
+        "required": true,
+        "desc": "Proof of holding cultivable land up to 2 hectares"
+      }
     ]
   }
 ]
