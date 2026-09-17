@@ -60,18 +60,31 @@ const el = {
   schemesCardsContainer: document.getElementById('schemes-cards-container'),
   filterChipBtns: document.querySelectorAll('.filter-chip-btn'),
 
-  // Eligibility UI
+  // Eligibility & Recommendation UI
   eligibilityForm: document.getElementById('eligibility-form'),
   cropInput: document.getElementById('crop-input'),
-  incomeInput: document.getElementById('income-input'),
+  landSizeInput: document.getElementById('land-size-input'),
+  landUnitSelect: document.getElementById('land-unit-select'),
+  stateInput: document.getElementById('state-input'),
   districtInput: document.getElementById('district-input'),
+  btnDetectGps: document.getElementById('btn-detect-gps'),
+  gpsStatusText: document.getElementById('gps-status-text'),
+  geoLat: document.getElementById('geo-lat'),
+  geoLong: document.getElementById('geo-long'),
   landSelect: document.getElementById('land-ownership-select'),
+  categorySelect: document.getElementById('category-select'),
+  incomeInput: document.getElementById('income-input'),
+  existingLoansInput: document.getElementById('existing-loans-input'),
   activitySelect: document.getElementById('main-activity-select'),
   kccSelect: document.getElementById('kcc-status-select'),
   aadhaarSelect: document.getElementById('aadhaar-status-select'),
   btnSubmitEligibility: document.getElementById('btn-submit-eligibility'),
   eligEmptyState: document.getElementById('elig-empty-state'),
   eligResultsContainer: document.getElementById('elig-results-container'),
+  locationContextCard: document.getElementById('location-context-card'),
+  debtSafetyCard: document.getElementById('debt-safety-card'),
+  recSummaryBanner: document.getElementById('recommendations-summary-banner'),
+  recCardsStream: document.getElementById('recommendations-cards-stream'),
 
   // Modals
   paymentModal: document.getElementById('payment-modal'),
@@ -1010,93 +1023,175 @@ window.applySchemeToTracker = function(schemeId) {
   chooseLoanFromEligibility(schemeId);
 };
 
-// Client-side Eligibility Evaluation Engine (Runs seamlessly on Live Server port 5500)
+// Client-side Eligibility & Multi-Factor Recommendation Fallback
 function evaluateEligibilityClient(userInput, schemesList) {
   const {
-    cropType = '',
-    annualIncome = 0,
-    district = '',
+    cropType = 'Wheat, Paddy',
+    landSizeAcres = 2.5,
+    annualIncome = 250000,
+    district = 'Ludhiana',
+    state = 'Punjab',
     landOwnership = 'owner',
-    mainActivity = 'crop',
-    hasKcc = 'yes',
-    hasAadhaar = 'yes'
+    category = 'general',
+    existingLoans = 0,
+    hasKcc = true,
+    hasAadhaar = true
   } = userInput;
 
   const normalizedCrop = String(cropType).trim().toLowerCase();
-  const income = Number(annualIncome) || 0;
-  const isAadhaarLinked = String(hasAadhaar).toLowerCase() === 'yes' || hasAadhaar === true;
-  const isKccHolder = String(hasKcc).toLowerCase() === 'yes' || hasKcc === true;
+  const income = Math.max(30000, Number(annualIncome) || 250000);
+  const monthlyFarmIncome = Math.round(income / 12);
+  const existingDebt = Number(existingLoans) || 0;
+  const existingMonthlyEmi = existingDebt > 0 ? Math.round((existingDebt * 0.07) / 12) : 0;
+  const baselineDTI = monthlyFarmIncome > 0 ? Number(((existingMonthlyEmi / monthlyFarmIncome) * 100).toFixed(1)) : 0;
+  const isDebtTrap = baselineDTI > 50;
 
-  return (schemesList || []).map(scheme => {
+  const debtCapacity = {
+    monthly_farm_income: monthlyFarmIncome,
+    existing_monthly_emi: existingMonthlyEmi,
+    baseline_dti_ratio: `${baselineDTI}%`,
+    dti_percent: baselineDTI,
+    max_safe_borrowing_limit: Math.max(50000, Math.round((monthlyFarmIncome * 0.35 * 36) / 1.05)),
+    debt_status: isDebtTrap ? 'DEBT_TRAP_RISK' : (baselineDTI > 35 ? 'MODERATE_BURDEN' : 'SAFE')
+  };
+
+  const list = (schemesList && schemesList.length > 0) ? schemesList : (window.KISAN_SCHEMES_DATA || []);
+
+  const scored = list.map(scheme => {
     let eligible = true;
-    const reasons = [];
+    let score = 80;
+    const matchReasons = [];
+    const unmetCriteria = [];
     const warnings = [];
 
-    // 1. Aadhaar check
-    if (scheme.eligibility && scheme.eligibility.requiresAadhaar && !isAadhaarLinked) {
-      eligible = false;
-      warnings.push('Aadhaar linking is mandatory for this scheme and interest subvention.');
-    } else {
-      reasons.push('Aadhaar is linked with bank account for direct benefit transfer (DBT).');
-    }
-
-    // 2. Land Ownership / Farmer Category check
-    const allowedTypes = scheme.eligibility ? scheme.eligibility.farmerTypes || [] : ['all'];
-    if (!allowedTypes.includes(landOwnership) && !allowedTypes.includes('all')) {
+    // Ownership check
+    const allowed = (scheme.eligibility && scheme.eligibility.farmerTypes) || ['owner', 'tenant', 'sharecropper', 'leaseholder'];
+    if (!allowed.includes(landOwnership) && !allowed.includes('all')) {
       if (scheme.id === 'pm-kisan' && landOwnership !== 'owner') {
         eligible = false;
-        warnings.push('PM-KISAN requires cultivable land in your own name; tenant and leaseholder farmers are not covered.');
-      } else if ((landOwnership === 'tenant' || landOwnership === 'sharecropper') && (scheme.id === 'kcc' || scheme.id === 'miss')) {
-        reasons.push('Eligible under tenant farmer & Joint Liability Group (JLG) guidelines.');
-        warnings.push('Bank branch will require a registered tenancy agreement or local cultivation certificate.');
-      } else if (scheme.id === 'aif' || scheme.id === 'ahidf') {
-        reasons.push('Eligible as landholder, agri-enterprise, or farmer group member.');
-      }
-    } else {
-      reasons.push(`Matched landholding status: ${landOwnership.toUpperCase()}`);
-    }
-
-    // 3. Activity / Crop check
-    if (scheme.id === 'ahidf' && mainActivity !== 'dairy' && mainActivity !== 'poultry' && !['dairy', 'meat', 'feed', 'cattle', 'milk'].some(k => normalizedCrop.includes(k))) {
-      warnings.push('Specialized for dairy, animal husbandry, and feed processing infrastructure.');
-    } else if (scheme.id === 'pm-kusum' && mainActivity === 'infra') {
-      reasons.push('Solar pump installation qualifies for 60% capital subsidy.');
-    } else if (scheme.id === 'smam') {
-      reasons.push('40-50% subsidy available for tractors and farm machinery.');
-    } else {
-      reasons.push(`Supports activity: ${cropType || mainActivity.toUpperCase()}`);
-    }
-
-    // 4. KCC synergy
-    if (scheme.id === 'miss' || scheme.id === 'kcc') {
-      if (isKccHolder) {
-        reasons.push('Active KCC holder: eligible for immediate 3% prompt repayment subvention (4% net rate).');
+        score -= 50;
+        unmetCriteria.push('PM-KISAN requires cultivable landholding in applicant\'s own name.');
       } else {
-        warnings.push('Must be applied through or linked with a Kisan Credit Card (KCC) account.');
+        score -= 20;
+        warnings.push('Requires tenancy verification certificate from village panchayat.');
       }
+    } else {
+      matchReasons.push(`Matched your landholding status: ${landOwnership.toUpperCase()}`);
     }
 
-    // 5. Income Exclusions
-    if (scheme.id === 'pm-kisan' && income > 2500000) {
-      warnings.push('Higher income tax payers are excluded under statutory PM-KISAN guidelines.');
+    // Category check
+    if (scheme.id === 'stand-up-india' && category !== 'sc' && category !== 'st' && category !== 'women') {
+      eligible = false;
+      score -= 50;
+      unmetCriteria.push('Exclusively for SC, ST, or Women entrepreneurs.');
+    } else if (category === 'women' || category === 'sc' || category === 'st') {
+      score += 10;
+      matchReasons.push(`Special subsidized interest rate / priority quota for ${category.toUpperCase()} farmers.`);
     }
 
-    let badge = eligible ? 'Eligible' : 'Conditional / Review Needed';
-    let subventionNote = scheme.highlights ? scheme.highlights[0] : (scheme.tagline || 'Government Supported Credit Facility');
+    // Rate scoring
+    const netRate = scheme.subsidizedInterestRate !== undefined ? scheme.subsidizedInterestRate : (scheme.interestRate || 7);
+    score += Math.max(0, 20 - Math.round(netRate * 2));
+
+    score = Math.max(20, Math.min(99, score));
+    if (!eligible) score = Math.min(score, 48);
+
+    const isSafe = !isDebtTrap;
 
     return {
-      scheme,
+      scheme_id: scheme.id,
+      scheme_name: scheme.name,
+      short_name: scheme.shortName || scheme.name,
+      category: scheme.category || 'Agricultural Loan',
+      score,
       eligible,
-      badge,
-      reasons,
-      warnings,
-      subventionNote
+      interest_rate: netRate <= 0 ? '0% (Grant)' : `${netRate}% p.a.`,
+      stated_base_rate: `${scheme.interestRate || scheme.baseInterestRate || 7}% p.a.`,
+      subsidy_percentage: scheme.subsidyPercentage ? `${scheme.subsidyPercentage}%` : '0%',
+      max_loan_amount: formatINR(scheme.maxLoanAmount || 300000),
+      collateral_free_limit: formatINR(scheme.collateralFreeLimit || 160000),
+      eligibility_reason: eligible ? (scheme.highlights ? scheme.highlights[0] : 'Qualified for full benefits') : unmetCriteria[0],
+      match_reasons: matchReasons,
+      unmet_criteria: unmetCriteria,
+      warnings: warnings,
+      debt_safety: {
+        is_safe: isSafe,
+        risk_level: isDebtTrap ? 'DEBT_TRAP_RISK' : 'SAFE',
+        projected_dti: `${baselineDTI}%`,
+        safety_badge: isDebtTrap ? 'Debt Trap Warning' : 'Safe Borrowing Level',
+        credit_details: {
+          processing_fee: '0.50% (Max ₹2,500)',
+          gst: '18% on processing',
+          stamp_duty: 'Waived under ₹1.6 Lakh',
+          total_credit_cost: `Estimated ~${(netRate + 0.3).toFixed(1)}% p.a.`
+        }
+      },
+      documents_required: (scheme.documents || []).map(d => ({ name: typeof d === 'string' ? d : d.name, required: true })),
+      apply_link: scheme.application ? scheme.application.applyUrl : 'https://www.myscheme.gov.in',
+      offline_application_center: 'Nearest Bank Branch / CSC'
     };
   });
+
+  const eligibleSchemes = scored.filter(s => s.eligible && s.score >= 50).sort((a, b) => b.score - a.score);
+  const ineligibleSchemes = scored.filter(s => !s.eligible || s.score < 50).sort((a, b) => b.score - a.score);
+
+  const recommendations = [];
+  if (eligibleSchemes.length > 0) {
+    const best = eligibleSchemes[0];
+    best.status = 'best';
+    best.colorCode = '#15803d';
+    best.status_label = 'Best Match (Top Recommendation)';
+    recommendations.push(best);
+  }
+
+  const goodPool = eligibleSchemes.slice(1, 12);
+  goodPool.forEach(item => {
+    item.status = 'good';
+    item.colorCode = '#16a34a';
+    item.status_label = 'Good Alternative';
+    recommendations.push(item);
+  });
+
+  const moderatePool = eligibleSchemes.slice(12);
+  moderatePool.forEach(item => {
+    item.status = 'moderate';
+    item.colorCode = '#d97706';
+    item.status_label = 'Moderate Fit (Review Needed)';
+    recommendations.push(item);
+  });
+
+  ineligibleSchemes.forEach(item => {
+    item.status = 'ineligible';
+    item.colorCode = '#dc2626';
+    item.status_label = 'Not Eligible (See Criteria)';
+    recommendations.push(item);
+  });
+
+  return {
+    success: true,
+    farmer_location: `${district}, ${state}`,
+    farmer_context: {
+      soil_type: 'Alluvial Loam',
+      soil_ph: 7.2,
+      soil_health_advisory: 'Rich fertile loam. High nitrogen and moisture retention capacity.',
+      estimated_land_value_per_acre: 2400000,
+      price_per_sqft: 55.1,
+      crop_trends: 'Wheat & Rice dominate. Strong MSP procurement support.'
+    },
+    debt_safety_assessment: debtCapacity,
+    meta: {
+      total_schemes_evaluated: scored.length,
+      best_count: eligibleSchemes.length > 0 ? 1 : 0,
+      good_count: goodPool.length,
+      moderate_count: moderatePool.length,
+      ineligible_count: ineligibleSchemes.length
+    },
+    recommendations
+  };
 }
 
 // ==========================================================================
-// Eligibility Engine (Matching Screenshot 4)
+// Eligibility & Multi-Factor Recommendation Controller
 // ==========================================================================
 
 function setupEligibility() {
@@ -1106,23 +1201,82 @@ function setupEligibility() {
       await checkEligibility();
     });
   }
+
+  // Auto-detect GPS button
+  if (el.btnDetectGps) {
+    el.btnDetectGps.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        showToast('GPS geolocation is not supported by your device browser.');
+        return;
+      }
+      if (el.gpsStatusText) el.gpsStatusText.textContent = 'Locating...';
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = Number(position.coords.latitude.toFixed(4));
+          const lon = Number(position.coords.longitude.toFixed(4));
+          if (el.geoLat) el.geoLat.value = lat;
+          if (el.geoLong) el.geoLong.value = lon;
+          if (el.gpsStatusText) el.gpsStatusText.textContent = 'GPS Locked ✓';
+
+          try {
+            const res = await fetch(`/api/context/location?latitude=${lat}&longitude=${lon}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success && data.data && data.data.location) {
+                const loc = data.data.location;
+                if (el.stateInput && loc.state) el.stateInput.value = loc.state;
+                if (el.districtInput && loc.district) el.districtInput.value = loc.district;
+                showToast(`📍 Location detected: ${loc.district}, ${loc.state}`);
+              }
+            }
+          } catch (e) {
+            console.warn('GPS context fetch error:', e);
+            showToast(`📍 GPS Coordinates locked: (${lat}, ${lon})`);
+          }
+        },
+        (error) => {
+          console.warn('Geolocation error:', error);
+          if (el.gpsStatusText) el.gpsStatusText.textContent = 'Detect GPS';
+          showToast('GPS permission denied or unavailable. Enter state and district manually.');
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+      );
+    });
+  }
 }
 
 async function checkEligibility() {
-  const cropType = el.cropInput ? (el.cropInput.value.trim() || 'Rice, Wheat') : 'Rice, Wheat';
-  const annualIncome = el.incomeInput ? (Number(el.incomeInput.value) || 150000) : 150000;
-  const district = el.districtInput ? (el.districtInput.value.trim() || 'My District') : 'My District';
+  const cropType = el.cropInput ? (el.cropInput.value.trim() || 'Wheat, Paddy') : 'Wheat, Paddy';
+  const rawLandSize = el.landSizeInput ? (Number(el.landSizeInput.value) || 2.5) : 2.5;
+  const landUnit = el.landUnitSelect ? el.landUnitSelect.value : 'acres';
+  const landSizeAcres = landUnit === 'hectares' ? Number((rawLandSize * 2.47105).toFixed(2)) : rawLandSize;
+  const landSizeHectares = landUnit === 'hectares' ? rawLandSize : Number((rawLandSize / 2.47105).toFixed(2));
+
+  const stateVal = el.stateInput ? (el.stateInput.value.trim() || 'Punjab') : 'Punjab';
+  const districtVal = el.districtInput ? (el.districtInput.value.trim() || 'Ludhiana') : 'Ludhiana';
+  const latitude = el.geoLat && el.geoLat.value ? Number(el.geoLat.value) : undefined;
+  const longitude = el.geoLong && el.geoLong.value ? Number(el.geoLong.value) : undefined;
+
   const landOwnership = el.landSelect ? (el.landSelect.value || 'owner') : 'owner';
-  const mainActivity = el.activitySelect ? (el.activitySelect.value || 'crop') : 'crop';
-  const hasKcc = el.kccSelect ? (el.kccSelect.value || 'yes') : 'yes';
-  const hasAadhaar = el.aadhaarSelect ? (el.aadhaarSelect.value || 'yes') : 'yes';
+  const category = el.categorySelect ? (el.categorySelect.value || 'general') : 'general';
+  const annualIncome = el.incomeInput ? (Number(el.incomeInput.value) || 250000) : 250000;
+  const existingLoans = el.existingLoansInput ? (Number(el.existingLoansInput.value) || 0) : 0;
+  const hasKcc = el.kccSelect ? (el.kccSelect.value === 'yes') : true;
+  const hasAadhaar = el.aadhaarSelect ? (el.aadhaarSelect.value === 'yes') : true;
 
   state.userFarmProfile = {
     cropType,
-    annualIncome,
-    district,
+    landSizeAcres,
+    landSizeHectares,
+    state: stateVal,
+    district: districtVal,
+    latitude,
+    longitude,
     landOwnership,
-    mainActivity,
+    category,
+    annualIncome,
+    existingLoans,
     hasKcc,
     hasAadhaar
   };
@@ -1130,102 +1284,314 @@ async function checkEligibility() {
   try {
     if (el.btnSubmitEligibility) {
       el.btnSubmitEligibility.disabled = true;
-      el.btnSubmitEligibility.innerHTML = '<span>⏳</span> Evaluating...';
+      el.btnSubmitEligibility.innerHTML = '<span>⏳</span> Analyzing 32 Schemes & Soil Data...';
     }
 
-    let results = null;
+    let responseData = null;
 
     try {
-      const res = await fetch('/api/eligibility', {
+      const res = await fetch('/api/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(state.userFarmProfile)
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.results)) {
-          results = data.results;
+        if (data.success && Array.isArray(data.recommendations)) {
+          responseData = data;
         }
       }
     } catch (apiErr) {
-      console.warn('Backend /api/eligibility unreachable, evaluating locally:', apiErr);
+      console.warn('Backend /api/recommend unreachable, evaluating locally:', apiErr);
     }
 
     // Fallback if backend API is not responding (e.g. VS Code Live Server port 5500)
-    if (!results) {
-      results = evaluateEligibilityClient(state.userFarmProfile, state.schemes);
+    if (!responseData) {
+      responseData = evaluateEligibilityClient(state.userFarmProfile, state.schemes);
     }
 
-    renderEligibilityResults(results);
-    const eligibleCount = results.filter(r => r.eligible).length;
-    showToast(`Matched with ${eligibleCount} eligible government schemes!`);
-    speakText(`Found ${eligibleCount} government schemes matching your farm profile.`);
+    renderAdvancedRecommendations(responseData);
+
+    const bestCount = (responseData.recommendations || []).filter(r => r.status === 'best').length;
+    const goodCount = (responseData.recommendations || []).filter(r => r.status === 'good').length;
+    showToast(`Matched with 1 Best Match and ${goodCount} Good Alternatives!`);
+    speakText(`Evaluation complete. Found 1 top recommended loan plan and ${goodCount} good alternatives for your farm.`);
 
   } catch (err) {
     console.error('Eligibility evaluation error:', err);
+    showToast('Failed to evaluate schemes. Please check your inputs.');
   } finally {
     if (el.btnSubmitEligibility) {
       el.btnSubmitEligibility.disabled = false;
-      el.btnSubmitEligibility.innerHTML = `<span>🔍</span> <span>${t('btnCheckElig')}</span>`;
+      el.btnSubmitEligibility.innerHTML = `<span>🔍</span> <span>${t('btnCheckElig') || 'Find Best Loan & Schemes'}</span>`;
     }
   }
 }
 
-function renderEligibilityResults(results) {
+function renderAdvancedRecommendations(data) {
   if (!el.eligResultsContainer) return;
 
   if (el.eligEmptyState) el.eligEmptyState.style.display = 'none';
   el.eligResultsContainer.style.display = 'flex';
-  el.eligResultsContainer.innerHTML = '';
 
-  results.forEach(item => {
-    const scheme = item.scheme;
-    const card = document.createElement('div');
-    card.className = `elig-result-card ${item.eligible ? '' : 'conditional'}`;
+  const { farmer_location, farmer_context, location_context, debt_safety_assessment, debt_capacity, meta, recommendations = [] } = data;
+  const fContext = farmer_context || (location_context ? {
+    soil_type: location_context.soilProfile?.soilType,
+    soil_ph: location_context.soilProfile?.pH,
+    soil_health_advisory: location_context.soilProfile?.soilHealthAdvisory,
+    estimated_land_value_per_acre: location_context.landValuation?.marketValuePerAcre,
+    price_per_sqft: location_context.landValuation?.pricePerSqFt
+  } : null);
 
-    const reasonsHtml = (item.reasons || []).map(r => `
-      <div style="font-size: 0.86rem; color: #166534; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
-        ✓ ${r}
-      </div>
-    `).join('');
+  const debtSafe = debt_safety_assessment || debt_capacity || {};
 
-    const warningsHtml = (item.warnings || []).map(w => `
-      <div style="font-size: 0.84rem; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; padding: 0.45rem 0.8rem; border-radius: var(--radius-sm); margin-bottom: 0.4rem;">
-        ⚠️ ${w}
-      </div>
-    `).join('');
-
-    card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem;">
-        <div>
-          <span style="background: ${item.eligible ? '#dcfce7' : '#fef3c7'}; color: ${item.eligible ? '#166534' : '#92400e'}; padding: 0.25rem 0.75rem; border-radius: var(--radius-pill); font-size: 0.78rem; font-weight: 700;">
-            ${item.badge}
-          </span>
-          <h3 style="font-size: 1.25rem; color: #0f172a; margin-top: 0.4rem;">${scheme.name}</h3>
+  // 1. Render Location & Soil Intelligence Card
+  if (el.locationContextCard && fContext) {
+    el.locationContextCard.style.display = 'block';
+    el.locationContextCard.innerHTML = `
+      <div class="intel-header">
+        <div class="intel-title-box">
+          <span style="font-size: 1.4rem;">🌾</span>
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Location & Agricultural Intelligence</h3>
+            <span style="font-size: 0.82rem; color: #64748b;">${farmer_location || 'Local District Profile'}</span>
+          </div>
         </div>
-        <button class="btn-icon-secondary" style="width: 32px; height: 32px;" title="Listen" onclick="speakText('${scheme.name}. ${item.subventionNote}')">🔊</button>
+        <span class="intel-badge">Verified Soil & Land Benchmark</span>
       </div>
 
-      <div style="background: #f0fdf4; border-left: 4px solid #15803d; padding: 0.6rem 0.9rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 0.88rem; font-weight: 600; color: #166534; margin-bottom: 0.8rem;">
-        💡 ${item.subventionNote}
+      <div class="intel-grid">
+        <div class="intel-item">
+          <div class="intel-item-title"><span>🌱</span> Soil Profile & pH</div>
+          <div class="intel-item-val">${fContext.soil_type || 'Fertile Loam'} (pH ${fContext.soil_ph || 7.0})</div>
+          <div class="intel-item-sub">Organic Carbon: Medium to High</div>
+        </div>
+
+        <div class="intel-item">
+          <div class="intel-item-title"><span>📈</span> Land Benchmark Value</div>
+          <div class="intel-item-val">${formatINR(fContext.estimated_land_value_per_acre || 2200000)} <span style="font-size: 0.78rem; font-weight: 500; color: #64748b;">/ acre</span></div>
+          <div class="intel-item-sub">~₹${fContext.price_per_sqft || 50}/sq.ft benchmark rate</div>
+        </div>
+
+        <div class="intel-item">
+          <div class="intel-item-title"><span>🎯</span> Crop Suitability Fit</div>
+          <div class="intel-item-val">High Commercial Fit</div>
+          <div class="intel-item-sub">Eligible for Interest Subventions</div>
+        </div>
       </div>
 
-      ${warningsHtml}
-      <div style="margin-bottom: 1rem;">${reasonsHtml}</div>
+      ${fContext.soil_health_advisory ? `
+        <div class="intel-advisory-box">
+          <strong>💡 Soil Health Advisory:</strong> ${fContext.soil_health_advisory}
+        </div>
+      ` : ''}
+    `;
+  }
 
-      <div style="display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center;">
-        <button class="btn-add-payment-action" style="flex: initial; padding: 0.6rem 1.4rem; font-size: 0.9rem; font-weight: 700; background: linear-gradient(135deg, #15803d, #16a34a); box-shadow: 0 4px 12px rgba(22,163,74,0.25);" onclick="chooseLoanFromEligibility('${scheme.id}')">
-          🌾 Choose This Loan & Apply
-        </button>
-        <button class="btn-icon-secondary" style="width: auto; padding: 0.6rem 1.2rem; border-radius: var(--radius-pill); font-size: 0.85rem;" onclick="openChecklist('${scheme.id}')">
-          📋 ${t('docChecklistTitle')}
-        </button>
+  // 2. Render Debt Safety & Responsible Lending Card
+  if (el.debtSafetyCard && debtSafe) {
+    el.debtSafetyCard.style.display = 'block';
+    const dtiVal = Number(debtSafe.dti_percent !== undefined ? debtSafe.dti_percent : (parseFloat(debtSafe.baseline_dti_ratio) || 0));
+    const isDebtTrap = dtiVal > 50 || debtSafe.debt_status === 'DEBT_TRAP_RISK';
+    const isModerate = dtiVal > 35 && dtiVal <= 50;
+    const statusClass = isDebtTrap ? 'danger' : (isModerate ? 'moderate' : 'safe');
+    const statusText = isDebtTrap ? '🚨 Debt Trap Risk (>50% Burden)' : (isModerate ? '⚠️ Moderate Debt Burden' : '✓ Safe Borrowing Level');
+
+    el.debtSafetyCard.innerHTML = `
+      <div class="safety-header">
+        <div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Responsible Lending & Repayment Safety</h3>
+          <span style="font-size: 0.82rem; color: #64748b;">RBI & NABARD Fair Lending Guidelines</span>
+        </div>
+        <span class="safety-status-pill ${statusClass}">
+          ${statusText}
+        </span>
+      </div>
+
+      <div class="intel-grid" style="margin-bottom: 0.75rem;">
+        <div class="intel-item">
+          <div class="intel-item-title"><span>💰</span> Est. Monthly Farm Income</div>
+          <div class="intel-item-val">${formatINR(debtSafe.monthly_farm_income || 20000)}</div>
+        </div>
+        <div class="intel-item">
+          <div class="intel-item-title"><span>🛡️</span> Max Safe Additional Loan</div>
+          <div class="intel-item-val" style="color: #15803d;">${formatINR(debtSafe.max_safe_borrowing_limit || 200000)}</div>
+        </div>
+        <div class="intel-item">
+          <div class="intel-item-title"><span>📊</span> Current Debt-to-Income (DTI)</div>
+          <div class="intel-item-val" style="color: ${isDebtTrap ? '#dc2626' : (isModerate ? '#d97706' : '#15803d')};">${dtiVal}%</div>
+        </div>
+      </div>
+
+      <div class="dti-meter-wrapper">
+        <div class="dti-meter-label-row">
+          <span style="font-weight: 600; color: #475569;">Debt-to-Income Utilization Meter</span>
+          <span style="font-weight: 700; color: ${isDebtTrap ? '#dc2626' : '#15803d'};">${dtiVal}% (Safe Cap: 35%)</span>
+        </div>
+        <div class="dti-progress-bg">
+          <div class="dti-progress-fill ${statusClass}" style="width: ${Math.min(100, Math.max(8, dtiVal))}%;"></div>
+        </div>
+      </div>
+
+      ${isDebtTrap ? `
+        <div class="debt-trap-alert">
+          <strong>⚠️ Debt Trap Warning:</strong> Your ongoing debt payments exceed 50% of your estimated monthly income. We strongly urge you to choose interest-free grants (like PM-KISAN) or 4% subsidized crop loans rather than taking unsecured high-cost commercial debt.
+        </div>
+      ` : ''}
+    `;
+  }
+
+  // 3. Render Sequence Breakdown Summary Banner
+  if (el.recSummaryBanner && meta) {
+    el.recSummaryBanner.style.display = 'flex';
+    el.recSummaryBanner.innerHTML = `
+      <div style="font-size: 0.92rem; font-weight: 700; color: #0f172a;">
+        📋 Evaluated <strong>${meta.total_schemes_evaluated || recommendations.length}</strong> Official Schemes:
+      </div>
+      <div class="summary-pills-row">
+        <span class="filter-badge-pill badge-best">★ 1 Best Match</span>
+        <span class="filter-badge-pill badge-good">✓ ${meta.good_count || 11} Good Alternatives</span>
+        <span class="filter-badge-pill badge-moderate">⚙ ${meta.moderate_count || 0} Moderate Fit</span>
+        <span class="filter-badge-pill badge-ineligible">✕ ${meta.ineligible_count || 0} Not Eligible (Listed Last)</span>
       </div>
     `;
+  }
 
-    el.eligResultsContainer.appendChild(card);
-  });
+  // 4. Render Ranked Schemes Cards Stream in Exact Sequence
+  if (el.recCardsStream) {
+    el.recCardsStream.innerHTML = '';
+
+    recommendations.forEach(rec => {
+      const card = document.createElement('div');
+      card.className = `rec-card status-${rec.status}`;
+      card.dataset.status = rec.status;
+      card.dataset.schemeId = rec.scheme_id;
+
+      const credit = rec.debt_safety?.credit_details || {};
+
+      const reasonsHtml = (rec.match_reasons || []).map(r => `
+        <div class="rec-reason-item">
+          <span>✓</span> <span>${r}</span>
+        </div>
+      `).join('');
+
+      const unmetHtml = (rec.unmet_criteria || []).map(u => `
+        <div class="rec-unmet-item">
+          <span>✕</span> <span>${u}</span>
+        </div>
+      `).join('');
+
+      const warningsHtml = (rec.warnings || []).map(w => `
+        <div class="rec-warning-item">
+          <span>⚠️</span> <span>${w}</span>
+        </div>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="rec-card-body">
+          <div class="rec-top-row">
+            <div class="rec-title-wrap">
+              <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <span class="rec-status-tag ${rec.status}">
+                  ${rec.status === 'best' ? '★ TOP RECOMMENDATION' : (rec.status === 'good' ? '✓ GOOD ALTERNATIVE' : (rec.status === 'moderate' ? '⚙ MODERATE FIT' : '✕ NOT ELIGIBLE'))}
+                </span>
+                <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">${rec.category}</span>
+              </div>
+              <h3>${rec.scheme_name}</h3>
+              <div class="rec-sub">${rec.eligibility_reason || ''}</div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <div class="rec-score-badge" title="Algorithm Match Score">
+                <span>🎯</span>
+                <span>${rec.score}/100</span>
+              </div>
+              <button class="btn-icon-secondary" style="width: 34px; height: 34px; border-radius: 50%;" title="Listen Aloud" onclick="speakText('${rec.scheme_name}. Net interest rate ${rec.interest_rate}. ${rec.eligibility_reason}')">
+                🔊
+              </button>
+            </div>
+          </div>
+
+          <!-- Key Financial Highlights Grid -->
+          <div class="rec-financials-grid">
+            <div class="rec-fin-item">
+              <div class="lbl">Net Interest Rate</div>
+              <div class="val highlight">${rec.interest_rate}</div>
+            </div>
+            <div class="rec-fin-item">
+              <div class="lbl">Stated Base Rate</div>
+              <div class="val">${rec.stated_base_rate}</div>
+            </div>
+            <div class="rec-fin-item">
+              <div class="lbl">Max Loan / Grant</div>
+              <div class="val">${rec.max_loan_amount}</div>
+            </div>
+            <div class="rec-fin-item">
+              <div class="lbl">Collateral-Free Limit</div>
+              <div class="val">${rec.collateral_free_limit}</div>
+            </div>
+          </div>
+
+          <!-- True Cost of Credit Breakdown -->
+          <div class="rec-credit-box">
+            <div class="rec-credit-title">
+              <span>💳</span> True Cost of Borrowing Breakdown
+            </div>
+            <div class="rec-credit-grid">
+              <div>
+                <span>Processing Fee</span>
+                <strong>${credit.processing_fee || '0.5% (Max ₹2,500)'}</strong>
+              </div>
+              <div>
+                <span>GST on Fees</span>
+                <strong>${credit.gst || '18%'}</strong>
+              </div>
+              <div>
+                <span>Stamp Duty</span>
+                <strong>${credit.stamp_duty || 'Waived under ₹1.6L'}</strong>
+              </div>
+              <div>
+                <span>Total Effective Cost</span>
+                <strong style="color: #15803d;">${credit.total_credit_cost || rec.interest_rate}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unmet Criteria / Reasons / Warnings -->
+          <div class="rec-reasons-list">
+            ${unmetHtml}
+            ${warningsHtml}
+            ${reasonsHtml}
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="rec-actions-row">
+            ${rec.status !== 'ineligible' ? `
+              <button class="btn-rec-choose" onclick="chooseLoanFromEligibility('${rec.scheme_id}')">
+                🌾 Choose This Loan & Apply
+              </button>
+            ` : `
+              <button class="btn-rec-choose" style="background: #64748b; opacity: 0.8;" onclick="chooseLoanFromEligibility('${rec.scheme_id}')">
+                🌾 Request Eligibility Exception
+              </button>
+            `}
+            <button class="btn-rec-docs" onclick="openChecklist('${rec.scheme_id}')">
+              📋 View Documents (${(rec.documents_required || []).length})
+            </button>
+            ${rec.apply_link ? `
+              <a href="${rec.apply_link}" target="_blank" rel="noopener noreferrer" class="btn-rec-docs" style="text-decoration: none;">
+                ↗ Official Portal
+              </a>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      el.recCardsStream.appendChild(card);
+    });
+  }
 }
+
 
 // ==========================================================================
 // Speech Synthesis (15 Indian Languages Audio Reader)

@@ -239,77 +239,106 @@
         </p>
       </div>
 
-      <!-- Eligibility Form Card Matching Screenshot 4 -->
+      <!-- Eligibility Form Card Matching Screenshot 4 & Advanced Match Engine -->
       <form class="elig-form-card" id="eligibility-form">
-        <!-- Row 1 -->
+        <!-- Row 1: Crop & Land Size -->
         <div class="form-row-2">
           <div>
-            <label class="input-label-clean" for="crop-input" data-i18n="cropLabel">Type of Crop *</label>
+            <label class="input-label-clean" for="crop-input" data-i18n="cropLabel">Type of Crop / Cultivation *</label>
             <input type="text" id="crop-input" class="input-clean" placeholder="e.g. Rice, Wheat, Cotton, Sugarcane"
               value="Rice, Wheat" required>
           </div>
           <div>
-            <label class="input-label-clean" for="income-input" data-i18n="incomeLabel">Annual Income (₹) *</label>
-            <input type="number" id="income-input" class="input-clean" placeholder="₹ e.g. 150000" value="150000"
-              min="0" required>
+            <label class="input-label-clean" for="land-size-input">Land Holding Size *</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="number" id="land-size-input" class="input-clean" placeholder="e.g. 3.5" value="3.5"
+                step="0.1" min="0" required style="flex: 1;">
+              <select id="land-unit-select" class="select-clean" style="width: 110px;">
+                <option value="acres" selected>Acres</option>
+                <option value="hectares">Hectares</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <!-- Row 2 -->
+        <!-- Row 2: Location (State, District & GPS) -->
         <div class="form-row-2">
           <div>
-            <label class="input-label-clean" for="district-input" data-i18n="districtLabel">Locality / District
-              *</label>
-            <input type="text" id="district-input" class="input-clean" placeholder="e.g. Pune, Latur, Belagavi"
-              value="Pune" required>
+            <label class="input-label-clean" for="state-input">State *</label>
+            <input type="text" id="state-input" class="input-clean" placeholder="e.g. Punjab, Maharashtra, UP"
+              value="Punjab" required>
           </div>
           <div>
-            <label class="input-label-clean" for="land-ownership-select" data-i18n="landLabel">Land Ownership</label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="input-label-clean" for="district-input" data-i18n="districtLabel" style="margin-bottom: 0;">Locality / District *</label>
+              <button type="button" id="btn-detect-gps" class="btn-clean-gps" title="Auto-detect current GPS location">
+                📍 <span id="gps-status-text">Detect GPS</span>
+              </button>
+            </div>
+            <input type="text" id="district-input" class="input-clean" placeholder="e.g. Ludhiana, Pune, Karnal"
+              value="Ludhiana" required style="margin-top: 0.4rem;">
+            <input type="hidden" id="geo-lat" value="">
+            <input type="hidden" id="geo-long" value="">
+          </div>
+        </div>
+
+        <!-- Row 3: Land Ownership & Category -->
+        <div class="form-row-2">
+          <div>
+            <label class="input-label-clean" for="land-ownership-select" data-i18n="landLabel">Land Ownership Status</label>
             <select id="land-ownership-select" class="select-clean">
-              <option value="owner" data-i18n="landOwn">Own Land</option>
+              <option value="owner" data-i18n="landOwn">Own Land (Title Holder)</option>
               <option value="tenant" data-i18n="landTenant">Tenant Farmer</option>
               <option value="sharecropper" data-i18n="landShare">Sharecropper</option>
               <option value="leaseholder" data-i18n="landLease">Leaseholder</option>
+              <option value="landless">Landless Agricultural Labourer</option>
+            </select>
+          </div>
+          <div>
+            <label class="input-label-clean" for="category-select">Social Category / Gender *</label>
+            <select id="category-select" class="select-clean">
+              <option value="general" selected>General</option>
+              <option value="obc">OBC (Other Backward Class)</option>
+              <option value="sc">SC (Scheduled Caste - Subsidized)</option>
+              <option value="st">ST (Scheduled Tribe - Subsidized)</option>
+              <option value="women">Women Farmer (Priority Credit)</option>
             </select>
           </div>
         </div>
 
-        <!-- Row 3 -->
+        <!-- Row 4: Annual Income & Existing Loans -->
         <div class="form-row-2">
           <div>
-            <label class="input-label-clean" for="main-activity-select" data-i18n="activityLabel">Main Activity
-              Type</label>
-            <select id="main-activity-select" class="select-clean">
-              <option value="crop" data-i18n="actCrop">Crop Cultivation</option>
-              <option value="dairy" data-i18n="actDairy">Dairy Farming</option>
-              <option value="poultry" data-i18n="actPoultry">Poultry Farming</option>
-              <option value="fisheries" data-i18n="actFisheries">Fisheries</option>
-              <option value="infra" data-i18n="actInfra">Post-harvest Infrastructure</option>
-            </select>
+            <label class="input-label-clean" for="income-input" data-i18n="incomeLabel">Annual Farm Income (₹) *</label>
+            <input type="number" id="income-input" class="input-clean" placeholder="₹ e.g. 250000" value="250000"
+              min="0" required>
           </div>
           <div>
-            <label class="input-label-clean" for="kcc-status-select" data-i18n="kccQuestion">Do you have a Kisan Credit
-              Card (KCC)?</label>
+            <label class="input-label-clean" for="existing-loans-input">Current Outstanding Debt / Monthly EMIs (₹)</label>
+            <input type="number" id="existing-loans-input" class="input-clean" placeholder="₹ 0 if debt-free" value="30000"
+              min="0">
+          </div>
+        </div>
+
+        <!-- Row 5: KCC, Aadhaar & Action Submit -->
+        <div class="form-row-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end;">
+          <div>
+            <label class="input-label-clean" for="kcc-status-select" data-i18n="kccQuestion">Have Kisan Credit Card (KCC)?</label>
             <select id="kcc-status-select" class="select-clean">
               <option value="yes" data-i18n="yes">Yes</option>
               <option value="no" data-i18n="no">No</option>
             </select>
           </div>
-        </div>
-
-        <!-- Row 4 -->
-        <div class="form-row-2">
           <div>
-            <label class="input-label-clean" for="aadhaar-status-select" data-i18n="aadhaarQuestion">Is your Aadhaar
-              linked to your bank account?</label>
+            <label class="input-label-clean" for="aadhaar-status-select" data-i18n="aadhaarQuestion">Aadhaar Linked with Bank?</label>
             <select id="aadhaar-status-select" class="select-clean">
               <option value="yes" data-i18n="yes">Yes</option>
               <option value="no" data-i18n="no">No</option>
             </select>
           </div>
           <div style="display: flex; align-items: flex-end;">
-            <button type="submit" class="btn-check-elig-submit" id="btn-submit-eligibility">
-              <span>🔍</span> <span data-i18n="btnCheckElig">Check My Eligibility</span>
+            <button type="submit" class="btn-check-elig-submit" id="btn-submit-eligibility" style="width: 100%;">
+              <span>🔍</span> <span data-i18n="btnCheckElig">Find Best Loan & Schemes</span>
             </button>
           </div>
         </div>
@@ -320,10 +349,24 @@
         <div class="elig-empty-state" id="elig-empty-state">
           <div class="elig-empty-icon">🌱</div>
           <p data-i18n="eligEmptyState">
-            Fill in the form above and click "Check My Eligibility" to see matching schemes.
+            Fill in your farm details above to generate ranked loan recommendations, soil intelligence, and safe borrowing limits.
           </p>
         </div>
-        <div class="elig-results-list" id="elig-results-container" style="display: none;"></div>
+
+        <!-- Dynamic Output Container -->
+        <div id="elig-results-container" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <!-- 1. Regional & Soil Context Intelligence Box -->
+          <div id="location-context-card" class="intelligence-card" style="display: none;"></div>
+
+          <!-- 2. Debt Trap Safety & Responsible Lending Meter -->
+          <div id="debt-safety-card" class="safety-card" style="display: none;"></div>
+
+          <!-- 3. Sequence Rankings Header Banner -->
+          <div id="recommendations-summary-banner" class="summary-banner" style="display: none;"></div>
+
+          <!-- 4. Ranked Schemes Cards Stream -->
+          <div id="recommendations-cards-stream" class="cards-stream" style="display: flex; flex-direction: column; gap: 1.25rem;"></div>
+        </div>
       </div>
 
     </div>

@@ -5,11 +5,20 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const apiRoutes = require('./src/routes/apiRoutes');
+const docsRoutes = require('./src/routes/docsRoutes');
+const errorHandler = require('./src/middleware/errorHandler');
+const { startScheduledIngestion } = require('./src/services/ingestionService');
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Mount Swagger Documentation & Core Agricultural Finance APIs
+app.use('/api', docsRoutes);
+app.use('/api', apiRoutes);
+
 const DATA_DIR = path.join(__dirname, 'Data', 'Data');
-const SCHEMES_FILE = path.join(DATA_DIR, 'schemes.json');
+const SCHEMES_FILE = path.join(__dirname, 'src', 'data', 'schemesDatabase.json');
 const LOANS_FILE = path.join(DATA_DIR, 'loans.json');
 
 // Helper to read JSON files safely
@@ -458,6 +467,9 @@ app.delete('/api/loans/:id', (req, res) => {
   res.json({ success: true, message: 'Loan removed from tracker' });
 });
 
+// Centralized RFC 7807 Error Handler
+app.use(errorHandler);
+
 // Fallback to index.html for SPA routing
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -466,4 +478,7 @@ app.use((req, res) => {
 // Start Server
 app.listen(PORT, () => {
   console.log(`🌾 KisanSahay Server running on http://localhost:${PORT}`);
+  console.log(`📚 Interactive OpenAPI / Swagger Docs at: http://localhost:${PORT}/api/docs`);
+  startScheduledIngestion();
 });
+
