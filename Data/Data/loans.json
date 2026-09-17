@@ -1,0 +1,131 @@
+[
+  {
+    "id": "loan-kcc-101",
+    "schemeId": "kcc",
+    "schemeName": "Kisan Credit Card (Crop Cultivation)",
+    "bankName": "State Bank of India (Kisan Branch)",
+    "accountNumber": "•••• 4821",
+    "cropOrPurpose": "Wheat & Mustard (Rabi Season)",
+    "sanctionDate": "2024-10-15",
+    "totalAmount": 150000,
+    "paidAmount": 60000,
+    "interestRate": 4,
+    "baseRate": 7,
+    "promptIncentive": 3,
+    "tenureMonths": 12,
+    "installmentType": "Monthly",
+    "emiAmount": 9000,
+    "dueDate": "2025-03-31",
+    "status": "Active",
+    "incentiveStatus": "Active - Pay by due date to keep 4% rate",
+    "payments": [
+      {
+        "id": "pay-1789559561840",
+        "date": "2026-09-16",
+        "amount": 60000,
+        "note": "Online / Mandi payment"
+      },
+      {
+        "id": "pay-1",
+        "date": "2024-12-20",
+        "amount": 25000,
+        "note": "First installment paid"
+      },
+      {
+        "id": "pay-2",
+        "date": "2025-01-25",
+        "amount": 20000,
+        "note": "Post-harvest mandi payment"
+      }
+    ]
+  },
+  {
+    "id": "loan-miss-102",
+    "schemeId": "miss",
+    "schemeName": "MISS Short-Term Working Capital",
+    "bankName": "Punjab National Bank",
+    "accountNumber": "•••• 9104",
+    "cropOrPurpose": "Paddy Cultivation & Fertilizer Inputs",
+    "sanctionDate": "2024-07-01",
+    "totalAmount": 80000,
+    "paidAmount": 30000,
+    "interestRate": 4,
+    "baseRate": 7,
+    "promptIncentive": 3,
+    "tenureMonths": 12,
+    "installmentType": "Quarterly",
+    "emiAmount": 13000,
+    "dueDate": "2025-04-10",
+    "status": "Active",
+    "incentiveStatus": "Eligible for 3% Subvention Incentive",
+    "payments": [
+      {
+        "id": "pay-3",
+        "date": "2024-10-15",
+        "amount": 30000,
+        "note": "Quarterly installment"
+      }
+    ]
+  },
+  {
+    "id": "grant-pmk-103",
+    "schemeId": "pm-kisan",
+    "schemeName": "PM-KISAN Direct Benefit Transfer",
+    "bankName": "Bank of Baroda",
+    "accountNumber": "•••• 3319",
+    "cropOrPurpose": "Direct Income Support for Cultivation",
+    "sanctionDate": "2024-04-01",
+    "totalAmount": 6000,
+    "paidAmount": 4000,
+    "interestRate": 0,
+    "baseRate": 0,
+    "promptIncentive": 0,
+    "tenureMonths": 12,
+    "installmentType": "4-Monthly (₹2,000 x 3)",
+    "emiAmount": 2000,
+    "dueDate": "2025-03-20",
+    "status": "Active Benefit",
+    "incentiveStatus": "2 Installments Disbursed, 1 Upcoming",
+    "payments": [
+      {
+        "id": "pay-4",
+        "date": "2024-06-18",
+        "amount": 2000,
+        "note": "1st Installment (DBT)"
+      },
+      {
+        "id": "pay-5",
+        "date": "2024-10-05",
+        "amount": 2000,
+        "note": "2nd Installment (DBT)"
+      }
+    ]
+  },
+  {
+    "id": "loan-1789559628631",
+    "schemeId": "custom",
+    "schemeName": "Tractor & Farm Equipment Loan",
+    "bankName": "HDFC Rural Bank",
+    "accountNumber": "•••• 1234",
+    "cropOrPurpose": "Crop Cultivation",
+    "sanctionDate": "2026-09-16",
+    "totalAmount": 250000,
+    "paidAmount": 50000,
+    "interestRate": 7.5,
+    "baseRate": 7,
+    "promptIncentive": 3,
+    "tenureMonths": 24,
+    "installmentType": "Monthly",
+    "dueDate": "2026-12-15",
+    "status": "Active",
+    "incentiveStatus": "Prompt Repayment Eligible (3% Subsidy)",
+    "payments": [
+      {
+        "id": "pay-initial",
+        "date": "2026-09-16",
+        "amount": 50000,
+        "note": "Initial paid amount recorded"
+      }
+    ]
+  }
+]
