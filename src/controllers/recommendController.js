@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getLocationContext } = require('../services/locationContext');
+const { getSoilFertilityProfile } = require('../services/soilFertilityEngine');
 const { rankSchemes } = require('../services/scoringEngine');
 const logger = require('../utils/logger');
 
@@ -89,7 +90,15 @@ async function getRecommendations(req, res, next) {
       longitude: farmerProfile.longitude
     });
 
-    // 2. Evaluate and Rank Schemes
+    // 2. Compute dynamic soil fertility profile (300 km resolution)
+    const dynamicSoil = getSoilFertilityProfile({
+      state: farmerProfile.state || locationContext.resolvedLocation.state,
+      district: farmerProfile.district || locationContext.resolvedLocation.district,
+      latitude: farmerProfile.latitude,
+      longitude: farmerProfile.longitude
+    });
+
+    // 3. Evaluate and Rank Schemes
     const schemesDatabase = getSchemesDatabase();
     const rankingResult = rankSchemes(schemesDatabase, farmerProfile, locationContext);
 
@@ -108,10 +117,17 @@ async function getRecommendations(req, res, next) {
       success: true,
       farmer_location: farmerLocationStr,
       farmer_context: {
-        soil_type: locationContext.soilProfile.soilType,
-        soil_texture: locationContext.soilProfile.texture,
-        soil_ph: locationContext.soilProfile.pH,
-        soil_advisory: locationContext.soilProfile.soilHealthAdvisory,
+        soil_type: dynamicSoil?.soilType || locationContext.soilProfile.soilType,
+        soil_texture: dynamicSoil?.texture || locationContext.soilProfile.texture,
+        soil_ph: dynamicSoil?.pH || locationContext.soilProfile.pH,
+        soil_advisory: dynamicSoil?.soilHealthAdvisory || locationContext.soilProfile.soilHealthAdvisory,
+        nitrogen_rating: dynamicSoil?.nitrogenKgHa?.rating,
+        phosphorus_rating: dynamicSoil?.phosphorusKgHa?.rating,
+        potassium_rating: dynamicSoil?.potassiumKgHa?.rating,
+        organic_carbon: dynamicSoil?.organicCarbon?.rating,
+        dynamic_zone_badge: dynamicSoil?.dynamicBadge,
+        reference_station: dynamicSoil?.referenceStation,
+        distance_from_station_km: dynamicSoil?.distanceFromStationKm,
         estimated_land_value_per_acre: locationContext.landValuation.marketValuePerAcre,
         circle_rate_per_acre: locationContext.landValuation.circleRatePerAcre,
         irrigation_coverage: `${locationContext.landValuation.irrigationPercentage}%`,

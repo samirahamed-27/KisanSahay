@@ -34,6 +34,13 @@
 
       <!-- Header Actions -->
       <div class="header-actions">
+        <!-- Farmer Document Vault Quick Access -->
+        <button class="vault-nav-btn" id="btn-vault-nav" title="Farmer Encrypted Document Vault">
+          <span class="vault-nav-icon" id="vault-nav-icon">🔒</span>
+          <span id="vault-status-nav-text" data-i18n="navVault">Document Vault</span>
+          <span class="vault-indicator-dot uninitialized" id="vault-indicator-dot" title="Vault status"></span>
+        </button>
+
         <!-- 15 Languages Dropdown / Selector Button -->
         <button class="lang-select-btn" id="lang-toggle-btn" title="Choose from 15 Indian Languages / भाषा चुनें">
           <span>🌐</span>
@@ -401,6 +408,23 @@
         <button class="filter-chip-btn" data-filter="income" data-i18n="filterIncome">Income Support</button>
         <button class="filter-chip-btn" data-filter="more" data-i18n="filterMore">More Support</button>
       </div>
+
+      <!-- Schemes Sorting & Clean Priority Bar -->
+      <div class="schemes-sort-bar">
+        <div class="schemes-count-badge">
+          <span class="pulse-dot-green"></span>
+          <span id="schemes-count-text">Showing verified schemes (⭐ Top Recommended on top)</span>
+        </div>
+        <div class="schemes-sort-control">
+          <label for="schemes-sort-select" style="font-size: 0.85rem; font-weight: 700; color: #475569;">Sort By:</label>
+          <select id="schemes-sort-select" class="select-clean" style="padding: 0.4rem 0.85rem; font-size: 0.85rem; width: auto; font-weight: 600;">
+            <option value="recommended" selected>⭐ Top Recommended (Green First)</option>
+            <option value="interest_asc">📉 Lowest Interest Rate First</option>
+            <option value="amount_desc">💰 Highest Loan Limit First</option>
+            <option value="name_asc">🔤 Scheme Name (A-Z)</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Schemes Grid (Matching Screenshot 3) -->
@@ -680,6 +704,232 @@
           data-i18n="btnClose">Close</button>
         <button type="button" class="btn-add-payment-action" style="flex: initial; padding: 0.65rem 1.4rem;"
           id="btn-track-from-checklist" data-i18n="btnAddToTracker">Track This Loan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 5: Farmer Document Vault (Password Protected: Word, PIN, Pattern)
+       ========================================================================== -->
+  <div class="modal-overlay" id="vault-modal" style="z-index: 170;">
+    <div class="modal-dialog modal-vault-dialog" style="max-width: 650px;">
+      <button class="modal-close-x" id="vault-modal-close">✕</button>
+
+      <!-- Header Banner -->
+      <div class="vault-modal-header">
+        <div class="vault-modal-badge">
+          <span id="vault-header-icon">🔒</span>
+          <span id="vault-header-status">Encrypted Farmer Vault</span>
+        </div>
+        <h2 class="vault-modal-title" data-i18n="vaultTitle">Farmer Document Vault & Verification</h2>
+        <p class="vault-modal-desc" data-i18n="vaultSubtitle">
+          Before choosing any loan, verify your documents. They are safely encrypted with your personal password, PIN, or Pattern Lock.
+        </p>
+      </div>
+
+      <!-- Required Notice if prompted via "Choose Loan" -->
+      <div id="vault-scheme-prompt-banner" class="vault-scheme-notice" style="display: none;">
+        <span style="font-size: 1.4rem;">🌾</span>
+        <div>
+          <strong id="vault-target-scheme-name">Scheme Application</strong>
+          <div style="font-size: 0.83rem; color: #166534; margin-top: 0.2rem;">
+            Document verification is mandatory before configuring this loan. Save your encrypted documents to continue.
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Inputs Form -->
+      <div class="vault-docs-grid">
+        <!-- 1. Aadhaar Card -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-aadhaar" style="margin-bottom: 0;">
+              <span data-i18n="docAadhaar">Aadhaar Card (12 Digits)</span> *
+            </label>
+            <span class="doc-badge-req">Mandatory</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">🪪</span>
+            <input type="text" id="vault-aadhaar" class="input-clean" placeholder="XXXX-XXXX-XXXX" maxlength="14" value="5482-9102-3847" required>
+          </div>
+        </div>
+
+        <!-- 2. Land Record -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-land" style="margin-bottom: 0;">
+              <span data-i18n="docLand">Land Record (Khasra/Khatauni/Patta)</span> *
+            </label>
+            <span class="doc-badge-req">Mandatory</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">📜</span>
+            <input type="text" id="vault-land" class="input-clean" placeholder="e.g. Khasra 142/5, Khatauni 28" value="Khasra No. 142/5, Khatauni 28" required>
+          </div>
+        </div>
+
+        <!-- 3. Bank Account Details -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-bank" style="margin-bottom: 0;">
+              <span data-i18n="docBank">Bank Account & IFSC</span> *
+            </label>
+            <span class="doc-badge-req">Mandatory</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">🏦</span>
+            <input type="text" id="vault-bank" class="input-clean" placeholder="Bank Name, A/C & IFSC" value="SBI Agri Branch, A/C: 38291048192, IFSC: SBIN0001428" required>
+          </div>
+        </div>
+
+        <!-- 4. Crop Sowing / Girdawari -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-crop" style="margin-bottom: 0;">
+              <span data-i18n="docCrop">Crop Sowing / Girdawari Proof</span> *
+            </label>
+            <span class="doc-badge-req">Mandatory</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">🌱</span>
+            <input type="text" id="vault-crop" class="input-clean" placeholder="e.g. Rabi 2024 Wheat Cultivation Slip" value="Rabi 2024 Wheat Cultivation Certificate" required>
+          </div>
+        </div>
+
+        <!-- 5. Category / Caste Certificate -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-category" style="margin-bottom: 0;">
+              <span data-i18n="docCategory">Category / Caste Certificate</span>
+            </label>
+            <span class="doc-badge-opt">Optional / Subsidies</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">📑</span>
+            <input type="text" id="vault-category" class="input-clean" placeholder="Certificate No. (General / SC / ST / OBC / Women)" value="General / Not Applicable">
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Lock Password Choice (Word, PIN, Pattern) -->
+      <div class="vault-security-box">
+        <div class="security-box-header">
+          <span style="font-size: 1.15rem;">🔐</span>
+          <span style="font-weight: 700; color: #0f172a;" data-i18n="vaultPasswordChoice">Choose Security Lock Option:</span>
+        </div>
+
+        <!-- 3 Password Tabs: Word, PIN, Pattern -->
+        <div class="security-type-tabs">
+          <button type="button" class="sec-tab-btn active" data-tab="word" id="sec-tab-word">
+            <span>🔤</span> <span data-i18n="tabWord">Word Passphrase</span>
+          </button>
+          <button type="button" class="sec-tab-btn" data-tab="number" id="sec-tab-number">
+            <span>🔢</span> <span data-i18n="tabNumber">Number PIN</span>
+          </button>
+          <button type="button" class="sec-tab-btn" data-tab="pattern" id="sec-tab-pattern">
+            <span>⚡</span> <span data-i18n="tabPattern">Pattern Lock</span>
+          </button>
+        </div>
+
+        <!-- Tab Pane 1: Word Passphrase -->
+        <div class="sec-pane active" id="sec-pane-word">
+          <div class="form-row-2">
+            <div>
+              <label class="input-label-clean" for="vault-word-pass">Secret Word Passphrase *</label>
+              <input type="password" id="vault-word-pass" class="input-clean" placeholder="e.g. Kisan@2025" value="Kisan@2025">
+            </div>
+            <div>
+              <label class="input-label-clean" for="vault-word-confirm">Confirm Passphrase *</label>
+              <input type="password" id="vault-word-confirm" class="input-clean" placeholder="Re-enter passphrase" value="Kisan@2025">
+            </div>
+          </div>
+          <small style="color: #64748b; margin-top: 0.35rem; display: block;">Letters, numbers, or words you remember easily.</small>
+        </div>
+
+        <!-- Tab Pane 2: Number PIN -->
+        <div class="sec-pane" id="sec-pane-number" style="display: none;">
+          <div style="display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <label class="input-label-clean" for="vault-pin-pass">4 to 6 Digit PIN *</label>
+              <input type="password" id="vault-pin-pass" class="input-clean" placeholder="• • • •" maxlength="6" style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;">
+              <div style="margin-top: 0.75rem;">
+                <label class="input-label-clean" for="vault-pin-confirm">Confirm PIN *</label>
+                <input type="password" id="vault-pin-confirm" class="input-clean" placeholder="• • • •" maxlength="6" style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;">
+              </div>
+            </div>
+            <!-- Interactive Keypad -->
+            <div class="pin-keypad" id="pin-keypad">
+              <button type="button" class="keypad-key" data-digit="1">1</button>
+              <button type="button" class="keypad-key" data-digit="2">2</button>
+              <button type="button" class="keypad-key" data-digit="3">3</button>
+              <button type="button" class="keypad-key" data-digit="4">4</button>
+              <button type="button" class="keypad-key" data-digit="5">5</button>
+              <button type="button" class="keypad-key" data-digit="6">6</button>
+              <button type="button" class="keypad-key" data-digit="7">7</button>
+              <button type="button" class="keypad-key" data-digit="8">8</button>
+              <button type="button" class="keypad-key" data-digit="9">9</button>
+              <button type="button" class="keypad-key action" id="btn-pin-clear">C</button>
+              <button type="button" class="keypad-key" data-digit="0">0</button>
+              <button type="button" class="keypad-key action" id="btn-pin-back">⌫</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Pane 3: 3x3 Visual Pattern Lock -->
+        <div class="sec-pane" id="sec-pane-pattern" style="display: none;">
+          <div class="pattern-lock-wrap">
+            <p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.6rem; text-align: center;">
+              Connect at least 4 dots to draw your secret gesture lock:
+            </p>
+            <!-- 3x3 Pattern Grid Container with Canvas Overlay -->
+            <div class="pattern-container" id="pattern-container">
+              <canvas id="pattern-canvas" width="240" height="240"></canvas>
+              <div class="pattern-dots-grid" id="pattern-dots-grid">
+                <div class="pattern-dot" data-index="0"><span></span></div>
+                <div class="pattern-dot" data-index="1"><span></span></div>
+                <div class="pattern-dot" data-index="2"><span></span></div>
+                <div class="pattern-dot" data-index="3"><span></span></div>
+                <div class="pattern-dot" data-index="4"><span></span></div>
+                <div class="pattern-dot" data-index="5"><span></span></div>
+                <div class="pattern-dot" data-index="6"><span></span></div>
+                <div class="pattern-dot" data-index="7"><span></span></div>
+                <div class="pattern-dot" data-index="8"><span></span></div>
+              </div>
+            </div>
+            <div class="pattern-feedback" id="pattern-feedback">Touch & drag or click dots to draw pattern</div>
+            <button type="button" class="btn-reset-pattern" id="btn-reset-pattern">🔄 Clear & Redraw Pattern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="vault-modal-footer">
+        <button type="button" class="btn-icon-secondary" id="btn-vault-cancel" style="padding: 0.65rem 1.4rem; border-radius: var(--radius-pill);">Cancel</button>
+        <button type="button" class="btn-vault-save-action" id="btn-vault-save-submit">
+          <span id="btn-vault-save-icon">🔒</span>
+          <span id="btn-vault-save-text" data-i18n="btnEncryptVault">Encrypt & Secure Documents</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vault Unlock Prompt Modal (When locked vault exists) -->
+  <div class="modal-overlay" id="vault-unlock-modal" style="z-index: 180;">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <button class="modal-close-x" id="vault-unlock-close">✕</button>
+      <div style="text-align: center; margin-bottom: 1.2rem;">
+        <div style="width: 52px; height: 52px; background: #dcfce7; color: #15803d; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.6rem;">🔒</div>
+        <h2 style="font-size: 1.3rem; color: #0f172a; margin-bottom: 0.3rem;">Unlock Your Document Vault</h2>
+        <p style="font-size: 0.85rem; color: #64748b;" id="unlock-modal-desc">Enter your security key to access your encrypted documents.</p>
+      </div>
+
+      <div id="unlock-input-container" style="margin-bottom: 1.4rem;">
+        <!-- Populated dynamically based on whether password type is word, pin, or pattern -->
+      </div>
+
+      <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+        <button type="button" class="btn-icon-secondary" id="btn-unlock-cancel" style="padding: 0.6rem 1.2rem; border-radius: var(--radius-pill);">Cancel</button>
+        <button type="button" class="btn-add-payment-action" id="btn-unlock-submit" style="padding: 0.6rem 1.6rem;">🔓 Unlock Vault</button>
       </div>
     </div>
   </div>
