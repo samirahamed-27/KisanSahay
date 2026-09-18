@@ -180,6 +180,7 @@ const el = {
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
+  setupThemeToggle();
   setupNavigation();
   setupLanguages();
   setupSpeech();
@@ -188,6 +189,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupDocumentVault();
   setupLoanTabs();
   setupSchemesSearch();
+  setupSahayAI();
+  renderHomeCategories();
+  setupCategoryExplorer();
+  setupMultiuserStateListener();
 
   // Apply saved language
   setLanguage(state.currentLang);
@@ -303,7 +308,7 @@ function setLanguage(langCode) {
 // ==========================================================================
 
 function setupNavigation() {
-  el.navItems.forEach(item => {
+  document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
       const view = item.getAttribute('data-view');
       if (view) {
@@ -347,7 +352,7 @@ function switchView(viewName) {
   });
 
   // View active state
-  el.views.forEach(v => {
+  document.querySelectorAll('.page-view').forEach(v => {
     if (v.id === `view-${viewName}`) {
       v.classList.add('active');
     } else {
@@ -355,8 +360,19 @@ function switchView(viewName) {
     }
   });
 
+  if (viewName === 'landrates') {
+    const stateSelect = document.getElementById('filter-land-state');
+    const districtInput = document.getElementById('filter-land-district');
+    const sVal = stateSelect ? stateSelect.value : 'Maharashtra';
+    const dVal = districtInput ? districtInput.value.trim() : 'Pune';
+    loadLandRates({ state: sVal, district: dVal });
+    loadLandRateComparison(sVal, dVal);
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
 }
+
 
 // ==========================================================================
 // Loans Tracker Engine (Active vs Ended Loans)
@@ -2111,6 +2127,22 @@ function evaluateEligibilityClient(userInput, schemesList) {
 // Eligibility & Multi-Factor Recommendation Controller
 // ==========================================================================
 
+window.toggleScoreBreakdown = function(schemeId, evt) {
+  if (evt) evt.stopPropagation();
+  const target = document.getElementById(`match-container-${schemeId}`);
+  if (target) {
+    const wasOpen = target.classList.contains('open');
+    document.querySelectorAll('.match-score-container.open').forEach(c => c.classList.remove('open'));
+    if (!wasOpen) target.classList.add('open');
+  }
+};
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.match-score-container')) {
+    document.querySelectorAll('.match-score-container.open').forEach(c => c.classList.remove('open'));
+  }
+});
+
 function setupEligibility() {
   if (el.eligibilityForm) {
     el.eligibilityForm.addEventListener('submit', async (e) => {
@@ -2201,7 +2233,7 @@ async function checkEligibility() {
   try {
     if (el.btnSubmitEligibility) {
       el.btnSubmitEligibility.disabled = true;
-      el.btnSubmitEligibility.innerHTML = '<span>⏳</span> Analyzing 32 Schemes & Soil Data...';
+      el.btnSubmitEligibility.innerHTML = '<span>⏳</span> Analyzing Schemes & Soil Data...';
     }
 
     let responseData = null;
@@ -2262,8 +2294,7 @@ function renderAdvancedRecommendations(data) {
 
   const debtSafe = debt_safety_assessment || debt_capacity || {};
 
-  // 1. Render Location & Soil Intelligence Card
-  // 1. Render Dynamic 300 km Soil & Agricultural Intelligence Card
+  // 1. Render Location & Dynamic 300 km Soil Intelligence Card
   if (el.locationContextCard && fContext) {
     el.locationContextCard.style.display = 'block';
 
@@ -2382,12 +2413,12 @@ function renderAdvancedRecommendations(data) {
         <span class="filter-badge-pill badge-best">★ 1 Best Match</span>
         <span class="filter-badge-pill badge-good">✓ ${meta.good_count || 11} Good Alternatives</span>
         <span class="filter-badge-pill badge-moderate">⚙ ${meta.moderate_count || 0} Moderate Fit</span>
-        <span class="filter-badge-pill badge-ineligible">✕ ${meta.ineligible_count || 0} Not Eligible (Listed Last)</span>
+        <span class="filter-badge-pill badge-ineligible">✕ ${meta.ineligible_count || 0} Not Eligible</span>
       </div>
     `;
   }
 
-  // 4. Render Ranked Schemes Cards Stream in Exact Sequence
+  // 4. Render Ranked Schemes Cards Stream with Explainable Match Score & Breakdown Popover
   if (el.recCardsStream) {
     el.recCardsStream.innerHTML = '';
 
@@ -2417,6 +2448,32 @@ function renderAdvancedRecommendations(data) {
         </div>
       `).join('');
 
+      // Criteria breakdown for explainable match score
+      const criteria = rec.criteria_breakdown || rec.criteriaBreakdown || [
+        { criterion: 'land_size', label: 'Land Holding Size', satisfied: true, detail: 'Fits land bracket' },
+        { criterion: 'state_region', label: 'State & Region', satisfied: true, detail: 'Active in your state' },
+        { criterion: 'income_limit', label: 'Annual Income', satisfied: true, detail: 'Earnings fit requirement' },
+        { criterion: 'category', label: 'Category & Gender', satisfied: true, detail: 'Category guidelines met' },
+        { criterion: 'ownership', label: 'Land Title Status', satisfied: true, detail: 'Land ownership verified' },
+        { criterion: 'debt_safety', label: 'Debt & DTI Capacity', satisfied: true, detail: 'Safe borrowing margin' }
+      ];
+
+      const breakdownItemsHtml = criteria.map(c => {
+        const iconClass = c.satisfied ? 'met' : 'unmet';
+        const iconSymbol = c.satisfied ? '✓' : '✕';
+        return `
+          <div class="breakdown-item">
+            <span class="breakdown-icon ${iconClass}">${iconSymbol}</span>
+            <div>
+              <span class="breakdown-label">${c.label}:</span>
+              <span class="breakdown-detail">${c.detail || (c.satisfied ? 'Requirement met' : 'Unfulfilled')}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const scorePillClass = rec.score >= 80 ? 'high' : (rec.score >= 50 ? 'medium' : 'low');
+
       card.innerHTML = `
         <div class="rec-card-body">
           <div class="rec-top-row">
@@ -2432,11 +2489,27 @@ function renderAdvancedRecommendations(data) {
             </div>
 
             <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <div class="rec-score-badge" title="Algorithm Match Score">
-                <span>🎯</span>
-                <span>${rec.score}/100</span>
+              <!-- Explainable Algorithm Match Score with Expandable Breakdown Popover -->
+              <div class="match-score-container" id="match-container-${rec.scheme_id}">
+                <div class="match-score-pill ${scorePillClass}" onclick="toggleScoreBreakdown('${rec.scheme_id}', event)" title="Tap to view exact criteria breakdown">
+                  <span>🎯</span>
+                  <span>${rec.score}% Match</span>
+                  <span class="breakdown-toggle-icon">▾</span>
+                </div>
+                <div class="score-breakdown-popover" id="breakdown-${rec.scheme_id}">
+                  <div class="breakdown-popover-title">
+                    <span>🎯</span> Explainable Match Criteria (${rec.score}%)
+                  </div>
+                  <div class="breakdown-list">
+                    ${breakdownItemsHtml}
+                  </div>
+                  <div class="breakdown-tip">
+                    ${rec.score < 95 && rec.eligible ? '💡 Hard cap: Scoring is strictly capped at 95% unless 100% of hard criteria are verified. Complete Aadhaar KYC in Vault to reach 100%.' : '✓ Verified 100% against official gazette rules.'}
+                  </div>
+                </div>
               </div>
-              <button class="btn-icon-secondary" style="width: 34px; height: 34px; border-radius: 50%;" title="Listen Aloud" onclick="speakText('${rec.scheme_name}. Net interest rate ${rec.interest_rate}. ${rec.eligibility_reason}')">
+
+              <button class="btn-icon-secondary" style="width: 34px; height: 34px; border-radius: 50%;" title="Listen Aloud" onclick="speakText('${rec.scheme_name}. Net interest rate ${rec.interest_rate}. Match score ${rec.score} percent. ${rec.eligibility_reason}')">
                 🔊
               </button>
             </div>
@@ -2521,6 +2594,336 @@ function renderAdvancedRecommendations(data) {
     });
   }
 }
+
+// ==========================================================================
+// PART 2: SAHAY AI — AGRICULTURAL LOAN & SCHEME ASSISTANT
+// ==========================================================================
+
+function setupSahayAI() {
+  const launcher = document.getElementById('sahay-launcher-btn');
+  const chatWindow = document.getElementById('sahay-chat-window');
+  const closeBtn = document.getElementById('sahay-close-btn');
+  const resetBtn = document.getElementById('sahay-reset-btn');
+  const langToggle = document.getElementById('sahay-lang-toggle');
+  const langIndicator = document.getElementById('sahay-lang-indicator');
+  const ttsToggle = document.getElementById('sahay-tts-toggle');
+  const ttsIcon = document.getElementById('sahay-tts-icon');
+  const messageStream = document.getElementById('sahay-message-stream');
+  const inputForm = document.getElementById('sahay-input-form');
+  const userInput = document.getElementById('sahay-user-input');
+  const micBtn = document.getElementById('sahay-mic-btn');
+  const speechStatus = document.getElementById('sahay-speech-status');
+
+  if (!launcher || !chatWindow) return;
+
+  let sahayLang = 'en'; // 'en' | 'hi'
+  let isTtsActive = true;
+  let recognition = null;
+  let isListening = false;
+
+  // Toggle open/close
+  launcher.addEventListener('click', () => {
+    const isHidden = chatWindow.style.display === 'none' || !chatWindow.style.display;
+    chatWindow.style.display = isHidden ? 'flex' : 'none';
+    if (isHidden && userInput) {
+      setTimeout(() => userInput.focus(), 150);
+    }
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      chatWindow.style.display = 'none';
+    });
+  }
+
+  // Language toggle (EN / HI)
+  if (langToggle) {
+    langToggle.addEventListener('click', () => {
+      sahayLang = sahayLang === 'en' ? 'hi' : 'en';
+      if (langIndicator) langIndicator.textContent = sahayLang.toUpperCase();
+      showToast(`Sahay AI language set to ${sahayLang === 'hi' ? 'Hindi (हिंदी)' : 'English'}`);
+
+      // Update prompt chip text to active language
+      const chips = document.querySelectorAll('#sahay-prompt-chips .sahay-chip');
+      if (chips.length >= 4) {
+        if (sahayLang === 'hi') {
+          chips[0].textContent = '🌱 क्या मैं KCC के लिए पात्र हूँ?';
+          chips[0].setAttribute('data-query', 'क्या मैं KCC के लिए पात्र हूँ?');
+          chips[1].textContent = '📋 फसल ऋण के लिए कौन-से दस्तावेज चाहिए?';
+          chips[1].setAttribute('data-query', 'फसल ऋण के लिए कौन-से दस्तावेज चाहिए?');
+          chips[2].textContent = '📈 मेरे राज्य में ब्याज दरों की तुलना करें';
+          chips[2].setAttribute('data-query', 'मेरे राज्य में ब्याज दरों की तुलना करें');
+          chips[3].textContent = '🚜 50% कृषि यंत्र सब्सिडी कैसे पाएं?';
+          chips[3].setAttribute('data-query', '50% कृषि यंत्र सब्सिडी कैसे पाएं?');
+        } else {
+          chips[0].textContent = '🌱 Am I eligible for KCC?';
+          chips[0].setAttribute('data-query', 'Am I eligible for KCC?');
+          chips[1].textContent = '📋 What documents do I need for a crop loan?';
+          chips[1].setAttribute('data-query', 'What documents do I need for a crop loan?');
+          chips[2].textContent = '📈 Compare interest rates for my state';
+          chips[2].setAttribute('data-query', 'Compare interest rates for my state');
+          chips[3].textContent = '🚜 How to get 50% equipment subsidy?';
+          chips[3].setAttribute('data-query', 'How to get 50% equipment subsidy?');
+        }
+      }
+    });
+  }
+
+  // TTS Read Aloud toggle
+  if (ttsToggle) {
+    ttsToggle.addEventListener('click', () => {
+      isTtsActive = !isTtsActive;
+      if (ttsIcon) ttsIcon.textContent = isTtsActive ? '🔊' : '🔇';
+      showToast(`Voice read-aloud ${isTtsActive ? 'Enabled' : 'Muted'}`);
+      if (!isTtsActive && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    });
+  }
+
+  // Reset conversation
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (messageStream) {
+        messageStream.innerHTML = `
+          <div class="sahay-intro-card">
+            <div class="sahay-intro-icon">🌾</div>
+            <div class="sahay-intro-title">Namaste! I'm Sahay AI</div>
+            <p class="sahay-intro-text">
+              Your direct guide to agricultural credit, government subsidies, and scheme documentation. Ask me any question in English or Hindi!
+            </p>
+          </div>
+          <div class="sahay-prompt-chips-container" id="sahay-prompt-chips">
+            <div class="sahay-chips-title">💡 Suggested Questions:</div>
+            <button type="button" class="sahay-chip" data-query="Am I eligible for KCC?">
+              🌱 Am I eligible for KCC?
+            </button>
+            <button type="button" class="sahay-chip" data-query="What documents do I need for a crop loan?">
+              📋 What documents do I need for a crop loan?
+            </button>
+            <button type="button" class="sahay-chip" data-query="Compare interest rates for my state">
+              📈 Compare interest rates for my state
+            </button>
+            <button type="button" class="sahay-chip" data-query="How to get 50% equipment subsidy?">
+              🚜 How to get 50% equipment subsidy?
+            </button>
+          </div>
+        `;
+        wirePromptChips();
+      }
+      showToast('Conversation reset. Ready for a new query.');
+    });
+  }
+
+  // Wire prompt chips click
+  function wirePromptChips() {
+    document.querySelectorAll('#sahay-prompt-chips .sahay-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const query = chip.getAttribute('data-query') || chip.textContent.trim();
+        handleAssistantSend(query);
+      });
+    });
+  }
+  wirePromptChips();
+
+  // Speech-to-Text Setup
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRec) {
+    try {
+      recognition = new SpeechRec();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isListening = true;
+        if (micBtn) micBtn.classList.add('active');
+        if (speechStatus) speechStatus.style.display = 'flex';
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (userInput) userInput.value = transcript;
+        handleAssistantSend(transcript);
+      };
+
+      recognition.onerror = (e) => {
+        console.warn('Speech recognition error:', e.error);
+        stopListening();
+      };
+
+      recognition.onend = () => {
+        stopListening();
+      };
+    } catch (e) {
+      console.warn('Could not initialize SpeechRecognition:', e);
+    }
+  }
+
+  function stopListening() {
+    isListening = false;
+    if (micBtn) micBtn.classList.remove('active');
+    if (speechStatus) speechStatus.style.display = 'none';
+  }
+
+  if (micBtn) {
+    micBtn.addEventListener('click', () => {
+      if (!recognition) {
+        showToast('Voice input is not supported in this browser.');
+        return;
+      }
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
+        try {
+          recognition.start();
+        } catch (e) {
+          console.warn('Recognition start failed:', e);
+        }
+      }
+    });
+  }
+
+  // Form submit
+  if (inputForm) {
+    inputForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = userInput ? userInput.value.trim() : '';
+      if (!text) return;
+      handleAssistantSend(text);
+      if (userInput) userInput.value = '';
+    });
+  }
+
+  async function handleAssistantSend(messageText) {
+    if (!messageText || !messageText.trim()) return;
+
+    // 1. Append User Message
+    appendMessage('user', messageText);
+
+    // 2. Append Typing Indicator
+    const typingId = 'sahay-typing-' + Date.now();
+    const typingBubble = document.createElement('div');
+    typingBubble.className = 'sahay-msg assistant';
+    typingBubble.id = typingId;
+    typingBubble.innerHTML = `
+      <div class="sahay-msg-content" style="display: flex; align-items: center; gap: 0.5rem; color: #64748b;">
+        <span class="recording-dot" style="background: #15803d;"></span>
+        <span>Grounded retrieval from official directives...</span>
+      </div>
+    `;
+    messageStream.appendChild(typingBubble);
+    messageStream.scrollTop = messageStream.scrollHeight;
+
+    try {
+      const res = await fetch('/api/assistant/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: messageText,
+          language: sahayLang,
+          farmerProfile: state.userFarmProfile || {}
+        })
+      });
+
+      const data = await res.json();
+      const typingEl = document.getElementById(typingId);
+      if (typingEl) typingEl.remove();
+
+      if (data.success && data.data) {
+        appendAssistantReply(data.data);
+      } else {
+        appendMessage('assistant', 'Sorry, I could not complete that query. Please try again or rephrase.');
+      }
+    } catch (err) {
+      console.error('Sahay AI Chat Error:', err);
+      const typingEl = document.getElementById(typingId);
+      if (typingEl) typingEl.remove();
+      appendMessage('assistant', 'Could not connect to the verified scheme database. Please check your internet connection.');
+    }
+  }
+
+  function appendMessage(role, text) {
+    if (!messageStream) return;
+    const msg = document.createElement('div');
+    msg.className = `sahay-msg ${role}`;
+    msg.innerHTML = `<div class="sahay-msg-content">${escapeHtml(text)}</div>`;
+    messageStream.appendChild(msg);
+    messageStream.scrollTop = messageStream.scrollHeight;
+  }
+
+  function appendAssistantReply(answerData) {
+    if (!messageStream) return;
+    const { reply, citations = [], suggestedChips = [] } = answerData;
+
+    const formattedReply = reply
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/•/g, '&bull;')
+      .replace(/\n/g, '<br>');
+
+    const citationsHtml = (citations && citations.length > 0) ? `
+      <div class="sahay-citations-box">
+        <div style="font-size: 0.68rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
+          📌 Grounded Source Citation:
+        </div>
+        ${citations.map(c => `
+          <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="sahay-citation-pill" title="Verified against official portal">
+            <span>🔗</span> <span>${escapeHtml(c.authority || c.schemeName)}</span>
+            <span class="sahay-citation-date">(${c.lastVerifiedAt?.split('T')[0] || '2026-09'})</span>
+          </a>
+        `).join('')}
+      </div>
+    ` : '';
+
+    const chipsHtml = (suggestedChips && suggestedChips.length > 0) ? `
+      <div class="sahay-prompt-chips-container" style="margin-top: 0.6rem;">
+        <div class="sahay-chips-title">💡 Next Questions:</div>
+        ${suggestedChips.map(chip => `
+          <button type="button" class="sahay-chip dynamic-chip" data-query="${escapeHtml(chip)}">
+            ${escapeHtml(chip)}
+          </button>
+        `).join('')}
+      </div>
+    ` : '';
+
+    const msg = document.createElement('div');
+    msg.className = 'sahay-msg assistant';
+    msg.innerHTML = `
+      <div class="sahay-msg-content">
+        ${formattedReply}
+        ${citationsHtml}
+        ${chipsHtml}
+      </div>
+    `;
+
+    messageStream.appendChild(msg);
+    messageStream.scrollTop = messageStream.scrollHeight;
+
+    // Attach dynamic chip listeners
+    msg.querySelectorAll('.dynamic-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const q = btn.getAttribute('data-query');
+        handleAssistantSend(q);
+      });
+    });
+
+    // TTS Voice Read Aloud
+    if (isTtsActive && window.speechSynthesis) {
+      const cleanSpeakText = reply.replace(/\*\*/g, '').replace(/•/g, '').replace(/\n+/g, '. ');
+      const utterance = new SpeechSynthesisUtterance(cleanSpeakText);
+      utterance.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
+      utterance.rate = 0.95;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+}
+
 
 
 // ==========================================================================
@@ -2629,3 +3032,644 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 300);
   }, 3500);
 }
+
+// ==========================================================================
+// Land Rates & Valuation Engine
+// ==========================================================================
+
+async function loadLandRates(filters = {}) {
+  const tableBody = document.getElementById('landrates-table-body');
+  const countBadge = document.getElementById('landrates-count-badge');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">Loading unified land valuation data...</td></tr>';
+
+  try {
+    const params = new URLSearchParams();
+    if (filters.state) params.append('state', filters.state);
+    if (filters.district) params.append('district', filters.district);
+    if (filters.rate_type) params.append('rate_type', filters.rate_type);
+    params.append('limit', '50');
+
+    const res = await fetch(`/api/land-rates?${params.toString()}`);
+    const data = await res.json();
+
+    if (data.status === 'success' && Array.isArray(data.data)) {
+      if (countBadge) {
+        countBadge.innerText = `Showing ${data.data.length} of ${data.meta.total} records`;
+      }
+
+      if (data.data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">No land rates found matching criteria.</td></tr>';
+        return;
+      }
+
+      tableBody.innerHTML = data.data.map(item => {
+        const isCircle = item.rate_type === 'circle_rate';
+        const badgeClass = isCircle ? 'circle_rate' : 'market_rate_listing';
+        const badgeText = isCircle ? '🏛️ Circle Rate' : '🏷️ Market Rate (Listing)';
+        const formattedRate = '₹' + Math.round(item.rate_per_acre).toLocaleString('en-IN');
+        const effective = item.effective_date ? `Effective: ${item.effective_date}` : 'Active Asking Listing';
+        const portalLink = item.source_url 
+          ? `<a href="${item.source_url}" target="_blank" rel="noopener" style="color: #15803d; font-weight: 700; text-decoration: none;">${item.source_name} ↗</a>`
+          : item.source_name;
+
+        return `
+          <tr>
+            <td>
+              <strong>${item.district}</strong>, <span style="color: #64748b;">${item.state}</span>
+            </td>
+            <td>
+              <div>${item.taluk ? '<strong>' + item.taluk + '</strong>' : ''}</div>
+              <div style="font-size: 0.8rem; color: #64748b;">${item.village_zone || 'Agricultural Zone'}</div>
+            </td>
+            <td>
+              <span class="rate-value-highlight">${formattedRate}</span>
+              <div style="font-size: 0.74rem; color: #64748b;">per Acre</div>
+            </td>
+            <td>
+              <span class="badge-rate-type ${badgeClass}">${badgeText}</span>
+            </td>
+            <td>
+              ${portalLink}
+            </td>
+            <td style="font-size: 0.82rem; color: #64748b;">
+              ${effective}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  } catch (err) {
+    console.error('Error loading land rates:', err);
+    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #dc2626;">Error fetching land rates. Please retry.</td></tr>';
+  }
+}
+
+async function loadLandRateComparison(stateName, districtName) {
+  const comparisonBox = document.getElementById('landrates-comparison-box');
+  if (!comparisonBox) return;
+
+  comparisonBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: #64748b;">Calculating regional circle rate vs market spread...</div>';
+
+  try {
+    const params = new URLSearchParams();
+    if (stateName) params.append('state', stateName);
+    if (districtName) params.append('district', districtName);
+
+    const res = await fetch(`/api/land-rates/compare?${params.toString()}`);
+    const resData = await res.json();
+
+    if (resData.status === 'success' && resData.data) {
+      const { circleRate, marketRate, comparison, query } = resData.data;
+
+      const circleHtml = circleRate ? `
+        <div class="rate-card-box circle">
+          <div class="rate-box-title circle">
+            <span>🏛️</span> Circle Rate (Ready Reckoner)
+          </div>
+          <div class="rate-box-price">₹${circleRate.avgRatePerAcre.toLocaleString('en-IN')}</div>
+          <div class="rate-box-unit">Average Government Benchmark / Acre</div>
+          <div class="rate-metric-row">
+            <span>Official Range:</span>
+            <strong>₹${circleRate.minRatePerAcre.toLocaleString('en-IN')} - ₹${circleRate.maxRatePerAcre.toLocaleString('en-IN')}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Primary Authority:</span>
+            <strong>${circleRate.sources.join(', ')}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Effective Date:</span>
+            <strong>${circleRate.latestEffectiveDate || 'April 1 Fiscal Year'}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Cadastral Records:</span>
+            <strong>${circleRate.count} verified zones</strong>
+          </div>
+        </div>
+      ` : `
+        <div class="rate-card-box circle" style="opacity: 0.6;">
+          <div class="rate-box-title circle"><span>🏛️</span> Government Circle Rate</div>
+          <p style="font-size: 0.88rem; color: #64748b; margin-top: 1rem;">No direct circle rate record for this district yet.</p>
+        </div>
+      `;
+
+      const marketHtml = marketRate ? `
+        <div class="rate-card-box market">
+          <div class="rate-box-title market">
+            <span>🏷️</span> Market Asking Rate (Listing)
+          </div>
+          <div class="rate-box-price">₹${marketRate.avgRatePerAcre.toLocaleString('en-IN')}</div>
+          <div class="rate-box-unit">Average Seller Asking Price / Acre</div>
+          <div class="rate-metric-row">
+            <span>Asking Range:</span>
+            <strong>₹${marketRate.minRatePerAcre.toLocaleString('en-IN')} - ₹${marketRate.maxRatePerAcre.toLocaleString('en-IN')}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Listing Portals:</span>
+            <strong>${marketRate.sources.join(', ')}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Legal Status:</span>
+            <strong style="color: #0284c7;">Asking Price (Negotiable)</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Sample Listings:</span>
+            <strong>${marketRate.count} verified listings</strong>
+          </div>
+        </div>
+      ` : `
+        <div class="rate-card-box market" style="opacity: 0.6;">
+          <div class="rate-box-title market"><span>🏷️</span> Market Asking Rate</div>
+          <p style="font-size: 0.88rem; color: #64748b; margin-top: 1rem;">No market listings recorded for this district yet.</p>
+        </div>
+      `;
+
+      const premiumBadge = (comparison && comparison.premiumPercent !== null) ? `
+        <div class="spread-center-box">
+          <div class="spread-circle-badge">
+            <div class="spread-number">${comparison.premiumPercent > 0 ? '+' : ''}${comparison.premiumPercent}%</div>
+            <div class="spread-label">Spread</div>
+          </div>
+          <div class="spread-text">Market asking rate premium over circle rate</div>
+        </div>
+      ` : `
+        <div class="spread-center-box">
+          <div class="spread-circle-badge" style="background: #f1f5f9; border-color: #cbd5e1;">
+            <div class="spread-number" style="color: #64748b;">—</div>
+            <div class="spread-label" style="color: #64748b;">Spread</div>
+          </div>
+        </div>
+      `;
+
+      comparisonBox.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+          <div>
+            <h2 style="font-size: 1.3rem; font-weight: 800; color: #0f172a;">
+              ${query.district}, ${query.state} Valuation Comparison
+            </h2>
+            <p style="font-size: 0.84rem; color: #64748b;">Side-by-side benchmark for land registration and credit appraisal</p>
+          </div>
+          <span style="font-size: 0.78rem; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 0.3rem 0.75rem; border-radius: var(--radius-pill);">
+            Real-Time Analysis
+          </span>
+        </div>
+
+        <div class="comparison-grid">
+          ${circleHtml}
+          ${premiumBadge}
+          ${marketHtml}
+        </div>
+
+        <div class="comparison-footer-notes">
+          <div class="note-item">
+            <strong>📋 Stamp Duty & Registry Guidance:</strong>
+            ${comparison.stampDutyGuidance}
+          </div>
+          <div class="note-item">
+            <strong>🏦 Loan Collateral & Credit Prudence:</strong>
+            ${comparison.lendingPrudenceNote}
+          </div>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error('Error fetching land rate comparison:', err);
+    comparisonBox.innerHTML = '<div style="color: #dc2626; padding: 1rem;">Failed to load comparison data.</div>';
+  }
+}
+
+function setupLandRatesEngine() {
+  const btnCompare = document.getElementById('btn-compare-land-rates');
+  const stateSelect = document.getElementById('filter-land-state');
+  const districtInput = document.getElementById('filter-land-district');
+  const typeSelect = document.getElementById('filter-land-type');
+
+  if (btnCompare) {
+    btnCompare.addEventListener('click', () => {
+      const stateVal = stateSelect ? stateSelect.value : '';
+      const districtVal = districtInput ? districtInput.value.trim() : '';
+      const typeVal = typeSelect ? typeSelect.value : '';
+
+      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
+      if (stateVal) {
+        loadLandRateComparison(stateVal, districtVal);
+      }
+    });
+  }
+
+  if (stateSelect) {
+    stateSelect.addEventListener('change', () => {
+      const stateVal = stateSelect.value;
+      if (stateVal === 'Maharashtra') districtInput.value = 'Pune';
+      else if (stateVal === 'Karnataka') districtInput.value = 'Bengaluru Rural';
+      else if (stateVal === 'Telangana') districtInput.value = 'Rangareddy';
+      else if (stateVal === 'Uttar Pradesh') districtInput.value = 'Meerut';
+      else districtInput.value = '';
+
+      const districtVal = districtInput ? districtInput.value.trim() : '';
+      const typeVal = typeSelect ? typeSelect.value : '';
+      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
+      if (stateVal) loadLandRateComparison(stateVal, districtVal);
+    });
+  }
+
+  if (typeSelect) {
+    typeSelect.addEventListener('change', () => {
+      const stateVal = stateSelect ? stateSelect.value : '';
+      const districtVal = districtInput ? districtInput.value.trim() : '';
+      const typeVal = typeSelect.value;
+      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
+    });
+  }
+
+  // Initial load
+  loadLandRates({ state: 'Maharashtra', district: 'Pune' });
+  loadLandRateComparison('Maharashtra', 'Pune');
+}
+
+// Ensure Land Rates Engine initializes on DOM load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupLandRatesEngine);
+} else {
+  setupLandRatesEngine();
+}
+
+// ==========================================================================
+// THEME TOGGLE ENGINE (DARK & LIGHT DUALITY)
+// ==========================================================================
+
+function setupThemeToggle() {
+  const btn = document.getElementById('theme-toggle-btn');
+  const icon = document.getElementById('theme-icon-indicator');
+  const savedTheme = localStorage.getItem('kisansahay_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+  const applyTheme = (theme) => {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-mode');
+      if (icon) icon.textContent = '☀️';
+      if (btn) btn.title = 'Switch to Light Mode';
+    } else {
+      document.body.classList.remove('dark-mode');
+      if (icon) icon.textContent = '🌙';
+      if (btn) btn.title = 'Switch to Dark Mode';
+    }
+  };
+
+  applyTheme(savedTheme);
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const isDark = document.body.classList.contains('dark-mode');
+      const newTheme = isDark ? 'light' : 'dark';
+      applyTheme(newTheme);
+      localStorage.setItem('kisansahay_theme', newTheme);
+      showToast(newTheme === 'dark' ? '🌙 Dark Mode activated' : '☀️ Light Mode activated');
+    });
+  }
+}
+
+// ==========================================================================
+// 15 SCHEME CATEGORIES & CATEGORY EXPLORER ENGINE (Images 3, 4, 5)
+// ==========================================================================
+
+function renderHomeCategories() {
+  const container = document.getElementById('home-categories-grid');
+  if (!container || !window.NATIONAL_CATEGORIES) return;
+
+  container.innerHTML = window.NATIONAL_CATEGORIES.map(cat => `
+    <div class="category-card-item" style="--cat-accent: ${cat.accentColor}; --cat-bg-glow: ${cat.bgGlow};" onclick="openCategorySchemes('${cat.id}')">
+      <div class="category-icon-disc">
+        ${cat.iconSvg}
+      </div>
+      <div class="category-scheme-count-pill" style="color: ${cat.accentColor};">
+        ${cat.count} Schemes
+      </div>
+      <div class="category-card-title">
+        ${cat.name}
+      </div>
+    </div>
+  `).join('');
+}
+
+let currentCategoryState = {
+  categoryId: 'agriculture',
+  scope: 'all',
+  searchQuery: '',
+  state: 'all',
+  gender: 'all',
+  age: 'all',
+  benefit: 'all',
+  caste: 'all'
+};
+
+window.openCategorySchemes = function (categoryId = 'agriculture', initialScope = 'all') {
+  currentCategoryState.categoryId = categoryId;
+  currentCategoryState.scope = initialScope;
+  currentCategoryState.searchQuery = '';
+  currentCategoryState.state = 'all';
+  currentCategoryState.gender = 'all';
+  currentCategoryState.benefit = 'all';
+  currentCategoryState.caste = 'all';
+
+  const cat = (window.NATIONAL_CATEGORIES || []).find(c => c.id === categoryId) || window.NATIONAL_CATEGORIES[0];
+  if (!cat) return;
+
+  // 1. Switch View
+  switchView('category-schemes');
+
+  // 2. Set Breadcrumb Title
+  const breadcrumb = document.getElementById('cat-breadcrumb-title');
+  if (breadcrumb) breadcrumb.textContent = cat.name;
+
+  // 3. Render Themed Illustrated Hero Banner
+  const bannerContainer = document.getElementById('category-hero-banner-container');
+  if (bannerContainer && typeof window.getCategoryBannerHtml === 'function') {
+    bannerContainer.innerHTML = `
+      ${window.getCategoryBannerHtml(cat.bannerTheme)}
+      <div class="category-hero-content-overlay">
+        <div class="category-hero-overlay-title">${cat.name}</div>
+        <div style="color: #cbd5e1; font-size: 0.95rem; margin-top: 0.4rem; max-width: 650px; line-height: 1.4;">
+          ${cat.description}
+        </div>
+      </div>
+    `;
+  }
+
+  // 4. Set Scope tab active
+  document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(tab => {
+    if (tab.getAttribute('data-cat-scope') === initialScope) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+
+  // 5. Reset filter inputs
+  const searchInput = document.getElementById('cat-search-input');
+  if (searchInput) searchInput.value = '';
+
+  const stateSelect = document.getElementById('cat-filter-state');
+  if (stateSelect) stateSelect.value = 'all';
+
+  const genderSelect = document.getElementById('cat-filter-gender');
+  if (genderSelect) genderSelect.value = 'all';
+
+  const ageSelect = document.getElementById('cat-filter-age');
+  if (ageSelect) ageSelect.value = 'all';
+
+  const benefitSelect = document.getElementById('cat-filter-benefit');
+  if (benefitSelect) benefitSelect.value = 'all';
+
+  const casteSelect = document.getElementById('cat-filter-caste');
+  if (casteSelect) casteSelect.value = 'all';
+
+  // 6. Filter & Render cards
+  filterAndRenderCategorySchemes();
+};
+
+function filterAndRenderCategorySchemes() {
+  const container = document.getElementById('cat-schemes-cards-list');
+  const countEl = document.getElementById('cat-schemes-count-num');
+  if (!container) return;
+
+  const { categoryId, scope, searchQuery, state: filterState, gender, benefit } = currentCategoryState;
+
+  // 1. Gather flagship category schemes
+  let list = (window.FLAGSHIP_CATEGORY_SCHEMES || []).filter(s => s.categoryId === categoryId);
+
+  // 2. Incorporate existing database schemes if agriculture or banking
+  if (categoryId === 'agriculture' && Array.isArray(state.schemes)) {
+    const agriSchemes = state.schemes.slice(0, 45).map(s => ({
+      id: s.id,
+      categoryId: 'agriculture',
+      title: s.name,
+      ministry: s.ministry || 'Ministry of Agriculture and Farmers Welfare',
+      description: s.description || 'Verified agricultural credit and welfare support scheme.',
+      tags: ['Agriculture', s.type || 'Loan', s.state !== 'All India' ? 'State Scheme' : 'Central Scheme'],
+      scope: s.state === 'All India' || !s.state ? 'central' : 'state',
+      state: s.state || 'All India',
+      gender: 'all',
+      benefitType: 'Concessional Interest & Credit',
+      applyUrl: s.application_url || 'https://agricoop.nic.in/'
+    }));
+    list = [...list, ...agriSchemes];
+  } else if (categoryId === 'banking' && Array.isArray(state.schemes)) {
+    const bankSchemes = state.schemes.filter(s => s.category?.includes('LOAN')).slice(0, 35).map(s => ({
+      id: s.id,
+      categoryId: 'banking',
+      title: s.name,
+      ministry: s.ministry || 'Department of Financial Services',
+      description: s.description || 'Concessional banking and institutional financing directive.',
+      tags: ['Banking', 'Credit', s.type || 'Subvention'],
+      scope: s.state === 'All India' || !s.state ? 'central' : 'state',
+      state: s.state || 'All India',
+      gender: 'all',
+      benefitType: 'Institutional Bank Credit',
+      applyUrl: s.application_url || 'https://financialservices.gov.in/'
+    }));
+    list = [...list, ...bankSchemes];
+  }
+
+  // 3. Filter by Scope
+  if (scope === 'state') {
+    list = list.filter(s => s.scope === 'state' || (s.state && s.state !== 'Central' && s.state !== 'All India'));
+  } else if (scope === 'central') {
+    list = list.filter(s => s.scope === 'central' || s.state === 'Central' || s.state === 'All India');
+  }
+
+  // 4. Filter by State
+  if (filterState && filterState !== 'all') {
+    list = list.filter(s => s.state === filterState || s.state === 'All India' || s.scope === 'central');
+  }
+
+  // 5. Filter by Gender
+  if (gender && gender !== 'all') {
+    list = list.filter(s => s.gender === gender || s.gender === 'all');
+  }
+
+  // 6. Filter by Benefit
+  if (benefit && benefit !== 'all') {
+    list = list.filter(s => {
+      const bText = (s.benefitType || '').toLowerCase();
+      const tagsText = (s.tags || []).join(' ').toLowerCase();
+      if (benefit === 'subsidy') return bText.includes('subsidy') || bText.includes('grant') || tagsText.includes('subsidy');
+      if (benefit === 'loan') return bText.includes('loan') || bText.includes('credit') || tagsText.includes('loan');
+      if (benefit === 'insurance') return bText.includes('insurance') || tagsText.includes('insurance');
+      if (benefit === 'dbt') return bText.includes('dbt') || bText.includes('cash') || tagsText.includes('dbt');
+      return true;
+    });
+  }
+
+  // 7. Filter by Search Query
+  if (searchQuery && searchQuery.trim()) {
+    const q = searchQuery.toLowerCase().trim().replace(/["']/g, '');
+    list = list.filter(s =>
+      s.title.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.ministry.toLowerCase().includes(q) ||
+      (s.tags && s.tags.some(t => t.toLowerCase().includes(q)))
+    );
+  }
+
+  // Update counter
+  if (countEl) countEl.textContent = list.length;
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="elig-empty-state">
+        <div class="elig-empty-icon">🔍</div>
+        <p>No schemes matched your current filter criteria. Try choosing "All Schemes" or resetting filters.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(item => `
+    <div class="cat-scheme-card">
+      <div>
+        <div class="cat-card-ministry">${escapeHtmlApp(item.ministry)}</div>
+        <h3 class="cat-card-title">${escapeHtmlApp(item.title)}</h3>
+      </div>
+      <p class="cat-card-desc">${escapeHtmlApp(item.description)}</p>
+      <div class="cat-card-tags-row">
+        ${(item.tags || []).map(t => `<span class="cat-tag-pill">${escapeHtmlApp(t)}</span>`).join('')}
+      </div>
+      <div style="display: flex; gap: 0.8rem; align-items: center; margin-top: 0.4rem; flex-wrap: wrap;">
+        <a href="${item.applyUrl || '#'}" target="_blank" rel="noopener noreferrer" class="cat-card-action-btn">
+          <span>Apply on Official Portal</span> <span>↗</span>
+        </a>
+        <button type="button" class="btn-rec-docs" onclick="openChecklist('${item.id}')">
+          📋 Check Required Documents
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setupCategoryExplorer() {
+  // Scope tabs
+  document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentCategoryState.scope = tab.getAttribute('data-cat-scope') || 'all';
+      filterAndRenderCategorySchemes();
+    });
+  });
+
+  // Search input
+  const searchInput = document.getElementById('cat-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      currentCategoryState.searchQuery = searchInput.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  // Filter selects
+  const stateSelect = document.getElementById('cat-filter-state');
+  if (stateSelect) {
+    stateSelect.addEventListener('change', () => {
+      currentCategoryState.state = stateSelect.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  const genderSelect = document.getElementById('cat-filter-gender');
+  if (genderSelect) {
+    genderSelect.addEventListener('change', () => {
+      currentCategoryState.gender = genderSelect.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  const benefitSelect = document.getElementById('cat-filter-benefit');
+  if (benefitSelect) {
+    benefitSelect.addEventListener('change', () => {
+      currentCategoryState.benefit = benefitSelect.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  const casteSelect = document.getElementById('cat-filter-caste');
+  if (casteSelect) {
+    casteSelect.addEventListener('change', () => {
+      currentCategoryState.caste = casteSelect.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  // Reset filters
+  const resetBtn = document.getElementById('cat-btn-reset-filters');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      currentCategoryState.state = 'all';
+      currentCategoryState.gender = 'all';
+      currentCategoryState.benefit = 'all';
+      currentCategoryState.caste = 'all';
+      currentCategoryState.searchQuery = '';
+      currentCategoryState.scope = 'all';
+
+      if (searchInput) searchInput.value = '';
+      if (stateSelect) stateSelect.value = 'all';
+      if (genderSelect) genderSelect.value = 'all';
+      if (benefitSelect) benefitSelect.value = 'all';
+      if (casteSelect) casteSelect.value = 'all';
+
+      document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(t => {
+        if (t.getAttribute('data-cat-scope') === 'all') t.classList.add('active');
+        else t.classList.remove('active');
+      });
+
+      showToast('Category filters reset.');
+      filterAndRenderCategorySchemes();
+    });
+  }
+}
+
+// ==========================================================================
+// MULTI-USER STATE ISOLATION & EVENT LISTENER
+// ==========================================================================
+
+function setupMultiuserStateListener() {
+  window.addEventListener('kisansahay:profileChanged', (e) => {
+    const { profile, profileId } = e.detail || {};
+    if (!profileId) return;
+
+    // Isolate farm profile state in localStorage
+    const savedFarm = localStorage.getItem(`kisansahay_farm_${profileId}`);
+    if (savedFarm) {
+      try {
+        state.userFarmProfile = JSON.parse(savedFarm);
+        if (el.cropInput && state.userFarmProfile.cropType) el.cropInput.value = state.userFarmProfile.cropType;
+        if (el.landSizeInput && state.userFarmProfile.landSizeAcres) el.landSizeInput.value = state.userFarmProfile.landSizeAcres;
+        if (el.stateInput && state.userFarmProfile.state) el.stateInput.value = state.userFarmProfile.state;
+        if (el.districtInput && state.userFarmProfile.district) el.districtInput.value = state.userFarmProfile.district;
+        if (el.incomeInput && state.userFarmProfile.annualIncome) el.incomeInput.value = state.userFarmProfile.annualIncome;
+        if (el.existingLoansInput && state.userFarmProfile.existingLoans !== undefined) el.existingLoansInput.value = state.userFarmProfile.existingLoans;
+      } catch (err) {
+        console.warn('Error parsing saved farm profile for user:', err);
+      }
+    } else {
+      // Clean Fresh Slate for New Profile!
+      if (el.cropInput) el.cropInput.value = '';
+      if (el.landSizeInput) el.landSizeInput.value = '';
+      if (el.districtInput) el.districtInput.value = '';
+      if (el.incomeInput) el.incomeInput.value = '';
+      if (el.existingLoansInput) el.existingLoansInput.value = '0';
+      state.userFarmProfile = null;
+      if (el.eligResultsContainer) el.eligResultsContainer.style.display = 'none';
+      if (el.eligEmptyState) el.eligEmptyState.style.display = 'block';
+    }
+
+    // Refresh loans list isolated to profile
+    loadLoans();
+  });
+}
+
+function escapeHtmlApp(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
