@@ -50,9 +50,21 @@
           <small>▾</small>
         </button>
 
-        <div class="user-profile" title="Farmer Account Profile">
-          <div class="avatar-circle">V</div>
-          <small style="color: var(--text-muted); font-weight: 700;">▾</small>
+        <!-- Dark / Light Mode Toggle Button (Image 1) -->
+        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Dark / Light Mode" aria-label="Toggle theme">
+          <span id="theme-icon-indicator">🌙</span>
+        </button>
+
+        <!-- Multi-User Profile Account Switcher -->
+        <div id="user-profile-header-container">
+          <button class="user-profile-btn" id="user-profile-toggle-btn" title="Farmer Account Profile">
+            <div class="avatar-circle">V</div>
+            <div class="user-profile-meta hide-mobile">
+              <span class="user-profile-name">Veer Singh</span>
+              <span class="user-profile-id">+91 98765 43210</span>
+            </div>
+            <small style="color: var(--text-muted); font-weight: 700;">▾</small>
+          </button>
         </div>
 
         <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Navigation Menu">
@@ -197,40 +209,248 @@
       </div>
     </section>
 
-    <!-- How It Works Section (Matching Screenshot 2) -->
-    <section class="how-it-works-section">
-      <div class="section-header">
-        <h2 class="section-title" data-i18n="howItWorksTitle">How It Works</h2>
-        <p class="section-subtitle" data-i18n="howItWorksSubtitle">Four simple steps to find and manage your schemes</p>
+    <!-- ====================================================================
+         IMAGE 1: HERO STATS & NATIONAL SCHEMES COUNTER BANNER
+         ==================================================================== -->
+    <section class="hero-stats-banner">
+      <div class="hero-stats-badge">
+        #GOVERNMENTSCHEMES &nbsp;/&nbsp; #SCHEMESFORYOU
+      </div>
+      <div>
+        <button type="button" class="btn-find-schemes-hero" onclick="switchView('eligibility')">
+          <span>Find Schemes For You</span>
+          <span>➔</span>
+        </button>
       </div>
 
-      <div class="steps-grid">
+      <div class="hero-counters-grid">
+        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture')">
+          <div class="hero-counter-number">5020+</div>
+          <div class="hero-counter-label">Total Schemes ➔</div>
+        </div>
+        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'central')">
+          <div class="hero-counter-number">740+</div>
+          <div class="hero-counter-label">Central Schemes ➔</div>
+        </div>
+        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'state')">
+          <div class="hero-counter-number">4280+</div>
+          <div class="hero-counter-label">States/UTs Schemes ➔</div>
+        </div>
+      </div>
+
+      <div class="hero-scope-tabs">
+        <button type="button" class="hero-scope-tab-btn active" onclick="document.getElementById('home-categories-section')?.scrollIntoView({ behavior: 'smooth' })">
+          Categories
+        </button>
+        <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'state')">
+          States/UTs
+        </button>
+        <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'central')">
+          Central Ministries
+        </button>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         IMAGE 2: "HOW IT WORKS" 3-STEP FLOW PIPELINE
+         ==================================================================== -->
+    <section class="how-it-works-section">
+      <div class="how-it-works-sub">How it works</div>
+      <h2 class="how-it-works-title">Easy steps to apply for Government Schemes</h2>
+
+      <div class="how-it-works-grid">
+        <!-- Step 1: Enter Details -->
         <div class="step-card">
-          <div class="step-icon-wrap">📄</div>
-          <h3 class="step-title" data-i18n="step1Title">Check Eligibility</h3>
-          <p class="step-desc" data-i18n="step1Desc">Enter your crop type and annual income manually</p>
+          <div class="step-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              <path d="m9 14 2 2 4-4"/>
+            </svg>
+          </div>
+          <h3 class="step-title">Enter Details</h3>
+          <p class="step-desc">Start by entering your <strong>basic farm and location details!</strong></p>
         </div>
 
+        <div class="how-it-works-arrow">➔</div>
+
+        <!-- Step 2: Search -->
         <div class="step-card">
-          <div class="step-icon-wrap">🏛️</div>
-          <h3 class="step-title" data-i18n="step2Title">Pick a Scheme</h3>
-          <p class="step-desc" data-i18n="step2Desc">Choose from matched schemes like KCC, MISS, PM-KISAN</p>
+          <div class="step-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
+              <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>
+              <circle cx="12" cy="13" r="3"/>
+              <path d="m14.5 15.5 2.5 2.5"/>
+            </svg>
+          </div>
+          <h3 class="step-title">Search</h3>
+          <p class="step-desc">Our intelligent engine will <strong>find the most relevant schemes!</strong></p>
         </div>
 
-        <div class="step-card">
-          <div class="step-icon-wrap">🌱</div>
-          <h3 class="step-title" data-i18n="step3Title">Get Documents</h3>
-          <p class="step-desc" data-i18n="step3Desc">See exactly what papers you need before applying</p>
-        </div>
+        <div class="how-it-works-arrow">➔</div>
 
+        <!-- Step 3: Select & Apply -->
         <div class="step-card">
-          <div class="step-icon-wrap">📈</div>
-          <h3 class="step-title" data-i18n="step4Title">Track Loans</h3>
-          <p class="step-desc" data-i18n="step4Desc">Monitor EMIs, due balance, and money already paid</p>
+          <div class="step-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
+              <path d="m14 15 2.5 2.5"/>
+              <path d="M11 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+              <path d="m14 13-1.5-1.5"/>
+              <path d="M12 21a9 9 0 0 0 9-9c0-.7-.08-1.38-.23-2.03"/>
+            </svg>
+          </div>
+          <h3 class="step-title">Select & Apply</h3>
+          <p class="step-desc"><strong>Select and apply</strong> for the best suited scheme with full document checklist.</p>
         </div>
       </div>
     </section>
 
+    <!-- ====================================================================
+         IMAGE 5: 15 SCHEME CATEGORIES GRID ("Find schemes based on categories")
+         ==================================================================== -->
+    <section class="categories-section" id="home-categories-section">
+      <div class="categories-section-header">
+        <h2 class="categories-title">Find schemes based on categories</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Explore verified government funding, credit subventions, and welfare initiatives by domain
+        </p>
+      </div>
+
+      <!-- 15 Categories Grid -->
+      <div class="categories-grid-15" id="home-categories-grid">
+        <!-- Rendered dynamically from window.NATIONAL_CATEGORIES -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       VIEW: CATEGORY SCHEMES EXPLORER (Matching Screenshots 3 & 4)
+       ========================================================================== -->
+  <main id="view-category-schemes" class="page-view">
+    <div class="category-explorer-container">
+
+      <!-- Breadcrumb & Back Navigation -->
+      <div class="category-explorer-top-bar">
+        <button type="button" class="btn-back-to-categories" id="btn-back-categories" onclick="switchView('home')">
+          <span>←</span> <span>Back</span>
+        </button>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          KisanSahay / Categories / <span id="cat-breadcrumb-title" style="color: var(--primary-main); font-weight: 700;">Agriculture, Rural & Environment</span>
+        </div>
+      </div>
+
+      <!-- Illustrated Themed Hero Banner Container (Matching Images 3 & 4) -->
+      <div id="category-hero-banner-container" class="category-hero-art-wrapper">
+        <!-- Injected dynamically via window.getCategoryBannerHtml -->
+      </div>
+
+      <!-- Search Input with Exact Match Hint -->
+      <div class="cat-search-wrap">
+        <div class="cat-search-input-box">
+          <input type="text" id="cat-search-input" class="cat-search-input" placeholder="Search" autocomplete="off">
+          <button type="button" id="cat-search-btn" class="cat-search-btn" title="Search Schemes">
+            🔍
+          </button>
+        </div>
+        <div class="cat-search-hint">
+          ⓘ For an exact match, put the words in quotes. For example: "Scheme Name".
+        </div>
+      </div>
+
+      <!-- Segmented Scope Tabs (All Schemes | State/UT Schemes | Central Schemes) -->
+      <div class="cat-scope-tabs-bar" id="cat-scope-tabs-bar">
+        <button type="button" class="cat-scope-tab active" data-cat-scope="all">All Schemes</button>
+        <button type="button" class="cat-scope-tab" data-cat-scope="state">State/UT Schemes</button>
+        <button type="button" class="cat-scope-tab" data-cat-scope="central">Central Schemes</button>
+      </div>
+
+      <!-- Two-Column Explorer Layout -->
+      <div class="cat-explorer-two-col">
+        <!-- Left Filter Sidebar -->
+        <aside class="cat-filter-sidebar">
+          <div class="cat-sidebar-header">
+            <span class="cat-sidebar-title">Filter By</span>
+            <button type="button" class="cat-btn-reset-filters" id="cat-btn-reset-filters">Reset Filters</button>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-state">State/UT</label>
+            <select id="cat-filter-state" class="select-clean">
+              <option value="all">Select State</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Haryana">Haryana</option>
+            </select>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-gender">Gender</label>
+            <select id="cat-filter-gender" class="select-clean">
+              <option value="all">All Genders</option>
+              <option value="female">Female (Priority Subsidies)</option>
+              <option value="male">Male</option>
+            </select>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-age">Age</label>
+            <select id="cat-filter-age" class="select-clean">
+              <option value="all">Select Age Bracket</option>
+              <option value="18-35">18 - 35 Years (Youth)</option>
+              <option value="36-55">36 - 55 Years (Prime)</option>
+              <option value="56+">56+ Years (Senior)</option>
+            </select>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-benefit">Benefit Type</label>
+            <select id="cat-filter-benefit" class="select-clean">
+              <option value="all">All Benefit Types</option>
+              <option value="subsidy">Direct Subsidy & Grant</option>
+              <option value="loan">Concessional Loan / Subvention</option>
+              <option value="insurance">Insurance Coverage</option>
+              <option value="dbt">Direct Benefit Transfer (DBT)</option>
+            </select>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-caste">Caste / Social Category</label>
+            <select id="cat-filter-caste" class="select-clean">
+              <option value="all">All Social Categories</option>
+              <option value="general">General</option>
+              <option value="obc">OBC</option>
+              <option value="sc">SC (Subsidized)</option>
+              <option value="st">ST (Subsidized)</option>
+            </select>
+          </div>
+        </aside>
+
+        <!-- Right Schemes Stream -->
+        <section class="cat-schemes-stream">
+          <div class="cat-stream-header">
+            <div class="cat-found-count" id="cat-found-count">
+              We found <strong id="cat-schemes-count-num">110</strong> schemes based on your preferences
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Sort : <strong style="color: var(--text-dark);">Relevance ▾</strong>
+            </div>
+          </div>
+
+          <!-- Schemes Stream List -->
+          <div id="cat-schemes-cards-list" style="display: flex; flex-direction: column; gap: 1.2rem;">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
+      </div>
+
+    </div>
   </main>
 
   <!-- ==========================================================================
@@ -1201,6 +1421,99 @@
     </div>
   </div>
 
+  <!-- ==========================================================================
+       MULTI-USER PROFILE MODAL (Phone & Gmail Tabs)
+       ========================================================================== -->
+  <div class="modal-overlay" id="multiuser-add-modal" style="display: none; z-index: 400; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 440px; width: 90%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin: 0;">➕ Add New Profile</h2>
+        <button type="button" class="modal-close-x" id="btn-close-add-profile" style="position: static;">✕</button>
+      </div>
+
+      <div class="modal-tab-row">
+        <button type="button" class="modal-tab-btn active" id="tab-btn-phone">📱 Mobile Phone</button>
+        <button type="button" class="modal-tab-btn" id="tab-btn-gmail">✉️ Gmail / Email</button>
+      </div>
+
+      <!-- Phone Number Option -->
+      <form id="form-add-phone" style="display: block;">
+        <div style="margin-bottom: 1rem;">
+          <label class="input-label-clean" for="add-profile-name-phone">Full Name *</label>
+          <input type="text" id="add-profile-name-phone" class="input-clean" placeholder="e.g. Ramesh Kumar" required>
+        </div>
+        <div style="margin-bottom: 1.4rem;">
+          <label class="input-label-clean" for="add-profile-phone">10-Digit Mobile Number *</label>
+          <input type="tel" id="add-profile-phone" class="input-clean" placeholder="e.g. 9876543210" maxlength="10" required>
+        </div>
+        <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+          <button type="button" class="btn-cancel" id="btn-cancel-add-profile">Cancel</button>
+          <button type="submit" class="btn-primary-action">Create Profile</button>
+        </div>
+      </form>
+
+      <!-- Gmail Option with OTP -->
+      <form id="form-add-gmail" style="display: none;">
+        <div style="margin-bottom: 1rem;">
+          <label class="input-label-clean" for="add-profile-name-gmail">Full Name *</label>
+          <input type="text" id="add-profile-name-gmail" class="input-clean" placeholder="e.g. Priya Sharma" required>
+        </div>
+        <div style="margin-bottom: 1.4rem;">
+          <label class="input-label-clean" for="add-profile-email">Gmail / Email Address *</label>
+          <input type="email" id="add-profile-email" class="input-clean" placeholder="e.g. farmer.priya@gmail.com" required>
+          <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 0.35rem;">
+            A 6-digit verification code (OTP) will be sent to verify this account.
+          </small>
+        </div>
+        <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+          <button type="button" class="btn-cancel" onclick="document.getElementById('multiuser-add-modal').style.display='none'">Cancel</button>
+          <button type="submit" class="btn-primary-action">Send OTP ➔</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MULTI-USER OTP VERIFICATION MODAL
+       ========================================================================== -->
+  <div class="modal-overlay" id="multiuser-otp-modal" style="display: none; z-index: 410; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 440px; width: 90%; text-align: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin: 0;">🔐 Verify Gmail Address</h2>
+        <button type="button" class="modal-close-x" id="btn-close-otp-modal" style="position: static;">✕</button>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.6rem;">
+        Enter the 6-digit OTP sent to <strong id="otp-target-email" style="color: var(--text-dark);">email</strong>
+      </p>
+
+      <div class="otp-demo-hint-box" id="otp-demo-hint" style="display: none;"></div>
+
+      <!-- 6 OTP input boxes -->
+      <div class="otp-boxes-grid">
+        <input type="text" id="otp-box-1" class="otp-digit-input" maxlength="1" inputmode="numeric" autocomplete="one-time-code">
+        <input type="text" id="otp-box-2" class="otp-digit-input" maxlength="1" inputmode="numeric">
+        <input type="text" id="otp-box-3" class="otp-digit-input" maxlength="1" inputmode="numeric">
+        <input type="text" id="otp-box-4" class="otp-digit-input" maxlength="1" inputmode="numeric">
+        <input type="text" id="otp-box-5" class="otp-digit-input" maxlength="1" inputmode="numeric">
+        <input type="text" id="otp-box-6" class="otp-digit-input" maxlength="1" inputmode="numeric">
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.4rem;">
+        Resend code in: <span id="otp-timer-count" style="font-weight: 700; color: var(--primary-main);">60s</span>
+        &nbsp;•&nbsp;
+        <button type="button" id="btn-resend-otp" style="background: none; border: none; color: var(--primary-main); font-weight: 700; cursor: pointer;" disabled>
+          Resend OTP
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 0.8rem; justify-content: center;">
+        <button type="button" class="btn-cancel" id="btn-cancel-otp-modal">Cancel</button>
+        <button type="button" class="btn-primary-action" id="btn-confirm-verify-otp">Verify & Switch Profile</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer (Matching Screenshot) -->
   <footer class="footer">
     <div class="footer-container">
@@ -1220,6 +1533,8 @@
   <!-- Scripts -->
   <script src="differnet languages.js"></script>
   <script src="schemes_data.js"></script>
+  <script src="categories_data.js"></script>
+  <script src="multiuser.js"></script>
   <script src="app.js"></script>
 </body>
 
