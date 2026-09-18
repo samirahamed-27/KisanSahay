@@ -17,14 +17,19 @@ const {
   syncLandRates
 } = require('../controllers/landRatesController');
 
+const { handleAssistantChat } = require('../controllers/assistantController');
+const { getReviewQueue, processReviewAction } = require('../controllers/reviewController');
+
 const { validateRecommendationInput } = require('../middleware/validator');
 const { apiLimiter, recommendLimiter } = require('../middleware/rateLimiter');
 
 // 1. Recommendation Endpoint (Multi-Factor Scoring & Ranked Sequencing)
 router.post('/recommend', recommendLimiter, validateRecommendationInput, getRecommendations);
 
-// 2. Schemes Catalog Endpoints
+// 2. Schemes Catalog & Review Gate Endpoints
 router.get('/schemes', apiLimiter, getAllSchemes);
+router.get('/schemes/review-queue', apiLimiter, getReviewQueue);
+router.post('/schemes/review-action', apiLimiter, processReviewAction);
 router.get('/schemes/:id', apiLimiter, getSchemeById);
 
 // 3. Crops Catalog Endpoint (63 Curated Crops with scales & soil guidelines)
@@ -45,8 +50,13 @@ router.post('/vault/save', apiLimiter, saveVault);
 router.post('/vault/unlock', apiLimiter, unlockVault);
 router.get('/vault/status', apiLimiter, getVaultInfo);
 
-// 7. Ingestion / Refresh Endpoint
+// 7. Sahay AI Assistant (RAG Chatbot grounded in verified government data)
+router.post('/assistant/chat', apiLimiter, handleAssistantChat);
+
+// 8. Ingestion / Refresh Endpoint
 router.post('/ingest/refresh', apiLimiter, triggerIngestion);
 
 module.exports = router;
+
+
 

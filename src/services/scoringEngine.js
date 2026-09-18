@@ -211,13 +211,68 @@ function scoreScheme(scheme, farmerProfile, locationContext, debtCapacity) {
     warnings.push(safetyAssessment.warningMessage);
   }
 
-  // Clamp score bounds
-  totalScore = Math.max(10, Math.min(99, totalScore));
+  // Meaningful Explainable Criteria Breakdown
+  const isLandValid = (!crit.minLandAcres || farmerLandAcres >= crit.minLandAcres) &&
+                      (!crit.maxLandAcres || farmerLandAcres <= crit.maxLandAcres);
+  const isOwnershipValid = allowedOwnerships.includes('all') || allowedOwnerships.includes(farmerOwnership);
+  const isCategoryValid = !isDedicatedCategoryScheme || (farmerCategory === 'sc' || farmerCategory === 'st' || farmerCategory === 'women');
+  const isIncomeValid = !crit.maxAnnualIncome || farmerIncome <= crit.maxAnnualIncome;
+  const isStateValid = applicableStates.includes('all') || applicableStates.some(s => farmerState.includes(s));
+  const isDebtSafe = safetyAssessment.isSafe;
+
+  const criteriaBreakdown = [
+    {
+      criterion: 'land_size',
+      label: 'Land Holding Size',
+      satisfied: isLandValid,
+      detail: isLandValid ? `${farmerLandAcres} acres fits requirement` : (crit.maxLandAcres ? `Limit is ${crit.maxLandAcres} acres` : `Min ${crit.minLandAcres} acres`)
+    },
+    {
+      criterion: 'state_region',
+      label: 'State & Region',
+      satisfied: isStateValid,
+      detail: isStateValid ? `Active in ${locationContext.resolvedLocation.state || 'All States'}` : `Restricted to ${crit.statesApplicable?.join(', ')}`
+    },
+    {
+      criterion: 'income_limit',
+      label: 'Annual Income',
+      satisfied: isIncomeValid,
+      detail: isIncomeValid ? `Earnings fit threshold` : `Exceeds ${formatINR(crit.maxAnnualIncome)} cap`
+    },
+    {
+      criterion: 'category',
+      label: 'Social Category & Gender',
+      satisfied: isCategoryValid,
+      detail: isCategoryValid ? `Eligible for ${farmerCategory.toUpperCase()}` : 'Exclusive priority reservation'
+    },
+    {
+      criterion: 'ownership',
+      label: 'Land Title Status',
+      satisfied: isOwnershipValid,
+      detail: isOwnershipValid ? `${farmerOwnership.toUpperCase()} status recognized` : 'Requires land title in applicant name'
+    },
+    {
+      criterion: 'debt_safety',
+      label: 'Debt & DTI Capacity',
+      satisfied: isDebtSafe,
+      detail: isDebtSafe ? 'Safe borrowing margin' : 'High existing debt burden'
+    }
+  ];
+
+  // Hard Cap Rule: NEVER show a match score above 95% unless EVERY hard criterion is fully satisfied
+  const allHardCriteriaMet = eligible && unmetCriteria.length === 0 && isLandValid && isOwnershipValid && isIncomeValid && isCategoryValid && isStateValid && isDebtSafe;
+  
+  if (!allHardCriteriaMet) {
+    totalScore = Math.min(totalScore, 95);
+  }
 
   // Hard clamp if completely ineligible
   if (!eligible) {
     totalScore = Math.min(totalScore, 48);
   }
+
+  // Clamp overall score bounds (10 to 99)
+  totalScore = Math.max(10, Math.min(99, totalScore));
 
   // Generate clear plain-language summary reason
   let primaryReason = '';
@@ -251,6 +306,9 @@ function scoreScheme(scheme, farmerProfile, locationContext, debtCapacity) {
     match_reasons: matchReasons,
     unmet_criteria: unmetCriteria,
     warnings: warnings,
+    criteria_breakdown: criteriaBreakdown,
+    criteriaBreakdown: criteriaBreakdown,
+    all_hard_criteria_met: allHardCriteriaMet,
     debt_safety: {
       is_safe: safetyAssessment.isSafe,
       risk_level: safetyAssessment.riskLevel,
@@ -282,6 +340,7 @@ function scoreScheme(scheme, farmerProfile, locationContext, debtCapacity) {
     tagline: scheme.tagline
   };
 }
+
 
 /**
  * Score all schemes and sort into the exact specified sequence:
@@ -343,9 +402,14 @@ function rankSchemes(schemesDatabase, farmerProfile, locationContext) {
     recommendations.push(item);
   });
 
+  const facets = calculateFilterFacets(schemesDatabase, farmerProfile);
+
   return {
+
     debt_capacity: debtCapacity,
     recommendations,
+    filter_facets: facets,
+    filterFacets: facets,
     meta: {
       total_schemes_evaluated: scored.length,
       best_count: eligibleSchemes.length > 0 ? 1 : 0,
@@ -356,9 +420,108 @@ function rankSchemes(schemesDatabase, farmerProfile, locationContext) {
   };
 }
 
+/**
+ * Computes live facet counts for all sidebar filter options
+ */
+function calculateFilterFacets(schemes = [], farmerProfile = {}) {
+  const farmerState = String(farmerProfile.state || '').toLowerCase().trim();
+
+  // Baseline filtering by state if specified
+  const relevantSchemes = farmerState ? schemes.filter(s => {
+    const states = (s.eligibilityCriteria?.statesApplicable || ['all']).map(x => x.toLowerCase());
+    return states.includes('all') || states.some(st => farmerState.includes(st));
+  }) : schemes;
+
+  const facets = {
+    categories: { general: 0, obc: 0, sc: 0, st: 0, women: 0 },
+    landBrackets: { marginal_sub2_5: 0, small_2_5to5: 0, medium_5to10: 0, large_above10: 0 },
+    loanStatus: { none: 0, has_kcc: 0, has_other_loan: 0 },
+    occupations: { owner: 0, tenant: 0, sharecropper: 0, landless: 0 },
+    collateral: { collateral_free: 0, collateral_required: 0 },
+    irrigation: { irrigated: 0, rainfed: 0 },
+    incomeBrackets: { under_1_5l: 0, bracket_1_5l_to_3l: 0, bracket_3l_to_6l: 0, above_6l: 0 },
+    crops: {
+      wheat: 0,
+      rice: 0,
+      maize: 0,
+      cotton: 0,
+      soybean: 0,
+      sugarcane: 0,
+      pulses: 0,
+      mustard: 0,
+      potato: 0,
+      onion: 0,
+      horticulture: 0,
+      dairy: 0,
+      fisheries: 0
+    },
+    totalMatched: relevantSchemes.length
+  };
+
+  relevantSchemes.forEach(s => {
+    const crit = s.eligibilityCriteria || {};
+    const cats = (crit.allowedCategories || ['general', 'sc', 'st', 'obc', 'women']).map(c => c.toLowerCase());
+    if (cats.includes('general') || cats.includes('all')) facets.categories.general++;
+    if (cats.includes('obc') || cats.includes('all')) facets.categories.obc++;
+    if (cats.includes('sc') || cats.includes('all')) facets.categories.sc++;
+    if (cats.includes('st') || cats.includes('all')) facets.categories.st++;
+    if (cats.includes('women') || cats.includes('all')) facets.categories.women++;
+
+    // Land size brackets
+    const minA = crit.minLandAcres || 0;
+    const maxA = crit.maxLandAcres || 9999;
+    if (minA <= 2.5 && maxA >= 0.5) facets.landBrackets.marginal_sub2_5++;
+    if (minA <= 5.0 && maxA >= 2.5) facets.landBrackets.small_2_5to5++;
+    if (minA <= 10.0 && maxA >= 5.0) facets.landBrackets.medium_5to10++;
+    if (maxA >= 10.0) facets.landBrackets.large_above10++;
+
+    // Loan status
+    if (!crit.requiresKcc) facets.loanStatus.none++;
+    facets.loanStatus.has_kcc++;
+    facets.loanStatus.has_other_loan++;
+
+    // Occupations
+    const types = (crit.farmerTypes || ['owner', 'tenant', 'sharecropper', 'leaseholder']).map(t => t.toLowerCase());
+    if (types.includes('all') || types.includes('owner')) facets.occupations.owner++;
+    if (types.includes('all') || types.includes('tenant')) facets.occupations.tenant++;
+    if (types.includes('all') || types.includes('sharecropper')) facets.occupations.sharecropper++;
+    if (types.includes('all') || types.includes('landless') || s.id === 'pm-kmy') facets.occupations.landless++;
+
+    // Collateral
+    if ((s.collateralFreeLimit && s.collateralFreeLimit >= 160000) || s.category === 'income_support') {
+      facets.collateral.collateral_free++;
+    } else {
+      facets.collateral.collateral_required++;
+    }
+
+    // Irrigation
+    facets.irrigation.irrigated++;
+    facets.irrigation.rainfed++;
+
+    // Income brackets
+    const maxInc = crit.maxAnnualIncome || 9999999;
+    if (maxInc >= 150000) facets.incomeBrackets.under_1_5l++;
+    if (maxInc >= 300000) facets.incomeBrackets.bracket_1_5l_to_3l++;
+    if (maxInc >= 600000) facets.incomeBrackets.bracket_3l_to_6l++;
+    if (maxInc > 600000) facets.incomeBrackets.above_6l++;
+
+    // Crops
+    const crops = (crit.cropsSupported || ['all']).map(c => c.toLowerCase());
+    const isAll = crops.includes('all');
+    Object.keys(facets.crops).forEach(cropKey => {
+      if (isAll || crops.some(c => c.includes(cropKey) || cropKey.includes(c))) {
+        facets.crops[cropKey]++;
+      }
+    });
+  });
+
+  return facets;
+}
+
 module.exports = {
   scoreScheme,
   rankSchemes,
+  calculateFilterFacets,
   calculateSchemeScore: (scheme, farmerProfile, locationContext = {}, debtCapacity = {}) => {
     const loc = locationContext.resolvedLocation ? locationContext : { resolvedLocation: { state: farmerProfile.state || '' } };
     const debt = debtCapacity.monthlyFarmIncome ? debtCapacity : assessDebtCapacity(farmerProfile);
@@ -373,8 +536,10 @@ module.exports = {
       ...r,
       matchScore: r.score,
       scoreBreakdown: r.score_breakdown || r.scoreBreakdown || {},
-      financialSummary: r.financial_summary || r.financialSummary || {}
+      financialSummary: r.financial_summary || r.financialSummary || {},
+      criteriaBreakdown: r.criteria_breakdown || r.criteriaBreakdown || []
     }));
   }
 };
+
 
