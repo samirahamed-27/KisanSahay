@@ -87,9 +87,9 @@ test('National 15 Categories — Schema, Metadata & Flagship Schemes', () => {
   assert.strictEqual(mockWindow.NATIONAL_CATEGORIES.length, 15, 'Must contain exactly 15 national categories matching Image 5');
 
   const expectedCategoryIds = [
-    'agriculture', 'banking', 'business', 'education', 'health',
-    'housing', 'justice', 'science', 'skills', 'social',
-    'sports', 'transport', 'tourism', 'utility', 'women_child'
+    'agriculture', 'banking', 'business', 'kcc-loans', 'pm-kisan',
+    'aif-schemes', 'mudra-loans', 'ahidf-schemes', 'smam-tractor', 'pm-kusum',
+    'nabard-deds', 'standup-india', 'shg-nrlm', 'pmfme', 'fidf-fisheries'
   ];
 
   expectedCategoryIds.forEach(id => {
