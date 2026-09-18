@@ -117,6 +117,29 @@ function getLocationContext(locationInput = {}) {
     };
   }
 
+  // Augment with Live Aggregated Circle Rates & Market Listings if available
+  try {
+    const landRatesRepo = require('../database/landRatesRepo');
+    const comp = landRatesRepo.getComparisonStats({ state: normalizedState, district: districtName });
+    if (comp && (comp.circleRate || comp.marketRate)) {
+      if (comp.circleRate) {
+        landValuation.circleRatePerAcre = comp.circleRate.avgRatePerAcre;
+        landValuation.circleRateSource = comp.circleRate.sources.join(', ');
+        landValuation.effectiveDate = comp.circleRate.latestEffectiveDate;
+      }
+      if (comp.marketRate) {
+        landValuation.marketValuePerAcre = comp.marketRate.avgRatePerAcre;
+        landValuation.marketSources = comp.marketRate.sources.join(', ');
+      }
+      if (comp.comparison && comp.comparison.premiumPercent !== null) {
+        landValuation.marketPremiumPercent = comp.comparison.premiumPercent;
+      }
+    }
+  } catch (err) {
+    // Non-blocking fallback to static baseline
+  }
+
+
   // 3. Crop Cultivation Trends
   const cropTrends = cropTrendsData[normalizedState] || cropTrendsData['General'];
 

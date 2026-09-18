@@ -10,6 +10,12 @@ const { getAllSchemes, getSchemeById } = require('../controllers/schemesControll
 const { getLocationIntelligence, getSoilFertility, getCrops } = require('../controllers/contextController');
 const { saveVault, unlockVault, getVaultInfo } = require('../controllers/vaultController');
 const { triggerIngestion } = require('../controllers/ingestController');
+const {
+  getLandRates,
+  getLandRateComparison,
+  getLandRateStats,
+  syncLandRates
+} = require('../controllers/landRatesController');
 
 const { validateRecommendationInput } = require('../middleware/validator');
 const { apiLimiter, recommendLimiter } = require('../middleware/rateLimiter');
@@ -28,12 +34,19 @@ router.get('/crops', apiLimiter, getCrops);
 router.get('/context/location', apiLimiter, getLocationIntelligence);
 router.get('/soil-fertility', apiLimiter, getSoilFertility);
 
-// 5. Farmer Document Vault (Password protected: Word, PIN, Pattern)
+// 5. Land Rate Aggregation System (Government Circle Rates & Market Asking Rates)
+router.get('/land-rates', apiLimiter, getLandRates);
+router.get('/land-rates/compare', apiLimiter, getLandRateComparison);
+router.get('/land-rates/stats', apiLimiter, getLandRateStats);
+router.post('/land-rates/sync', apiLimiter, syncLandRates);
+
+// 6. Farmer Document Vault (Password protected: Word, PIN, Pattern)
 router.post('/vault/save', apiLimiter, saveVault);
 router.post('/vault/unlock', apiLimiter, unlockVault);
 router.get('/vault/status', apiLimiter, getVaultInfo);
 
-// 5. Ingestion / Refresh Endpoint
+// 7. Ingestion / Refresh Endpoint
 router.post('/ingest/refresh', apiLimiter, triggerIngestion);
 
 module.exports = router;
+

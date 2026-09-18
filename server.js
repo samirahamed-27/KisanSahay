@@ -9,6 +9,7 @@ const apiRoutes = require('./src/routes/apiRoutes');
 const docsRoutes = require('./src/routes/docsRoutes');
 const errorHandler = require('./src/middleware/errorHandler');
 const { startScheduledIngestion } = require('./src/services/ingestionService');
+const landRateAggregationService = require('./src/services/landRateAggregationService');
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -480,5 +481,7 @@ app.listen(PORT, () => {
   console.log(`🌾 KisanSahay Server running on http://localhost:${PORT}`);
   console.log(`📚 Interactive OpenAPI / Swagger Docs at: http://localhost:${PORT}/api/docs`);
   startScheduledIngestion();
+  landRateAggregationService.startMonthlyScheduler();
 });
+
 
