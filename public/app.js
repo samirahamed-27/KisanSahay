@@ -180,6 +180,7 @@ const el = {
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
+  setupThemeToggle();
   setupNavigation();
   setupLanguages();
   setupSpeech();
@@ -189,10 +190,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupLoanTabs();
   setupSchemesSearch();
   setupSahayAI();
+  renderHomeCategories();
+  setupCategoryExplorer();
+  setupMultiuserStateListener();
 
   // Apply saved language
   setLanguage(state.currentLang);
-
 
   // Load backend data
   await loadCrops();
@@ -364,8 +367,6 @@ function switchView(viewName) {
     const dVal = districtInput ? districtInput.value.trim() : 'Pune';
     loadLandRates({ state: sVal, district: dVal });
     loadLandRateComparison(sVal, dVal);
-  } else if (viewName === 'eligibility') {
-    checkEligibilityLive(true);
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3292,5 +3293,383 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupLandRatesEngine);
 } else {
   setupLandRatesEngine();
+}
+
+// ==========================================================================
+// THEME TOGGLE ENGINE (DARK & LIGHT DUALITY)
+// ==========================================================================
+
+function setupThemeToggle() {
+  const btn = document.getElementById('theme-toggle-btn');
+  const icon = document.getElementById('theme-icon-indicator');
+  const savedTheme = localStorage.getItem('kisansahay_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+  const applyTheme = (theme) => {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-mode');
+      if (icon) icon.textContent = '☀️';
+      if (btn) btn.title = 'Switch to Light Mode';
+    } else {
+      document.body.classList.remove('dark-mode');
+      if (icon) icon.textContent = '🌙';
+      if (btn) btn.title = 'Switch to Dark Mode';
+    }
+  };
+
+  applyTheme(savedTheme);
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const isDark = document.body.classList.contains('dark-mode');
+      const newTheme = isDark ? 'light' : 'dark';
+      applyTheme(newTheme);
+      localStorage.setItem('kisansahay_theme', newTheme);
+      showToast(newTheme === 'dark' ? '🌙 Dark Mode activated' : '☀️ Light Mode activated');
+    });
+  }
+}
+
+// ==========================================================================
+// 15 SCHEME CATEGORIES & CATEGORY EXPLORER ENGINE (Images 3, 4, 5)
+// ==========================================================================
+
+function renderHomeCategories() {
+  const container = document.getElementById('home-categories-grid');
+  if (!container || !window.NATIONAL_CATEGORIES) return;
+
+  container.innerHTML = window.NATIONAL_CATEGORIES.map(cat => `
+    <div class="category-card-item" style="--cat-accent: ${cat.accentColor}; --cat-bg-glow: ${cat.bgGlow};" onclick="openCategorySchemes('${cat.id}')">
+      <div class="category-icon-disc">
+        ${cat.iconSvg}
+      </div>
+      <div class="category-scheme-count-pill" style="color: ${cat.accentColor};">
+        ${cat.count} Schemes
+      </div>
+      <div class="category-card-title">
+        ${cat.name}
+      </div>
+    </div>
+  `).join('');
+}
+
+let currentCategoryState = {
+  categoryId: 'agriculture',
+  scope: 'all',
+  searchQuery: '',
+  state: 'all',
+  gender: 'all',
+  age: 'all',
+  benefit: 'all',
+  caste: 'all'
+};
+
+window.openCategorySchemes = function (categoryId = 'agriculture', initialScope = 'all') {
+  currentCategoryState.categoryId = categoryId;
+  currentCategoryState.scope = initialScope;
+  currentCategoryState.searchQuery = '';
+  currentCategoryState.state = 'all';
+  currentCategoryState.gender = 'all';
+  currentCategoryState.benefit = 'all';
+  currentCategoryState.caste = 'all';
+
+  const cat = (window.NATIONAL_CATEGORIES || []).find(c => c.id === categoryId) || window.NATIONAL_CATEGORIES[0];
+  if (!cat) return;
+
+  // 1. Switch View
+  switchView('category-schemes');
+
+  // 2. Set Breadcrumb Title
+  const breadcrumb = document.getElementById('cat-breadcrumb-title');
+  if (breadcrumb) breadcrumb.textContent = cat.name;
+
+  // 3. Render Themed Illustrated Hero Banner
+  const bannerContainer = document.getElementById('category-hero-banner-container');
+  if (bannerContainer && typeof window.getCategoryBannerHtml === 'function') {
+    bannerContainer.innerHTML = `
+      ${window.getCategoryBannerHtml(cat.bannerTheme)}
+      <div class="category-hero-content-overlay">
+        <div class="category-hero-overlay-title">${cat.name}</div>
+        <div style="color: #cbd5e1; font-size: 0.95rem; margin-top: 0.4rem; max-width: 650px; line-height: 1.4;">
+          ${cat.description}
+        </div>
+      </div>
+    `;
+  }
+
+  // 4. Set Scope tab active
+  document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(tab => {
+    if (tab.getAttribute('data-cat-scope') === initialScope) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+
+  // 5. Reset filter inputs
+  const searchInput = document.getElementById('cat-search-input');
+  if (searchInput) searchInput.value = '';
+
+  const stateSelect = document.getElementById('cat-filter-state');
+  if (stateSelect) stateSelect.value = 'all';
+
+  const genderSelect = document.getElementById('cat-filter-gender');
+  if (genderSelect) genderSelect.value = 'all';
+
+  const ageSelect = document.getElementById('cat-filter-age');
+  if (ageSelect) ageSelect.value = 'all';
+
+  const benefitSelect = document.getElementById('cat-filter-benefit');
+  if (benefitSelect) benefitSelect.value = 'all';
+
+  const casteSelect = document.getElementById('cat-filter-caste');
+  if (casteSelect) casteSelect.value = 'all';
+
+  // 6. Filter & Render cards
+  filterAndRenderCategorySchemes();
+};
+
+function filterAndRenderCategorySchemes() {
+  const container = document.getElementById('cat-schemes-cards-list');
+  const countEl = document.getElementById('cat-schemes-count-num');
+  if (!container) return;
+
+  const { categoryId, scope, searchQuery, state: filterState, gender, benefit } = currentCategoryState;
+
+  // 1. Gather flagship category schemes
+  let list = (window.FLAGSHIP_CATEGORY_SCHEMES || []).filter(s => s.categoryId === categoryId);
+
+  // 2. Incorporate existing database schemes if agriculture or banking
+  if (categoryId === 'agriculture' && Array.isArray(state.schemes)) {
+    const agriSchemes = state.schemes.slice(0, 45).map(s => ({
+      id: s.id,
+      categoryId: 'agriculture',
+      title: s.name,
+      ministry: s.ministry || 'Ministry of Agriculture and Farmers Welfare',
+      description: s.description || 'Verified agricultural credit and welfare support scheme.',
+      tags: ['Agriculture', s.type || 'Loan', s.state !== 'All India' ? 'State Scheme' : 'Central Scheme'],
+      scope: s.state === 'All India' || !s.state ? 'central' : 'state',
+      state: s.state || 'All India',
+      gender: 'all',
+      benefitType: 'Concessional Interest & Credit',
+      applyUrl: s.application_url || 'https://agricoop.nic.in/'
+    }));
+    list = [...list, ...agriSchemes];
+  } else if (categoryId === 'banking' && Array.isArray(state.schemes)) {
+    const bankSchemes = state.schemes.filter(s => s.category?.includes('LOAN')).slice(0, 35).map(s => ({
+      id: s.id,
+      categoryId: 'banking',
+      title: s.name,
+      ministry: s.ministry || 'Department of Financial Services',
+      description: s.description || 'Concessional banking and institutional financing directive.',
+      tags: ['Banking', 'Credit', s.type || 'Subvention'],
+      scope: s.state === 'All India' || !s.state ? 'central' : 'state',
+      state: s.state || 'All India',
+      gender: 'all',
+      benefitType: 'Institutional Bank Credit',
+      applyUrl: s.application_url || 'https://financialservices.gov.in/'
+    }));
+    list = [...list, ...bankSchemes];
+  }
+
+  // 3. Filter by Scope
+  if (scope === 'state') {
+    list = list.filter(s => s.scope === 'state' || (s.state && s.state !== 'Central' && s.state !== 'All India'));
+  } else if (scope === 'central') {
+    list = list.filter(s => s.scope === 'central' || s.state === 'Central' || s.state === 'All India');
+  }
+
+  // 4. Filter by State
+  if (filterState && filterState !== 'all') {
+    list = list.filter(s => s.state === filterState || s.state === 'All India' || s.scope === 'central');
+  }
+
+  // 5. Filter by Gender
+  if (gender && gender !== 'all') {
+    list = list.filter(s => s.gender === gender || s.gender === 'all');
+  }
+
+  // 6. Filter by Benefit
+  if (benefit && benefit !== 'all') {
+    list = list.filter(s => {
+      const bText = (s.benefitType || '').toLowerCase();
+      const tagsText = (s.tags || []).join(' ').toLowerCase();
+      if (benefit === 'subsidy') return bText.includes('subsidy') || bText.includes('grant') || tagsText.includes('subsidy');
+      if (benefit === 'loan') return bText.includes('loan') || bText.includes('credit') || tagsText.includes('loan');
+      if (benefit === 'insurance') return bText.includes('insurance') || tagsText.includes('insurance');
+      if (benefit === 'dbt') return bText.includes('dbt') || bText.includes('cash') || tagsText.includes('dbt');
+      return true;
+    });
+  }
+
+  // 7. Filter by Search Query
+  if (searchQuery && searchQuery.trim()) {
+    const q = searchQuery.toLowerCase().trim().replace(/["']/g, '');
+    list = list.filter(s =>
+      s.title.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.ministry.toLowerCase().includes(q) ||
+      (s.tags && s.tags.some(t => t.toLowerCase().includes(q)))
+    );
+  }
+
+  // Update counter
+  if (countEl) countEl.textContent = list.length;
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="elig-empty-state">
+        <div class="elig-empty-icon">🔍</div>
+        <p>No schemes matched your current filter criteria. Try choosing "All Schemes" or resetting filters.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(item => `
+    <div class="cat-scheme-card">
+      <div>
+        <div class="cat-card-ministry">${escapeHtmlApp(item.ministry)}</div>
+        <h3 class="cat-card-title">${escapeHtmlApp(item.title)}</h3>
+      </div>
+      <p class="cat-card-desc">${escapeHtmlApp(item.description)}</p>
+      <div class="cat-card-tags-row">
+        ${(item.tags || []).map(t => `<span class="cat-tag-pill">${escapeHtmlApp(t)}</span>`).join('')}
+      </div>
+      <div style="display: flex; gap: 0.8rem; align-items: center; margin-top: 0.4rem; flex-wrap: wrap;">
+        <a href="${item.applyUrl || '#'}" target="_blank" rel="noopener noreferrer" class="cat-card-action-btn">
+          <span>Apply on Official Portal</span> <span>↗</span>
+        </a>
+        <button type="button" class="btn-rec-docs" onclick="openChecklist('${item.id}')">
+          📋 Check Required Documents
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setupCategoryExplorer() {
+  // Scope tabs
+  document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentCategoryState.scope = tab.getAttribute('data-cat-scope') || 'all';
+      filterAndRenderCategorySchemes();
+    });
+  });
+
+  // Search input
+  const searchInput = document.getElementById('cat-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      currentCategoryState.searchQuery = searchInput.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  // Filter selects
+  const stateSelect = document.getElementById('cat-filter-state');
+  if (stateSelect) {
+    stateSelect.addEventListener('change', () => {
+      currentCategoryState.state = stateSelect.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  const genderSelect = document.getElementById('cat-filter-gender');
+  if (genderSelect) {
+    genderSelect.addEventListener('change', () => {
+      currentCategoryState.gender = genderSelect.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  const benefitSelect = document.getElementById('cat-filter-benefit');
+  if (benefitSelect) {
+    benefitSelect.addEventListener('change', () => {
+      currentCategoryState.benefit = benefitSelect.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  const casteSelect = document.getElementById('cat-filter-caste');
+  if (casteSelect) {
+    casteSelect.addEventListener('change', () => {
+      currentCategoryState.caste = casteSelect.value;
+      filterAndRenderCategorySchemes();
+    });
+  }
+
+  // Reset filters
+  const resetBtn = document.getElementById('cat-btn-reset-filters');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      currentCategoryState.state = 'all';
+      currentCategoryState.gender = 'all';
+      currentCategoryState.benefit = 'all';
+      currentCategoryState.caste = 'all';
+      currentCategoryState.searchQuery = '';
+      currentCategoryState.scope = 'all';
+
+      if (searchInput) searchInput.value = '';
+      if (stateSelect) stateSelect.value = 'all';
+      if (genderSelect) genderSelect.value = 'all';
+      if (benefitSelect) benefitSelect.value = 'all';
+      if (casteSelect) casteSelect.value = 'all';
+
+      document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(t => {
+        if (t.getAttribute('data-cat-scope') === 'all') t.classList.add('active');
+        else t.classList.remove('active');
+      });
+
+      showToast('Category filters reset.');
+      filterAndRenderCategorySchemes();
+    });
+  }
+}
+
+// ==========================================================================
+// MULTI-USER STATE ISOLATION & EVENT LISTENER
+// ==========================================================================
+
+function setupMultiuserStateListener() {
+  window.addEventListener('kisansahay:profileChanged', (e) => {
+    const { profile, profileId } = e.detail || {};
+    if (!profileId) return;
+
+    // Isolate farm profile state in localStorage
+    const savedFarm = localStorage.getItem(`kisansahay_farm_${profileId}`);
+    if (savedFarm) {
+      try {
+        state.userFarmProfile = JSON.parse(savedFarm);
+        if (el.cropInput && state.userFarmProfile.cropType) el.cropInput.value = state.userFarmProfile.cropType;
+        if (el.landSizeInput && state.userFarmProfile.landSizeAcres) el.landSizeInput.value = state.userFarmProfile.landSizeAcres;
+        if (el.stateInput && state.userFarmProfile.state) el.stateInput.value = state.userFarmProfile.state;
+        if (el.districtInput && state.userFarmProfile.district) el.districtInput.value = state.userFarmProfile.district;
+        if (el.incomeInput && state.userFarmProfile.annualIncome) el.incomeInput.value = state.userFarmProfile.annualIncome;
+        if (el.existingLoansInput && state.userFarmProfile.existingLoans !== undefined) el.existingLoansInput.value = state.userFarmProfile.existingLoans;
+      } catch (err) {
+        console.warn('Error parsing saved farm profile for user:', err);
+      }
+    } else {
+      // Clean Fresh Slate for New Profile!
+      if (el.cropInput) el.cropInput.value = '';
+      if (el.landSizeInput) el.landSizeInput.value = '';
+      if (el.districtInput) el.districtInput.value = '';
+      if (el.incomeInput) el.incomeInput.value = '';
+      if (el.existingLoansInput) el.existingLoansInput.value = '0';
+      state.userFarmProfile = null;
+      if (el.eligResultsContainer) el.eligResultsContainer.style.display = 'none';
+      if (el.eligEmptyState) el.eligEmptyState.style.display = 'block';
+    }
+
+    // Refresh loans list isolated to profile
+    loadLoans();
+  });
+}
+
+function escapeHtmlApp(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 

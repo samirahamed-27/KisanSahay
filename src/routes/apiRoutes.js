@@ -19,6 +19,14 @@ const {
 
 const { handleAssistantChat } = require('../controllers/assistantController');
 const { getReviewQueue, processReviewAction } = require('../controllers/reviewController');
+const {
+  sendOtp,
+  verifyOtp,
+  getProfiles,
+  createProfile,
+  switchProfile,
+  deleteProfile
+} = require('../controllers/multiuserController');
 
 const { validateRecommendationInput } = require('../middleware/validator');
 const { apiLimiter, recommendLimiter } = require('../middleware/rateLimiter');
@@ -53,7 +61,15 @@ router.get('/vault/status', apiLimiter, getVaultInfo);
 // 7. Sahay AI Assistant (RAG Chatbot grounded in verified government data)
 router.post('/assistant/chat', apiLimiter, handleAssistantChat);
 
-// 8. Ingestion / Refresh Endpoint
+// 8. Multi-User Authentication & Profile Sandboxing
+router.post('/auth/send-otp', apiLimiter, sendOtp);
+router.post('/auth/verify-otp', apiLimiter, verifyOtp);
+router.get('/users/profiles', apiLimiter, getProfiles);
+router.post('/users/profiles', apiLimiter, createProfile);
+router.post('/users/switch-profile', apiLimiter, switchProfile);
+router.delete('/users/profiles/:id', apiLimiter, deleteProfile);
+
+// 9. Ingestion / Refresh Endpoint
 router.post('/ingest/refresh', apiLimiter, triggerIngestion);
 
 module.exports = router;

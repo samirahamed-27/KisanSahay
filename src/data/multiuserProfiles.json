@@ -1,0 +1,60 @@
+{
+  "activeProfileId": "profile_default",
+  "profiles": [
+    {
+      "id": "profile_default",
+      "name": "Veer Singh",
+      "type": "phone",
+      "identifier": "+91 98765 43210",
+      "avatar": "V",
+      "color": "#15803d",
+      "isDefault": true,
+      "verified": true,
+      "createdAt": "2026-09-18T19:59:48.689Z"
+    },
+    {
+      "id": "profile_1789761588693_758",
+      "name": "Suresh Patel",
+      "type": "phone",
+      "identifier": "+91 98765 11223",
+      "avatar": "S",
+      "color": "#0284c7",
+      "isDefault": false,
+      "verified": true,
+      "createdAt": "2026-09-18T19:59:48.693Z"
+    },
+    {
+      "id": "profile_1789761588693_751",
+      "name": "Anjali Verma",
+      "type": "gmail",
+      "identifier": "anjali.farmer@gmail.com",
+      "avatar": "A",
+      "color": "#7c3aed",
+      "isDefault": false,
+      "verified": true,
+      "createdAt": "2026-09-18T19:59:48.693Z"
+    },
+    {
+      "id": "profile_1789761695146_816",
+      "name": "Suresh Patel",
+      "type": "phone",
+      "identifier": "+91 98765 11223",
+      "avatar": "S",
+      "color": "#d97706",
+      "isDefault": false,
+      "verified": true,
+      "createdAt": "2026-09-18T20:01:35.146Z"
+    },
+    {
+      "id": "profile_1789761695147_392",
+      "name": "Anjali Verma",
+      "type": "gmail",
+      "identifier": "anjali.farmer@gmail.com",
+      "avatar": "A",
+      "color": "#dc2626",
+      "isDefault": false,
+      "verified": true,
+      "createdAt": "2026-09-18T20:01:35.147Z"
+    }
+  ]
+}
