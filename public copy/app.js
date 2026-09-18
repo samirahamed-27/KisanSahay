@@ -280,11 +280,12 @@ function setLanguage(langCode) {
     });
   }
 
-  // Translate all DOM elements with data-i18n
+  // Translate all DOM elements with data-i18n safely
   document.querySelectorAll('[data-i18n]').forEach(elem => {
     const key = elem.getAttribute('data-i18n');
-    const translated = t(key);
-    if (translated) {
+    const existing = elem.textContent ? elem.textContent.trim() : '';
+    const translated = t(key, existing);
+    if (translated && translated !== key) {
       elem.textContent = translated;
     }
   });
@@ -3369,7 +3370,9 @@ let currentCategoryState = {
   gender: 'all',
   age: 'all',
   benefit: 'all',
-  caste: 'all'
+  caste: 'all',
+  currentPage: 1,
+  pageSize: 6
 };
 
 window.openCategorySchemes = function (categoryId = 'agriculture', initialScope = 'all') {
@@ -3380,6 +3383,7 @@ window.openCategorySchemes = function (categoryId = 'agriculture', initialScope 
   currentCategoryState.gender = 'all';
   currentCategoryState.benefit = 'all';
   currentCategoryState.caste = 'all';
+  currentCategoryState.currentPage = 1;
 
   const cat = (window.NATIONAL_CATEGORIES || []).find(c => c.id === categoryId) || window.NATIONAL_CATEGORIES[0];
   if (!cat) return;
@@ -3440,6 +3444,7 @@ window.openCategorySchemes = function (categoryId = 'agriculture', initialScope 
 function filterAndRenderCategorySchemes() {
   const container = document.getElementById('cat-schemes-cards-list');
   const countEl = document.getElementById('cat-schemes-count-num');
+  const paginationContainer = document.getElementById('cat-pagination-container');
   if (!container) return;
 
   const { categoryId, scope, searchQuery, state: filterState, gender, benefit } = currentCategoryState;
@@ -3531,10 +3536,22 @@ function filterAndRenderCategorySchemes() {
         <p>No schemes matched your current filter criteria. Try choosing "All Schemes" or resetting filters.</p>
       </div>
     `;
+    if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
 
-  container.innerHTML = list.map(item => `
+  // Calculate Slide Pagination
+  const totalItems = list.length;
+  const pageSize = currentCategoryState.pageSize || 6;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if (currentCategoryState.currentPage > totalPages) {
+    currentCategoryState.currentPage = totalPages;
+  }
+  const currentPage = currentCategoryState.currentPage || 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedList = list.slice(startIndex, startIndex + pageSize);
+
+  container.innerHTML = paginatedList.map(item => `
     <div class="cat-scheme-card">
       <div>
         <div class="cat-card-ministry">${escapeHtmlApp(item.ministry)}</div>
@@ -3554,7 +3571,102 @@ function filterAndRenderCategorySchemes() {
       </div>
     </div>
   `).join('');
+
+  // Render Slide Pagination (Image 2: < 1 2 [3] 4 5 6 7 ... 91 >)
+  renderCategoryPagination(currentPage, totalPages);
 }
+
+function renderCategoryPagination(currentPage, totalPages) {
+  const paginationContainer = document.getElementById('cat-pagination-container');
+  if (!paginationContainer) return;
+
+  if (totalPages <= 1) {
+    paginationContainer.innerHTML = '';
+    return;
+  }
+
+  let html = '<div class="cat-pagination-bar">';
+
+  // Previous button (<)
+  html += `
+    <button type="button" class="cat-page-btn cat-page-prev" ${currentPage <= 1 ? 'disabled' : ''} onclick="goToCategoryPage(${currentPage - 1})" aria-label="Previous Page">
+      <span class="cat-page-nav-arrow">‹</span>
+    </button>
+  `;
+
+  // Page numbers helper
+  const renderBtn = (p) => {
+    const isActive = p === currentPage;
+    return `<button type="button" class="cat-page-btn ${isActive ? 'active' : ''}" onclick="goToCategoryPage(${p})">${p}</button>`;
+  };
+
+  if (totalPages <= 8) {
+    for (let p = 1; p <= totalPages; p++) {
+      html += renderBtn(p);
+    }
+  } else {
+    if (currentPage <= 4) {
+      for (let p = 1; p <= Math.min(7, totalPages - 1); p++) {
+        html += renderBtn(p);
+      }
+      html += `<span class="cat-page-ellipsis">...</span>`;
+      html += renderBtn(totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      html += renderBtn(1);
+      html += `<span class="cat-page-ellipsis">...</span>`;
+      for (let p = totalPages - 6; p <= totalPages; p++) {
+        html += renderBtn(p);
+      }
+    } else {
+      html += renderBtn(1);
+      html += `<span class="cat-page-ellipsis">...</span>`;
+      for (let p = currentPage - 2; p <= currentPage + 2; p++) {
+        html += renderBtn(p);
+      }
+      html += `<span class="cat-page-ellipsis">...</span>`;
+      html += renderBtn(totalPages);
+    }
+  }
+
+  // Next button (>)
+  html += `
+    <button type="button" class="cat-page-btn cat-page-next" ${currentPage >= totalPages ? 'disabled' : ''} onclick="goToCategoryPage(${currentPage + 1})" aria-label="Next Page">
+      <span class="cat-page-nav-arrow">›</span>
+    </button>
+  `;
+
+  html += '</div>';
+  paginationContainer.innerHTML = html;
+}
+
+window.goToCategoryPage = function (pageNum) {
+  currentCategoryState.currentPage = pageNum;
+  filterAndRenderCategorySchemes();
+  const topAnchor = document.getElementById('cat-found-count');
+  if (topAnchor) {
+    topAnchor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+};
+
+window.openSocialMediaModal = function () {
+  showToast('Connecting to Digital India & KisanSahay Official Social Channels...');
+  window.open('https://twitter.com/DigitalIndiaGov', '_blank');
+};
+
+window.openQuickLink = function (type) {
+  const titles = {
+    'about': 'About KisanSahay & Digital India Mission',
+    'contact': 'National Helpdesk & Krishi Bhawan Contact (011-24303714)',
+    'screen-reader': 'Screen Reader Access & WCAG 2.1 AAA Compliance',
+    'accessibility': 'Portal Accessibility Statement & Standards',
+    'faq': 'Frequently Asked Questions & Eligibility Guidelines',
+    'disclaimer': 'Official Government Disclaimer & Statutory Terms',
+    'terms': 'Terms & Conditions of Portal Usage',
+    'dashboard': 'National Agricultural Scheme Analytics & Real-Time Dashboard'
+  };
+  const title = titles[type] || 'Government Portal Quick Link';
+  showToast(`🏛️ ${title}`);
+};
 
 function setupCategoryExplorer() {
   // Scope tabs
@@ -3563,6 +3675,7 @@ function setupCategoryExplorer() {
       document.querySelectorAll('#cat-scope-tabs-bar .cat-scope-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       currentCategoryState.scope = tab.getAttribute('data-cat-scope') || 'all';
+      currentCategoryState.currentPage = 1;
       filterAndRenderCategorySchemes();
     });
   });
@@ -3572,6 +3685,7 @@ function setupCategoryExplorer() {
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       currentCategoryState.searchQuery = searchInput.value;
+      currentCategoryState.currentPage = 1;
       filterAndRenderCategorySchemes();
     });
   }
@@ -3581,6 +3695,7 @@ function setupCategoryExplorer() {
   if (stateSelect) {
     stateSelect.addEventListener('change', () => {
       currentCategoryState.state = stateSelect.value;
+      currentCategoryState.currentPage = 1;
       filterAndRenderCategorySchemes();
     });
   }
@@ -3589,6 +3704,7 @@ function setupCategoryExplorer() {
   if (genderSelect) {
     genderSelect.addEventListener('change', () => {
       currentCategoryState.gender = genderSelect.value;
+      currentCategoryState.currentPage = 1;
       filterAndRenderCategorySchemes();
     });
   }
@@ -3597,6 +3713,7 @@ function setupCategoryExplorer() {
   if (benefitSelect) {
     benefitSelect.addEventListener('change', () => {
       currentCategoryState.benefit = benefitSelect.value;
+      currentCategoryState.currentPage = 1;
       filterAndRenderCategorySchemes();
     });
   }
@@ -3605,6 +3722,7 @@ function setupCategoryExplorer() {
   if (casteSelect) {
     casteSelect.addEventListener('change', () => {
       currentCategoryState.caste = casteSelect.value;
+      currentCategoryState.currentPage = 1;
       filterAndRenderCategorySchemes();
     });
   }
@@ -3619,6 +3737,7 @@ function setupCategoryExplorer() {
       currentCategoryState.caste = 'all';
       currentCategoryState.searchQuery = '';
       currentCategoryState.scope = 'all';
+      currentCategoryState.currentPage = 1;
 
       if (searchInput) searchInput.value = '';
       if (stateSelect) stateSelect.value = 'all';
