@@ -237,324 +237,194 @@
        VIEW: CHECK ELIGIBILITY (Matching Screenshot 4)
        ========================================================================== -->
   <main id="view-eligibility" class="page-view">
-    <div class="eligibility-page-container">
+    <div class="eligibility-container">
 
-      <div class="eligibility-header-compact">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-          <div>
-            <div class="elig-pill-badge">
-              <span>🌱</span> <span data-i18n="eligBadge">Dynamic Eligibility Engine</span>
-            </div>
-            <h1 class="elig-title" data-i18n="eligTitle">Check Your Eligibility</h1>
-            <p class="elig-subtitle" data-i18n="eligSubtitle">
-              Real-time algorithm matching based on your farm, land size, and socio-economic profile. Adjust filters on the left to see live scheme updates.
-            </p>
-          </div>
-          <!-- Mobile Drawer Trigger Button (<900px) -->
-          <button type="button" class="btn-mobile-filter-drawer" id="btn-mobile-filter-drawer">
-            <span>⚡ Farm Profile & Filters</span>
-            <span class="active-filter-count-badge" id="mobile-filter-count-badge">Live</span>
-          </button>
+      <div class="eligibility-header">
+        <div class="elig-pill-badge">
+          <span>🌱</span> <span data-i18n="eligBadge">Eligibility Checker</span>
         </div>
+        <h1 class="elig-title" data-i18n="eligTitle">Check Your Eligibility</h1>
+        <p class="elig-subtitle" data-i18n="eligSubtitle">
+          Fill in the details about your farm below. We'll match you with government schemes you qualify for and show
+          you the documents you need to apply.
+        </p>
       </div>
 
-      <!-- Two-Column Layout: Left Sticky Sidebar (280-320px) + Right Results Stream -->
-      <div class="eligibility-two-col-layout">
-
-        <!-- ====================================================================
-             LEFT DYNAMIC FILTER SIDEBAR (280-320px Sticky)
-             ==================================================================== -->
-        <aside class="eligibility-sidebar" id="eligibility-sidebar">
-          <div class="sidebar-header-row">
-            <div class="sidebar-title">
-              <span>⚙️</span> Farm Filters
-            </div>
-            <div style="display: flex; gap: 0.4rem; align-items: center;">
-              <button type="button" class="btn-reset-filters" id="btn-reset-filters" title="Reset all filters to defaults">
-                Reset Filters
-              </button>
-              <button type="button" class="btn-close-sidebar-mobile" id="btn-close-sidebar-mobile">✕</button>
-            </div>
+      <!-- Eligibility Form Card Matching Screenshot 4 & Advanced Match Engine -->
+      <form class="elig-form-card" id="eligibility-form">
+        <!-- Row 1: Crop & Land Size -->
+        <div class="form-row-2">
+          <div>
+            <label class="input-label-clean" for="crop-input" data-i18n="cropLabel">Type of Crop / Cultivation *</label>
+            <input type="text" id="crop-input" list="crop-suggestions" class="input-clean" placeholder="e.g. Rice, Wheat, Makhana, Soybean, Cotton, Sugarcane"
+              value="Rice, Wheat" required autocomplete="off">
+            <datalist id="crop-suggestions">
+              <option value="Wheat (गेहूं)"></option>
+              <option value="Paddy / Rice (धान / चावल)"></option>
+              <option value="Basmati Rice (बासमती धान)"></option>
+              <option value="Maize (Corn) (मक्का)"></option>
+              <option value="Pearl Millet (Bajra) (बाजरा)"></option>
+              <option value="Sorghum (Jowar) (ज्वार)"></option>
+              <option value="Finger Millet (Ragi / Madua) (रागी / मडुआ)"></option>
+              <option value="Barley (Jau) (जौ)"></option>
+              <option value="Kodo Millet (कोदो)"></option>
+              <option value="Kutki / Little Millet (कुटकी)"></option>
+              <option value="Chickpea / Gram (चना)"></option>
+              <option value="Pigeon Pea / Arhar / Tur (अरहर / तुअर)"></option>
+              <option value="Lentil (Masoor) (मसूर)"></option>
+              <option value="Green Gram (Moong) (मूँग)"></option>
+              <option value="Black Gram (Urad) (उड़द)"></option>
+              <option value="Field Pea / Matar (मटर)"></option>
+              <option value="Mustard / Rapeseed (सरसों / राई)"></option>
+              <option value="Yellow Mustard (पीली सरसों)"></option>
+              <option value="Soybean (सोयाबीन)"></option>
+              <option value="Groundnut / Peanut (मूंगफली)"></option>
+              <option value="Sesame (Til) (तिल)"></option>
+              <option value="Sunflower (सूरजमुखी)"></option>
+              <option value="Cotton (कपास)"></option>
+              <option value="Sugarcane (गन्ना)"></option>
+              <option value="Jute (पटसन / जूट)"></option>
+              <option value="Potato (आलू)"></option>
+              <option value="Onion (प्याज़)"></option>
+              <option value="Tomato (टमाटर)"></option>
+              <option value="Garlic (लहसुन)"></option>
+              <option value="Makhana / Fox Nut (मखाना)"></option>
+              <option value="Mentha / Japanese Mint (मेंथा / पिपरमेंट)"></option>
+              <option value="Litchi / Shahi Litchi (लीची)"></option>
+              <option value="Mango (आम)"></option>
+              <option value="Banana (केला)"></option>
+              <option value="Guava (अमरूद)"></option>
+              <option value="Chilli (लाल मिर्च)"></option>
+              <option value="Turmeric (हल्दी)"></option>
+              <option value="Coriander (धनिया)"></option>
+              <option value="Cumin / Jeera (जीरा)"></option>
+              <option value="Fennel / Saunf (सौंफ)"></option>
+              <option value="Fenugreek / Methi (मेथी)"></option>
+              <option value="Button Mushroom (मशरूम)"></option>
+              <option value="Oyster Mushroom (ढींगरी मशरूम)"></option>
+              <option value="Dairy / Cattle Feed (दुग्ध / हरा चारा)"></option>
+              <option value="Fisheries / Aquaculture (मत्स्य पालन)"></option>
+            </datalist>
           </div>
-
-          <form id="eligibility-sidebar-form" onsubmit="return false;">
-            <!-- 1. State / District (Always Visible) -->
-            <div class="filter-group">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <label class="filter-group-label" for="filter-state-select">📍 State & District</label>
-                <button type="button" id="btn-detect-gps" class="btn-clean-gps" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;" title="Auto-detect current GPS location">
-                  📍 <span id="gps-status-text">GPS</span>
-                </button>
-              </div>
-              <select id="filter-state-select" class="sidebar-select">
-                <option value="all">All India (National)</option>
-                <option value="Punjab" selected>Punjab</option>
-                <option value="Uttar Pradesh">Uttar Pradesh</option>
-                <option value="Madhya Pradesh">Madhya Pradesh</option>
-                <option value="Bihar">Bihar</option>
-                <option value="Maharashtra">Maharashtra</option>
-                <option value="Haryana">Haryana</option>
-                <option value="Rajasthan">Rajasthan</option>
-                <option value="Gujarat">Gujarat</option>
-                <option value="Karnataka">Karnataka</option>
-                <option value="Telangana">Telangana</option>
-                <option value="Tamil Nadu">Tamil Nadu</option>
-                <option value="West Bengal">West Bengal</option>
+          <div>
+            <label class="input-label-clean" for="land-size-input">Land Holding Size *</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="number" id="land-size-input" class="input-clean" placeholder="e.g. 3.5" value="3.5"
+                step="0.1" min="0" required style="flex: 1;">
+              <select id="land-unit-select" class="select-clean" style="width: 110px;">
+                <option value="acres" selected>Acres</option>
+                <option value="hectares">Hectares</option>
               </select>
-              <input type="text" id="filter-district-input" class="sidebar-input" placeholder="District e.g. Ludhiana, Pune" value="Ludhiana">
-              <!-- Hidden compatibility inputs -->
-              <input type="hidden" id="state-input" value="Punjab">
-              <input type="hidden" id="district-input" value="Ludhiana">
-              <input type="hidden" id="geo-lat" value="">
-              <input type="hidden" id="geo-long" value="">
             </div>
+          </div>
+        </div>
 
-            <!-- 2. Land Holding Size Slider (Always Visible) -->
-            <div class="filter-group">
-              <div class="slider-header-row">
-                <label class="filter-group-label" for="filter-land-slider">📐 Land Holding Size</label>
-                <span class="slider-val-badge" id="land-slider-display">3.5 Acres</span>
-              </div>
-              <input type="range" id="filter-land-slider" class="sidebar-range" min="0" max="25" step="0.5" value="3.5">
-              <div class="slider-ticks">
-                <span>0 ac</span>
-                <span>2.5 ac (Marginal)</span>
-                <span>5 ac (Small)</span>
-                <span>15+ ac</span>
-              </div>
-              <!-- Hidden compatibility input -->
-              <input type="hidden" id="land-size-input" value="3.5">
-            </div>
-
-            <!-- 3. Crop Types Grown Multi-Select (Always Visible) -->
-            <div class="filter-group">
-              <label class="filter-group-label">🌾 Crop Types Grown</label>
-              <div class="crops-chip-selector" id="sidebar-crops-selector">
-                <button type="button" class="crop-filter-chip active" data-crop="Wheat">Wheat (गेहूं)</button>
-                <button type="button" class="crop-filter-chip active" data-crop="Rice">Rice / Paddy (धान)</button>
-                <button type="button" class="crop-filter-chip" data-crop="Maize">Maize (मक्का)</button>
-                <button type="button" class="crop-filter-chip" data-crop="Cotton">Cotton (कपास)</button>
-                <button type="button" class="crop-filter-chip" data-crop="Sugarcane">Sugarcane (गन्ना)</button>
-                <button type="button" class="crop-filter-chip" data-crop="Pulses">Pulses / Dal (दालें)</button>
-                <button type="button" class="crop-filter-chip" data-crop="Mustard">Mustard (सरसों)</button>
-                <button type="button" class="crop-filter-chip" data-crop="Soybean">Soybean (सोयाबीन)</button>
-                <button type="button" class="crop-filter-chip" data-crop="Dairy">Dairy (दुग्ध उत्पादन)</button>
-              </div>
-              <input type="hidden" id="crop-input" value="Rice, Wheat">
-            </div>
-
-            <!-- 4. Category & Affirmative Action (Always Visible) -->
-            <div class="filter-group">
-              <label class="filter-group-label">👥 Category & Gender</label>
-              <div class="checkbox-group" id="group-category">
-                <label class="filter-checkbox-label">
-                  <input type="radio" name="filter-category" value="general" checked>
-                  <span>General</span>
-                  <span class="facet-count-badge" id="count-cat-general">28</span>
-                </label>
-                <label class="filter-checkbox-label">
-                  <input type="radio" name="filter-category" value="obc">
-                  <span>OBC (Other Backward)</span>
-                  <span class="facet-count-badge" id="count-cat-obc">29</span>
-                </label>
-                <label class="filter-checkbox-label">
-                  <input type="radio" name="filter-category" value="sc">
-                  <span>SC (Scheduled Caste)</span>
-                  <span class="facet-count-badge" id="count-cat-sc">31</span>
-                </label>
-                <label class="filter-checkbox-label">
-                  <input type="radio" name="filter-category" value="st">
-                  <span>ST (Scheduled Tribe)</span>
-                  <span class="facet-count-badge" id="count-cat-st">31</span>
-                </label>
-                <label class="filter-checkbox-label">
-                  <input type="radio" name="filter-category" value="women">
-                  <span>Women Farmer (Priority)</span>
-                  <span class="facet-count-badge" id="count-cat-women">32</span>
-                </label>
-              </div>
-              <input type="hidden" id="category-select" value="general">
-            </div>
-
-            <!-- Progressive Disclosure: "+ More Filters" Accordion -->
-            <div class="more-filters-accordion">
-              <button type="button" class="btn-toggle-more-filters" id="btn-toggle-more-filters">
-                <span id="more-filters-toggle-text">➕ More Filters (Income, Debt, Title, Irrigation)</span>
+        <!-- Row 2: Location (State, District & GPS) -->
+        <div class="form-row-2">
+          <div>
+            <label class="input-label-clean" for="state-input">State *</label>
+            <input type="text" id="state-input" class="input-clean" placeholder="e.g. Punjab, Maharashtra, UP"
+              value="Punjab" required>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="input-label-clean" for="district-input" data-i18n="districtLabel" style="margin-bottom: 0;">Locality / District *</label>
+              <button type="button" id="btn-detect-gps" class="btn-clean-gps" title="Auto-detect current GPS location">
+                📍 <span id="gps-status-text">Detect GPS</span>
               </button>
-
-              <div class="collapsible-filter-sections" id="collapsible-filter-sections" style="display: none; margin-top: 0.85rem;">
-                <!-- 5. Annual Farm Income Bracket -->
-                <div class="filter-group">
-                  <label class="filter-group-label">💰 Annual Farm Income</label>
-                  <div class="checkbox-group" id="group-income">
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-income-bracket" value="all">
-                      <span>Any Income Bracket</span>
-                      <span class="facet-count-badge" id="count-inc-all">32</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-income-bracket" value="under1l">
-                      <span>&lt; ₹1.0 Lakh (Smallest)</span>
-                      <span class="facet-count-badge" id="count-inc-under1l">30</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-income-bracket" value="1to3l" checked>
-                      <span>₹1.0L – ₹3.0 Lakh</span>
-                      <span class="facet-count-badge" id="count-inc-1to3l">29</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-income-bracket" value="3to6l">
-                      <span>₹3.0L – ₹6.0 Lakh</span>
-                      <span class="facet-count-badge" id="count-inc-3to6l">26</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-income-bracket" value="above6l">
-                      <span>&gt; ₹6.0 Lakh (Commercial)</span>
-                      <span class="facet-count-badge" id="count-inc-above6l">22</span>
-                    </label>
-                  </div>
-                  <input type="hidden" id="income-input" value="250000">
-                </div>
-
-                <!-- 6. Existing Loan Status -->
-                <div class="filter-group">
-                  <label class="filter-group-label">💳 Existing Loan Status</label>
-                  <div class="checkbox-group" id="group-loan-status">
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-loan-status" value="none">
-                      <span>No Active Loans (Debt-Free)</span>
-                      <span class="facet-count-badge" id="count-loan-none">32</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-loan-status" value="has_kcc" checked>
-                      <span>Has Active KCC (3% PRI)</span>
-                      <span class="facet-count-badge" id="count-loan-kcc">29</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-loan-status" value="other_debt">
-                      <span>Has Existing Bank / Market Debt</span>
-                      <span class="facet-count-badge" id="count-loan-other">24</span>
-                    </label>
-                  </div>
-                  <input type="hidden" id="kcc-status-select" value="yes">
-                  <input type="hidden" id="existing-loans-input" value="30000">
-                </div>
-
-                <!-- 7. Collateral Security Available -->
-                <div class="filter-group">
-                  <label class="filter-group-label">🛡️ Collateral Security</label>
-                  <div class="checkbox-group" id="group-collateral">
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-collateral" value="any" checked>
-                      <span>All (Collateral-Free & Secured)</span>
-                      <span class="facet-count-badge" id="count-collat-any">32</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-collateral" value="yes">
-                      <span>Yes (Can pledge land mortgage)</span>
-                      <span class="facet-count-badge" id="count-collat-yes">28</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-collateral" value="no">
-                      <span>No (Collateral-Free &lt; ₹1.60L)</span>
-                      <span class="facet-count-badge" id="count-collat-no">18</span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- 8. Irrigation Type -->
-                <div class="filter-group">
-                  <label class="filter-group-label">💧 Irrigation Type</label>
-                  <div class="checkbox-group" id="group-irrigation">
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-irrigation" value="all" checked>
-                      <span>All Irrigation Types</span>
-                      <span class="facet-count-badge" id="count-irrig-all">32</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-irrigation" value="irrigated">
-                      <span>Irrigated (Canal / Tube well)</span>
-                      <span class="facet-count-badge" id="count-irrig-irrigated">27</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-irrigation" value="rainfed">
-                      <span>Rainfed (Monsoon Dependent)</span>
-                      <span class="facet-count-badge" id="count-irrig-rainfed">22</span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- 9. Farmer Occupation & Title Type -->
-                <div class="filter-group">
-                  <label class="filter-group-label">🚜 Occupation & Land Title</label>
-                  <div class="checkbox-group" id="group-occupation">
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-occupation" value="owner" checked>
-                      <span>Owner-Cultivator (Title Holder)</span>
-                      <span class="facet-count-badge" id="count-occ-owner">32</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-occupation" value="tenant">
-                      <span>Tenant Farmer (Bataidar)</span>
-                      <span class="facet-count-badge" id="count-occ-tenant">18</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-occupation" value="sharecropper">
-                      <span>Sharecropper / Oral Lessee</span>
-                      <span class="facet-count-badge" id="count-occ-share">16</span>
-                    </label>
-                    <label class="filter-checkbox-label">
-                      <input type="radio" name="filter-occupation" value="landless">
-                      <span>Agri Labourer / Landless</span>
-                      <span class="facet-count-badge" id="count-occ-landless">12</span>
-                    </label>
-                  </div>
-                  <input type="hidden" id="land-ownership-select" value="owner">
-                  <input type="hidden" id="aadhaar-status-select" value="yes">
-                </div>
-
-              </div>
             </div>
-
-          </form>
-        </aside>
-
-        <!-- ====================================================================
-             RIGHT RESULTS COLUMN (Live Debounced Output Stream)
-             ==================================================================== -->
-        <section class="eligibility-results-column">
-
-          <!-- Skeleton Loading State (Debounced recalculation without full page reload) -->
-          <div id="eligibility-skeleton-loader" class="skeleton-stream" style="display: none;">
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
+            <input type="text" id="district-input" class="input-clean" placeholder="e.g. Ludhiana, Pune, Karnal"
+              value="Ludhiana" required style="margin-top: 0.4rem;">
+            <input type="hidden" id="geo-lat" value="">
+            <input type="hidden" id="geo-long" value="">
           </div>
+        </div>
 
-          <!-- Output Container -->
-          <div id="elig-results-container" style="display: flex; flex-direction: column; gap: 1.5rem;">
-            <!-- 1. Regional & Dynamic 300km Soil Context Card -->
-            <div id="location-context-card" class="intelligence-card" style="display: none;"></div>
-
-            <!-- 2. Debt Safety & Responsible Lending Card -->
-            <div id="debt-safety-card" class="safety-card" style="display: none;"></div>
-
-            <!-- 3. Sequence Rankings Header Banner -->
-            <div id="recommendations-summary-banner" class="summary-banner" style="display: none;"></div>
-
-            <!-- 4. Ranked Schemes Cards Stream -->
-            <div id="recommendations-cards-stream" class="cards-stream" style="display: flex; flex-direction: column; gap: 1.25rem;"></div>
+        <!-- Row 3: Land Ownership & Category -->
+        <div class="form-row-2">
+          <div>
+            <label class="input-label-clean" for="land-ownership-select" data-i18n="landLabel">Land Ownership Status</label>
+            <select id="land-ownership-select" class="select-clean">
+              <option value="owner" data-i18n="landOwn">Own Land (Title Holder)</option>
+              <option value="tenant" data-i18n="landTenant">Tenant Farmer</option>
+              <option value="sharecropper" data-i18n="landShare">Sharecropper</option>
+              <option value="leaseholder" data-i18n="landLease">Leaseholder</option>
+              <option value="landless">Landless Agricultural Labourer</option>
+            </select>
           </div>
-
-          <!-- Empty State -->
-          <div class="elig-empty-state" id="elig-empty-state" style="display: none;">
-            <div class="elig-empty-icon">🌱</div>
-            <p data-i18n="eligEmptyState">
-              Adjust filters on the left to generate ranked loan recommendations, soil intelligence, and safe borrowing limits.
-            </p>
+          <div>
+            <label class="input-label-clean" for="category-select">Social Category / Gender *</label>
+            <select id="category-select" class="select-clean">
+              <option value="general" selected>General</option>
+              <option value="obc">OBC (Other Backward Class)</option>
+              <option value="sc">SC (Scheduled Caste - Subsidized)</option>
+              <option value="st">ST (Scheduled Tribe - Subsidized)</option>
+              <option value="women">Women Farmer (Priority Credit)</option>
+            </select>
           </div>
+        </div>
 
-        </section>
+        <!-- Row 4: Annual Income & Existing Loans -->
+        <div class="form-row-2">
+          <div>
+            <label class="input-label-clean" for="income-input" data-i18n="incomeLabel">Annual Farm Income (₹) *</label>
+            <input type="number" id="income-input" class="input-clean" placeholder="₹ e.g. 250000" value="250000"
+              min="0" required>
+          </div>
+          <div>
+            <label class="input-label-clean" for="existing-loans-input">Current Outstanding Debt / Monthly EMIs (₹)</label>
+            <input type="number" id="existing-loans-input" class="input-clean" placeholder="₹ 0 if debt-free" value="30000"
+              min="0">
+          </div>
+        </div>
+
+        <!-- Row 5: KCC, Aadhaar & Action Submit -->
+        <div class="form-row-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end;">
+          <div>
+            <label class="input-label-clean" for="kcc-status-select" data-i18n="kccQuestion">Have Kisan Credit Card (KCC)?</label>
+            <select id="kcc-status-select" class="select-clean">
+              <option value="yes" data-i18n="yes">Yes</option>
+              <option value="no" data-i18n="no">No</option>
+            </select>
+          </div>
+          <div>
+            <label class="input-label-clean" for="aadhaar-status-select" data-i18n="aadhaarQuestion">Aadhaar Linked with Bank?</label>
+            <select id="aadhaar-status-select" class="select-clean">
+              <option value="yes" data-i18n="yes">Yes</option>
+              <option value="no" data-i18n="no">No</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-check-elig-submit" id="btn-submit-eligibility" style="width: 100%;">
+              <span>🔍</span> <span data-i18n="btnCheckElig">Find Best Loan & Schemes</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Empty State / Matched Results -->
+      <div id="eligibility-results-wrapper" style="margin-top: 2rem;">
+        <div class="elig-empty-state" id="elig-empty-state">
+          <div class="elig-empty-icon">🌱</div>
+          <p data-i18n="eligEmptyState">
+            Fill in your farm details above to generate ranked loan recommendations, soil intelligence, and safe borrowing limits.
+          </p>
+        </div>
+
+        <!-- Dynamic Output Container -->
+        <div id="elig-results-container" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <!-- 1. Regional & Soil Context Intelligence Box -->
+          <div id="location-context-card" class="intelligence-card" style="display: none;"></div>
+
+          <!-- 2. Debt Trap Safety & Responsible Lending Meter -->
+          <div id="debt-safety-card" class="safety-card" style="display: none;"></div>
+
+          <!-- 3. Sequence Rankings Header Banner -->
+          <div id="recommendations-summary-banner" class="summary-banner" style="display: none;"></div>
+
+          <!-- 4. Ranked Schemes Cards Stream -->
+          <div id="recommendations-cards-stream" class="cards-stream" style="display: flex; flex-direction: column; gap: 1.25rem;"></div>
+        </div>
       </div>
 
     </div>
