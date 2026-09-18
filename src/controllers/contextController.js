@@ -69,8 +69,35 @@ function getSoilFertility(req, res, next) {
   }
 }
 
+const cropsData = require('../data/cropsData.json');
+
+function getCrops(req, res, next) {
+  try {
+    const { category, season, search } = req.query;
+    let list = cropsData;
+    if (category) {
+      list = list.filter(c => c.category && c.category.toLowerCase().includes(category.toLowerCase()));
+    }
+    if (season) {
+      list = list.filter(c => c.season && c.season.toLowerCase().includes(season.toLowerCase()));
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.hindiName && c.hindiName.includes(q)));
+    }
+    res.json({
+      success: true,
+      total: list.length,
+      data: list
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getLocationIntelligence,
-  getSoilFertility
+  getSoilFertility,
+  getCrops
 };
 
