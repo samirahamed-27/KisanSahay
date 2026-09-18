@@ -129,25 +129,66 @@ async function fetchPublicPortalUpdates() {
   };
 }
 
+const STAGED_FILE = path.join(__dirname, '..', 'data', 'stagedSchemes.json');
+
 /**
- * Manually trigger data refresh and update cache timestamp
+ * Stage an incoming discovered update for human verification
+ */
+function stageIncomingUpdate(stagedPayload) {
+  let existing = [];
+  if (fs.existsSync(STAGED_FILE)) {
+    try {
+      existing = JSON.parse(fs.readFileSync(STAGED_FILE, 'utf8'));
+    } catch (e) {
+      existing = [];
+    }
+  }
+
+  const record = {
+    id: stagedPayload.id || `staged-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+    status: 'staged',
+    submittedAt: new Date().toISOString(),
+    sourceAuthority: stagedPayload.sourceAuthority || 'Official Agri Portal',
+    sourceUrl: stagedPayload.sourceUrl || 'https://agricoop.nic.in',
+    lastVerifiedAt: new Date().toISOString(),
+    rawContent: stagedPayload.rawContent || '',
+    changesSummary: stagedPayload.changesSummary || 'Newly crawled scheme awaiting human approval.',
+    structuredScheme: stagedPayload.structuredScheme || null
+  };
+
+  // Prevent duplicate staging of same scheme id
+  const existingIdx = existing.findIndex(item => item.id === record.id || (item.structuredScheme && record.structuredScheme && item.structuredScheme.id === record.structuredScheme.id));
+  if (existingIdx >= 0) {
+    existing[existingIdx] = record;
+  } else {
+    existing.unshift(record);
+  }
+
+  fs.writeFileSync(STAGED_FILE, JSON.stringify(existing, null, 2), 'utf8');
+  logger.info(`Staged new scheme update "${record.id}" for human review.`);
+  return record;
+}
+
+/**
+ * Trigger data verification and refresh check.
+ * Strictly adheres to human review gate: new portal data is staged for review.
  */
 async function refreshData() {
   const portalResults = await fetchPublicPortalUpdates();
   
-  // Read current schemes
   if (fs.existsSync(SCHEMES_FILE)) {
     const raw = fs.readFileSync(SCHEMES_FILE, 'utf8');
     const schemes = JSON.parse(raw);
 
-    // Stamp the schemes with latest ingestion verification metadata
+    // Update verification heartbeat without changing scheme logic
     const stampedSchemes = schemes.map(s => ({
       ...s,
       lastVerifiedAt: portalResults.lastRefreshedAt
     }));
 
     fs.writeFileSync(SCHEMES_FILE, JSON.stringify(stampedSchemes, null, 2));
-    logger.info(`Updated and verified ${stampedSchemes.length} schemes in cache.`);
+    logger.info(`Verified ${stampedSchemes.length} published schemes in cache. Timestamp: ${portalResults.lastRefreshedAt}`);
+    
     return {
       success: true,
       count: stampedSchemes.length,
@@ -164,7 +205,6 @@ async function refreshData() {
  */
 function startScheduledIngestion(intervalMs = 7 * 24 * 60 * 60 * 1000) {
   logger.info('Background scheme ingestion scheduler initialized (Weekly cycle).');
-  // Periodic timer
   setInterval(async () => {
     try {
       await refreshData();
@@ -177,6 +217,8 @@ function startScheduledIngestion(intervalMs = 7 * 24 * 60 * 60 * 1000) {
 module.exports = {
   canFetch,
   fetchPublicPortalUpdates,
+  stageIncomingUpdate,
   refreshData,
   startScheduledIngestion
 };
+

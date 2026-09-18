@@ -76386,5 +76386,44 @@
     "interestRate": 3.5,
     "maxLimit": 250000,
     "state": "Bihar"
+  },
+  {
+    "id": "rbi-kcc-subvention-2026",
+    "name": "RBI Modified Interest Subvention Scheme (MISS) for Kisan Credit Card",
+    "shortName": "RBI MISS KCC Subvention",
+    "category": "Loan Subvention",
+    "subCategory": "Crop Loan Interest Subsidy",
+    "provider": "Reserve Bank of India & MoA&FW",
+    "officialPortalUrl": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12400&Mode=0",
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 4,
+    "subsidyPercentage": 42.8,
+    "maxLoanAmount": 300000,
+    "tenureMonths": 12,
+    "eligibilityCriteria": {
+      "minLandAcres": 0.1,
+      "maxLandAcres": 50,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper",
+        "leaseholder"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "maxAnnualIncome": 2500000,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "statesApplicable": [
+        "all"
+      ]
+    },
+    "lastVerifiedAt": "2026-09-15T10:30:00.000Z",
+    "publishedAt": "2026-09-18T18:11:09.430Z"
   }
 ]
