@@ -10,7 +10,7 @@
   window.NATIONAL_CATEGORIES = [
     {
       id: 'agriculture',
-      name: 'Agriculture,Rural & Environment',
+      name: 'Agriculture, Rural & Environment',
       hindiName: 'कृषि, ग्रामीण एवं पर्यावरण',
       count: 909,
       accentColor: '#10b981',
@@ -21,7 +21,7 @@
     },
     {
       id: 'banking',
-      name: 'Banking,Financial Services and Insurance',
+      name: 'Banking, Financial Services and Insurance',
       hindiName: 'बैंकिंग, वित्तीय सेवाएं एवं बीमा',
       count: 354,
       accentColor: '#f97316',
@@ -76,7 +76,7 @@
     },
     {
       id: 'justice',
-      name: 'Public Safety,Law & Justice',
+      name: 'Public Safety, Law & Justice',
       hindiName: 'सार्वजनिक सुरक्षा एवं न्याय',
       count: 34,
       accentColor: '#f97316',
