@@ -6,6 +6,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
+  /* Architectural Theme Variables */
+  --bg-primary: #f8fafc;
+  --bg-main: var(--bg-primary);
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-dark: var(--text-primary);
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-subtle: #edf2f7;
+  --accent-emerald: #10b981;
+  --accent-teal: #0891b2;
+
   /* Agri Palette */
   --primary-dark: #0f341d;
   --primary-deep: #16532d;
@@ -23,15 +37,6 @@
   --infra-red-grad: linear-gradient(135deg, #ea580c, #dc2626);
   --income-teal: #0891b2;
   --income-teal-grad: linear-gradient(135deg, #0e7490, #0891b2);
-
-  /* Neutrals & UI */
-  --bg-main: #f8faf9;
-  --bg-card: #ffffff;
-  --border-color: #e2e8f0;
-  --border-subtle: #edf2f7;
-  --text-dark: #0f172a;
-  --text-muted: #64748b;
-  --text-light: #94a3b8;
 
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
@@ -3870,24 +3875,28 @@ h1, h2, h3, h4, .brand-font {
    Matching reference screenshots (Images 1, 2, 3, 4, 5)
    ========================================================================== */
 
-/* Smooth Global Transition */
+/* Smooth Global Transition (0.3s ease) */
 body, 
 body *,
 body *:before,
 body *:after {
-  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease, box-shadow 0.25s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Dark Mode Palette Variables */
+/* Dark Mode Palette Variables (WCAG AAA Contrast) */
 body.dark-mode {
-  --bg-main: #0b0f19;
-  --bg-card: #111827;
-  --bg-card-hover: #1e293b;
-  --border-color: #1f2937;
-  --border-subtle: #374151;
-  --text-dark: #f8fafc;
+  --bg-primary: #0b131e;
+  --bg-main: var(--bg-primary);
+  --bg-card: #111c2e;
+  --bg-card-hover: #17243b;
+  --text-primary: #f8fafc;
+  --text-dark: var(--text-primary);
   --text-muted: #94a3b8;
   --text-light: #64748b;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --accent-emerald: #10b981;
+  --accent-teal: #34d399;
   --primary-main: #10b981;
   --primary-surface: rgba(16, 185, 129, 0.12);
   --primary-surface-hover: rgba(16, 185, 129, 0.22);
@@ -4598,13 +4607,13 @@ body.dark-mode .step-title {
 }
 
 body.dark-mode .category-card-item {
-  background: #111827;
-  border-color: #1f2937;
+  background: var(--bg-card);
+  border-color: var(--border-color);
 }
 
 .category-card-item:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
   border-color: var(--cat-accent, #10b981);
 }
 

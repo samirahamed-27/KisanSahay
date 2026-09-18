@@ -2230,6 +2230,15 @@ async function checkEligibility() {
     hasAadhaar
   };
 
+  // Persist strictly to active profile sandbox
+  try {
+    const activeProfile = window.multiUserManager ? window.multiUserManager.getActiveProfile() : null;
+    const activeProfileId = activeProfile ? activeProfile.id : 'profile_default';
+    localStorage.setItem(`kisansahay_farm_${activeProfileId}`, JSON.stringify(state.userFarmProfile));
+  } catch (err) {
+    console.warn('Failed to persist profile farm data to localStorage:', err);
+  }
+
   try {
     if (el.btnSubmitEligibility) {
       el.btnSubmitEligibility.disabled = true;
@@ -3633,6 +3642,24 @@ function setupCategoryExplorer() {
 // ==========================================================================
 
 function setupMultiuserStateListener() {
+  // Restore active profile sandboxed state on page load
+  const activeProfile = window.multiUserManager ? window.multiUserManager.getActiveProfile() : null;
+  const initialProfileId = activeProfile ? activeProfile.id : 'profile_default';
+  const initialSavedFarm = localStorage.getItem(`kisansahay_farm_${initialProfileId}`);
+  if (initialSavedFarm) {
+    try {
+      state.userFarmProfile = JSON.parse(initialSavedFarm);
+      if (el.cropInput && state.userFarmProfile.cropType) el.cropInput.value = state.userFarmProfile.cropType;
+      if (el.landSizeInput && state.userFarmProfile.landSizeAcres) el.landSizeInput.value = state.userFarmProfile.landSizeAcres;
+      if (el.stateInput && state.userFarmProfile.state) el.stateInput.value = state.userFarmProfile.state;
+      if (el.districtInput && state.userFarmProfile.district) el.districtInput.value = state.userFarmProfile.district;
+      if (el.incomeInput && state.userFarmProfile.annualIncome) el.incomeInput.value = state.userFarmProfile.annualIncome;
+      if (el.existingLoansInput && state.userFarmProfile.existingLoans !== undefined) el.existingLoansInput.value = state.userFarmProfile.existingLoans;
+    } catch (err) {
+      console.warn('Error parsing initial farm profile:', err);
+    }
+  }
+
   window.addEventListener('kisansahay:profileChanged', (e) => {
     const { profile, profileId } = e.detail || {};
     if (!profileId) return;
