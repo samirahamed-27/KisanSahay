@@ -104,21 +104,33 @@
       if (!container) return;
 
       container.innerHTML = `
-        <button class="user-profile-btn" id="user-profile-toggle-btn" title="Account: ${this.escapeHtml(active.name)}" aria-haspopup="true">
+        <button class="user-profile-btn clean-avatar-btn" id="user-profile-toggle-btn" title="Click to view profile: ${this.escapeHtml(active.name)}" aria-haspopup="true">
           <div class="avatar-circle" style="background: ${active.color || '#15803d'}; color: #ffffff;">
             ${this.escapeHtml(active.avatar || 'V')}
+            <span class="avatar-online-dot"></span>
           </div>
-          <div class="user-profile-meta hide-mobile">
-            <span class="user-profile-name">${this.escapeHtml(active.name)}</span>
-            <span class="user-profile-id">${this.escapeHtml(active.identifier || 'Farmer Profile')}</span>
-          </div>
-          <small style="color: var(--text-muted); font-weight: 700; margin-left: 0.25rem;">▾</small>
         </button>
 
         <div class="multiuser-dropdown-menu" id="multiuser-dropdown-menu" style="display: none;">
+          <!-- Active Profile Card with Full Details (Shown only after clicking profile picture) -->
+          <div class="dropdown-active-card">
+            <div class="avatar-circle large" style="background: ${active.color || '#15803d'}; color: #ffffff;">
+              ${this.escapeHtml(active.avatar || 'V')}
+            </div>
+            <div class="dropdown-active-meta">
+              <div class="dropdown-active-name-row">
+                <span class="dropdown-active-name">${this.escapeHtml(active.name)}</span>
+                <span class="dropdown-verified-badge">✓ Verified</span>
+              </div>
+              <div class="dropdown-active-contact">
+                ${active.type === 'gmail' ? '✉️' : '📱'} ${this.escapeHtml(active.identifier || 'Farmer Profile')}
+              </div>
+            </div>
+          </div>
+
           <div class="dropdown-header">
             <span class="dropdown-title">Switch Profile</span>
-            <span class="dropdown-badge">${this.state.profiles.length} Active</span>
+            <span class="dropdown-badge">${this.state.profiles.length} Profiles</span>
           </div>
 
           <div class="dropdown-profiles-list">
