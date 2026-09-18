@@ -1,1 +1,55 @@
-[]
+[
+  {
+    "id": "loan-1789677105537",
+    "schemeId": "kcc",
+    "schemeName": "Kisan Credit Card (KCC)",
+    "schemeSub": "Agri Loan",
+    "bankName": "Gramin Kisan Cooperative Bank",
+    "accountNumber": "•••• 7682",
+    "cropOrPurpose": "Credit Card & Working Capital",
+    "sanctionDate": "2026-09-17",
+    "principalAmount": 100000,
+    "totalAmount": 100000,
+    "totalWithInterest": 102180,
+    "paidAmount": 1200,
+    "dueAmount": 100980,
+    "monthlyEmi": 8515,
+    "emisLeft": 12,
+    "interestRate": 4,
+    "tenureMonths": 12,
+    "status": "Active",
+    "dueDate": "2026-12-16",
+    "payments": [
+      {
+        "id": "pay-1789677135810",
+        "date": "2026-09-17",
+        "amount": 1158,
+        "note": "Updated by farmer"
+      },
+      {
+        "id": "pay-1789677128176",
+        "date": "2026-09-17",
+        "amount": 42,
+        "note": "Updated by farmer"
+      },
+      {
+        "id": "pay-1789677127576",
+        "date": "2026-09-17",
+        "amount": 42,
+        "note": "Updated by farmer"
+      },
+      {
+        "id": "pay-1789677120744",
+        "date": "2026-09-17",
+        "amount": 42,
+        "note": "Updated by farmer"
+      },
+      {
+        "id": "pay-1789677108779",
+        "date": "2026-09-17",
+        "amount": 0,
+        "note": "Updated by farmer"
+      }
+    ]
+  }
+]

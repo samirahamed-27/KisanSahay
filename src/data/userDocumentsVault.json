@@ -1,0 +1,46 @@
+{
+  "test-farmer-word": {
+    "userId": "test-farmer-word",
+    "passwordType": "word",
+    "salt": "7168675b495781c9529c9982f68f6c8c",
+    "iv": "dae35e5a58c86add042e0eec",
+    "authTag": "a66aac6a932a1f645310ff6816e14b42",
+    "encryptedData": "3b254bd7eac6506fe7e320a6c5a6d1d5496294a9fd4fdb6cfed2f64fe2f90bffef7186edf4ebf399918c70819fb01ebb6c7f206014d3bc87e9a3f94718e83d425e94ef5e3f8b6075dc94761317fbdd61b4b9b2767be9599ba69603fcea642d97dee0e300667ba85eeab77614105d3c395c051ba113f0265ab7dead3ce884b79891e825f5aacd868b5c27fa7cc328149f1ecdd61c740b790dd4090a3ef3731e11f92dc9ca134d9e9c6e859e3e16abc50b819b8a969932b7e951c0d60d",
+    "verifierHash": "34e0dc6872708360fcadf1a8f2a221ca",
+    "documentCount": 4,
+    "updatedAt": "2026-09-18T10:24:37.699Z"
+  },
+  "test-farmer-pin": {
+    "userId": "test-farmer-pin",
+    "passwordType": "number",
+    "salt": "71249fa96ff6be2f8a3601b9b4a1cf30",
+    "iv": "f7553ff87a80ab042d6cd49a",
+    "authTag": "babbe9295cbe63067c552c2009e09a49",
+    "encryptedData": "657dbf64009fdf5172da1335d1e57a5043b55934083e3494b6c4f6a6ccd89cb08d0de9e5037a79df06a197e2a2e7cce54f029ef010f9d416c9405ff1309afd88e81b762a0e92fdda6a3e096ef18a0682f5d1b6a24c7253d7391213e9e9625d78c399468870556d54c12d416601cb134ee2cf",
+    "verifierHash": "52ee1849d4fb2b00802b76526ab6cde3",
+    "documentCount": 2,
+    "updatedAt": "2026-09-18T10:24:37.740Z"
+  },
+  "test-farmer-pattern": {
+    "userId": "test-farmer-pattern",
+    "passwordType": "pattern",
+    "salt": "3637e79e1d1faceb810df809b6913789",
+    "iv": "1632dc39205987ce6329e05c",
+    "authTag": "f07f524ff9a7d52fb231d2bfd650b320",
+    "encryptedData": "2e6e586a81afe513f1ebc2683e112a0affd9fd75aa288a06a646ae8691d161dfc7e16d70717af4301bc3cc3d21692029c89fc235c7d7a0406b5b770ff5384f66a9f13c112239b20c4c38e1e5ee19a497197099875bff2b5ea24aec9e1c97b5985427f848b214cca793bfd598f5c166697fd9",
+    "verifierHash": "9ad2284d2c828fedd121323147f41a08",
+    "documentCount": 2,
+    "updatedAt": "2026-09-18T10:24:37.781Z"
+  },
+  "farmer_test": {
+    "userId": "farmer_test",
+    "passwordType": "word",
+    "salt": "81d786eaabeaea4109ed5d4323e2e115",
+    "iv": "cea5ef214990673f2484a771",
+    "authTag": "4eb9651d4a4455fd499c793fef4894e3",
+    "encryptedData": "32c173a6d7b2a0fc7262e0f8455401a30814ea27fe8fad30493693861ae9ff4dc122a4f4b1a3fde6cb7f1fb3c99a36eab0a85dfde8d475c264807d2c8306852cd5b13bdab2131eea9e290275de1d19fd0c3f9982fc04a31bce9ca8b1b298f04c1f7d68b6dd40eb464e1b49d752047c8739a50ff6",
+    "verifierHash": "65272a2f2a138aa676a5bf16ca096e80",
+    "documentCount": 2,
+    "updatedAt": "2026-09-18T10:09:41.303Z"
+  }
+}
