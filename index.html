@@ -30,7 +30,9 @@
         <button class="nav-item" data-view="eligibility" data-i18n="navEligibility">Check Eligibility</button>
         <button class="nav-item" data-view="schemes" data-i18n="navSchemes">Government Schemes</button>
         <button class="nav-item" data-view="loans" data-i18n="navLoans">My Loans & EMIs</button>
+        <button class="nav-item" data-view="landrates" data-i18n="navLandRates">📊 Land Circle Rates</button>
       </nav>
+
 
       <!-- Header Actions -->
       <div class="header-actions">
@@ -80,7 +82,9 @@
         Government Schemes</button>
       <button class="nav-item" data-view="loans" style="justify-content: flex-start;" data-i18n="navLoans">💳 My Loans &
         EMIs</button>
+      <button class="nav-item" data-view="landrates" style="justify-content: flex-start;" data-i18n="navLandRates">📊 Land Circle Rates</button>
     </div>
+
   </aside>
 
   <!-- ==========================================================================
@@ -581,6 +585,108 @@
     </div>
 
   </main>
+
+  <!-- ==========================================================================
+       VIEW: LAND CIRCLE RATES & MARKET VALUATION
+       ========================================================================== -->
+  <main id="view-landrates" class="page-view">
+
+    <!-- Hero Header -->
+    <div class="landrates-hero">
+      <div class="landrates-pill-badge">
+        <span>🏛️</span> <span>Unified Agricultural Land Valuation</span>
+      </div>
+      <h1 class="landrates-title">Government Circle Rates vs Market Rates</h1>
+      <p class="landrates-subtitle">
+        Access official state stamp duty ready reckoner guidance values side-by-side with supplementary real estate asking prices. Transparent, verified, and normalized to standard rates per acre.
+      </p>
+    </div>
+
+    <!-- Dual Transparency Disclaimer -->
+    <div class="disclaimer-banner">
+      <div class="disclaimer-box circle">
+        <div class="disclaimer-box-icon">🏛️</div>
+        <div>
+          <strong>Government Circle Rate (Authoritative)</strong>
+          Official minimum registration value fixed by State Revenue & Registration Departments (IGR Maharashtra, Kaveri Karnataka, Telangana CARD, UP IGRS). Rates revised annually each fiscal year on April 1.
+        </div>
+      </div>
+      <div class="disclaimer-box market">
+        <div class="disclaimer-box-icon">🏷️</div>
+        <div>
+          <strong>Market Rate (Supplementary Listing)</strong>
+          Aggregated asking prices from 99acres and MagicBricks agricultural listings. Subject to buyer-seller negotiation; labeled strictly as asking price, not final deed transaction value.
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="landrates-filter-card">
+      <div class="landrates-filter-grid">
+        <div class="filter-group">
+          <label for="filter-land-state">State / राज्य</label>
+          <select id="filter-land-state" class="filter-select">
+            <option value="Maharashtra">Maharashtra (IGR Portal)</option>
+            <option value="Karnataka">Karnataka (Kaveri Portal)</option>
+            <option value="Telangana">Telangana (CARD Portal)</option>
+            <option value="Uttar Pradesh">Uttar Pradesh (IGRS Portal)</option>
+            <option value="">All States (National Search)</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-land-district">District / ज़िला</label>
+          <input type="text" id="filter-land-district" class="filter-input" placeholder="e.g. Pune, Bengaluru Rural, Meerut" value="Pune">
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-land-type">Rate Type / दर प्रकार</label>
+          <select id="filter-land-type" class="filter-select">
+            <option value="">All Types (Circle & Market)</option>
+            <option value="circle_rate">Government Circle Rate Only</option>
+            <option value="market_rate_listing">Market Rate (Listing) Only</option>
+          </select>
+        </div>
+
+        <div>
+          <button id="btn-compare-land-rates" class="btn-filter-compare">
+            <span>⚖️ Compare Rates</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side-by-Side Comparison Container -->
+    <div class="comparison-dashboard" id="landrates-comparison-box">
+      <!-- Populated dynamically via JS -->
+    </div>
+
+    <!-- Detailed Rates Table Section -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a;">Unified Land Valuation Database</h3>
+      <div style="font-size: 0.85rem; color: #64748b;" id="landrates-count-badge">Loading records...</div>
+    </div>
+
+    <div class="landrates-table-wrap">
+      <table class="landrates-table">
+        <thead>
+          <tr>
+            <th>Location</th>
+            <th>Taluk / Village Zone</th>
+            <th>Rate / Acre</th>
+            <th>Type</th>
+            <th>Source & Portal</th>
+            <th>Effective Date</th>
+          </tr>
+        </thead>
+        <tbody id="landrates-table-body">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
 
   <!-- ==========================================================================
        MODAL 1: 15 Indian Languages Selector
