@@ -303,7 +303,7 @@ function setLanguage(langCode) {
 // ==========================================================================
 
 function setupNavigation() {
-  el.navItems.forEach(item => {
+  document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
       const view = item.getAttribute('data-view');
       if (view) {
@@ -347,7 +347,7 @@ function switchView(viewName) {
   });
 
   // View active state
-  el.views.forEach(v => {
+  document.querySelectorAll('.page-view').forEach(v => {
     if (v.id === `view-${viewName}`) {
       v.classList.add('active');
     } else {
@@ -355,8 +355,18 @@ function switchView(viewName) {
     }
   });
 
+  if (viewName === 'landrates') {
+    const stateSelect = document.getElementById('filter-land-state');
+    const districtInput = document.getElementById('filter-land-district');
+    const sVal = stateSelect ? stateSelect.value : 'Maharashtra';
+    const dVal = districtInput ? districtInput.value.trim() : 'Pune';
+    loadLandRates({ state: sVal, district: dVal });
+    loadLandRateComparison(sVal, dVal);
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 
 // ==========================================================================
 // Loans Tracker Engine (Active vs Ended Loans)
@@ -2629,3 +2639,266 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 300);
   }, 3500);
 }
+
+// ==========================================================================
+// Land Rates & Valuation Engine
+// ==========================================================================
+
+async function loadLandRates(filters = {}) {
+  const tableBody = document.getElementById('landrates-table-body');
+  const countBadge = document.getElementById('landrates-count-badge');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">Loading unified land valuation data...</td></tr>';
+
+  try {
+    const params = new URLSearchParams();
+    if (filters.state) params.append('state', filters.state);
+    if (filters.district) params.append('district', filters.district);
+    if (filters.rate_type) params.append('rate_type', filters.rate_type);
+    params.append('limit', '50');
+
+    const res = await fetch(`/api/land-rates?${params.toString()}`);
+    const data = await res.json();
+
+    if (data.status === 'success' && Array.isArray(data.data)) {
+      if (countBadge) {
+        countBadge.innerText = `Showing ${data.data.length} of ${data.meta.total} records`;
+      }
+
+      if (data.data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">No land rates found matching criteria.</td></tr>';
+        return;
+      }
+
+      tableBody.innerHTML = data.data.map(item => {
+        const isCircle = item.rate_type === 'circle_rate';
+        const badgeClass = isCircle ? 'circle_rate' : 'market_rate_listing';
+        const badgeText = isCircle ? '🏛️ Circle Rate' : '🏷️ Market Rate (Listing)';
+        const formattedRate = '₹' + Math.round(item.rate_per_acre).toLocaleString('en-IN');
+        const effective = item.effective_date ? `Effective: ${item.effective_date}` : 'Active Asking Listing';
+        const portalLink = item.source_url 
+          ? `<a href="${item.source_url}" target="_blank" rel="noopener" style="color: #15803d; font-weight: 700; text-decoration: none;">${item.source_name} ↗</a>`
+          : item.source_name;
+
+        return `
+          <tr>
+            <td>
+              <strong>${item.district}</strong>, <span style="color: #64748b;">${item.state}</span>
+            </td>
+            <td>
+              <div>${item.taluk ? '<strong>' + item.taluk + '</strong>' : ''}</div>
+              <div style="font-size: 0.8rem; color: #64748b;">${item.village_zone || 'Agricultural Zone'}</div>
+            </td>
+            <td>
+              <span class="rate-value-highlight">${formattedRate}</span>
+              <div style="font-size: 0.74rem; color: #64748b;">per Acre</div>
+            </td>
+            <td>
+              <span class="badge-rate-type ${badgeClass}">${badgeText}</span>
+            </td>
+            <td>
+              ${portalLink}
+            </td>
+            <td style="font-size: 0.82rem; color: #64748b;">
+              ${effective}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  } catch (err) {
+    console.error('Error loading land rates:', err);
+    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #dc2626;">Error fetching land rates. Please retry.</td></tr>';
+  }
+}
+
+async function loadLandRateComparison(stateName, districtName) {
+  const comparisonBox = document.getElementById('landrates-comparison-box');
+  if (!comparisonBox) return;
+
+  comparisonBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: #64748b;">Calculating regional circle rate vs market spread...</div>';
+
+  try {
+    const params = new URLSearchParams();
+    if (stateName) params.append('state', stateName);
+    if (districtName) params.append('district', districtName);
+
+    const res = await fetch(`/api/land-rates/compare?${params.toString()}`);
+    const resData = await res.json();
+
+    if (resData.status === 'success' && resData.data) {
+      const { circleRate, marketRate, comparison, query } = resData.data;
+
+      const circleHtml = circleRate ? `
+        <div class="rate-card-box circle">
+          <div class="rate-box-title circle">
+            <span>🏛️</span> Circle Rate (Ready Reckoner)
+          </div>
+          <div class="rate-box-price">₹${circleRate.avgRatePerAcre.toLocaleString('en-IN')}</div>
+          <div class="rate-box-unit">Average Government Benchmark / Acre</div>
+          <div class="rate-metric-row">
+            <span>Official Range:</span>
+            <strong>₹${circleRate.minRatePerAcre.toLocaleString('en-IN')} - ₹${circleRate.maxRatePerAcre.toLocaleString('en-IN')}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Primary Authority:</span>
+            <strong>${circleRate.sources.join(', ')}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Effective Date:</span>
+            <strong>${circleRate.latestEffectiveDate || 'April 1 Fiscal Year'}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Cadastral Records:</span>
+            <strong>${circleRate.count} verified zones</strong>
+          </div>
+        </div>
+      ` : `
+        <div class="rate-card-box circle" style="opacity: 0.6;">
+          <div class="rate-box-title circle"><span>🏛️</span> Government Circle Rate</div>
+          <p style="font-size: 0.88rem; color: #64748b; margin-top: 1rem;">No direct circle rate record for this district yet.</p>
+        </div>
+      `;
+
+      const marketHtml = marketRate ? `
+        <div class="rate-card-box market">
+          <div class="rate-box-title market">
+            <span>🏷️</span> Market Asking Rate (Listing)
+          </div>
+          <div class="rate-box-price">₹${marketRate.avgRatePerAcre.toLocaleString('en-IN')}</div>
+          <div class="rate-box-unit">Average Seller Asking Price / Acre</div>
+          <div class="rate-metric-row">
+            <span>Asking Range:</span>
+            <strong>₹${marketRate.minRatePerAcre.toLocaleString('en-IN')} - ₹${marketRate.maxRatePerAcre.toLocaleString('en-IN')}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Listing Portals:</span>
+            <strong>${marketRate.sources.join(', ')}</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Legal Status:</span>
+            <strong style="color: #0284c7;">Asking Price (Negotiable)</strong>
+          </div>
+          <div class="rate-metric-row">
+            <span>Sample Listings:</span>
+            <strong>${marketRate.count} verified listings</strong>
+          </div>
+        </div>
+      ` : `
+        <div class="rate-card-box market" style="opacity: 0.6;">
+          <div class="rate-box-title market"><span>🏷️</span> Market Asking Rate</div>
+          <p style="font-size: 0.88rem; color: #64748b; margin-top: 1rem;">No market listings recorded for this district yet.</p>
+        </div>
+      `;
+
+      const premiumBadge = (comparison && comparison.premiumPercent !== null) ? `
+        <div class="spread-center-box">
+          <div class="spread-circle-badge">
+            <div class="spread-number">${comparison.premiumPercent > 0 ? '+' : ''}${comparison.premiumPercent}%</div>
+            <div class="spread-label">Spread</div>
+          </div>
+          <div class="spread-text">Market asking rate premium over circle rate</div>
+        </div>
+      ` : `
+        <div class="spread-center-box">
+          <div class="spread-circle-badge" style="background: #f1f5f9; border-color: #cbd5e1;">
+            <div class="spread-number" style="color: #64748b;">—</div>
+            <div class="spread-label" style="color: #64748b;">Spread</div>
+          </div>
+        </div>
+      `;
+
+      comparisonBox.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+          <div>
+            <h2 style="font-size: 1.3rem; font-weight: 800; color: #0f172a;">
+              ${query.district}, ${query.state} Valuation Comparison
+            </h2>
+            <p style="font-size: 0.84rem; color: #64748b;">Side-by-side benchmark for land registration and credit appraisal</p>
+          </div>
+          <span style="font-size: 0.78rem; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 0.3rem 0.75rem; border-radius: var(--radius-pill);">
+            Real-Time Analysis
+          </span>
+        </div>
+
+        <div class="comparison-grid">
+          ${circleHtml}
+          ${premiumBadge}
+          ${marketHtml}
+        </div>
+
+        <div class="comparison-footer-notes">
+          <div class="note-item">
+            <strong>📋 Stamp Duty & Registry Guidance:</strong>
+            ${comparison.stampDutyGuidance}
+          </div>
+          <div class="note-item">
+            <strong>🏦 Loan Collateral & Credit Prudence:</strong>
+            ${comparison.lendingPrudenceNote}
+          </div>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error('Error fetching land rate comparison:', err);
+    comparisonBox.innerHTML = '<div style="color: #dc2626; padding: 1rem;">Failed to load comparison data.</div>';
+  }
+}
+
+function setupLandRatesEngine() {
+  const btnCompare = document.getElementById('btn-compare-land-rates');
+  const stateSelect = document.getElementById('filter-land-state');
+  const districtInput = document.getElementById('filter-land-district');
+  const typeSelect = document.getElementById('filter-land-type');
+
+  if (btnCompare) {
+    btnCompare.addEventListener('click', () => {
+      const stateVal = stateSelect ? stateSelect.value : '';
+      const districtVal = districtInput ? districtInput.value.trim() : '';
+      const typeVal = typeSelect ? typeSelect.value : '';
+
+      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
+      if (stateVal) {
+        loadLandRateComparison(stateVal, districtVal);
+      }
+    });
+  }
+
+  if (stateSelect) {
+    stateSelect.addEventListener('change', () => {
+      const stateVal = stateSelect.value;
+      if (stateVal === 'Maharashtra') districtInput.value = 'Pune';
+      else if (stateVal === 'Karnataka') districtInput.value = 'Bengaluru Rural';
+      else if (stateVal === 'Telangana') districtInput.value = 'Rangareddy';
+      else if (stateVal === 'Uttar Pradesh') districtInput.value = 'Meerut';
+      else districtInput.value = '';
+
+      const districtVal = districtInput ? districtInput.value.trim() : '';
+      const typeVal = typeSelect ? typeSelect.value : '';
+      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
+      if (stateVal) loadLandRateComparison(stateVal, districtVal);
+    });
+  }
+
+  if (typeSelect) {
+    typeSelect.addEventListener('change', () => {
+      const stateVal = stateSelect ? stateSelect.value : '';
+      const districtVal = districtInput ? districtInput.value.trim() : '';
+      const typeVal = typeSelect.value;
+      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
+    });
+  }
+
+  // Initial load
+  loadLandRates({ state: 'Maharashtra', district: 'Pune' });
+  loadLandRateComparison('Maharashtra', 'Pune');
+}
+
+// Ensure Land Rates Engine initializes on DOM load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupLandRatesEngine);
+} else {
+  setupLandRatesEngine();
+}
+

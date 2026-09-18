@@ -2611,3 +2611,382 @@ h1, h2, h3, h4, .brand-font {
   color: #166534;
 }
 
+/* ==========================================================================
+   Land Rate Aggregation & Valuation Styles
+   ========================================================================== */
+
+.landrates-hero {
+  background: linear-gradient(135deg, #064e3b 0%, #0f341d 50%, #1e293b 100%);
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 2.2rem 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.landrates-hero::after {
+  content: '🌾';
+  position: absolute;
+  right: 2rem;
+  bottom: -1rem;
+  font-size: 8rem;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.landrates-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #86efac;
+  margin-bottom: 0.85rem;
+}
+
+.landrates-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.landrates-subtitle {
+  font-size: 0.98rem;
+  color: #cbd5e1;
+  max-width: 780px;
+  line-height: 1.55;
+}
+
+/* Dual Transparency Disclaimer Card */
+.disclaimer-banner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .disclaimer-banner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.disclaimer-box {
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.3rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  display: flex;
+  gap: 0.85rem;
+}
+
+.disclaimer-box.circle {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.disclaimer-box.market {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.disclaimer-box-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.disclaimer-box strong {
+  display: block;
+  font-size: 0.94rem;
+  margin-bottom: 0.2rem;
+}
+
+/* Filter Bar */
+.landrates-filter-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.4rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2rem;
+}
+
+.landrates-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.filter-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 0.4rem;
+}
+
+.filter-select, .filter-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: #0f172a;
+  background: #fff;
+  transition: var(--transition);
+}
+
+.filter-select:focus, .filter-input:focus {
+  border-color: #15803d;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+}
+
+.btn-filter-compare {
+  background: #15803d;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1.4rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 40px;
+}
+
+.btn-filter-compare:hover {
+  background: #166534;
+  transform: translateY(-1px);
+}
+
+/* Side-by-Side Comparison Container */
+.comparison-dashboard {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.8rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rate-card-box {
+  background: #f8faf9;
+  border-radius: var(--radius-md);
+  padding: 1.4rem;
+  border: 1px solid #e2e8f0;
+}
+
+.rate-card-box.circle {
+  border-top: 4px solid #16a34a;
+}
+
+.rate-card-box.market {
+  border-top: 4px solid #0284c7;
+}
+
+.rate-box-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rate-box-title.circle { color: #15803d; }
+.rate-box-title.market { color: #0284c7; }
+
+.rate-box-price {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.4rem;
+}
+
+.rate-box-unit {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 0.85rem;
+}
+
+.rate-metric-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px dashed #e2e8f0;
+  color: #475569;
+}
+
+.rate-metric-row:last-child {
+  border-bottom: none;
+}
+
+.spread-center-box {
+  text-align: center;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.spread-circle-badge {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fef3c7, #fed7aa);
+  border: 3px solid #f59e0b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 0.6rem;
+}
+
+.spread-number {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #b45309;
+}
+
+.spread-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+}
+
+.spread-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  max-width: 170px;
+}
+
+/* Advice Box inside Comparison */
+.comparison-footer-notes {
+  margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #e2e8f0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .comparison-footer-notes {
+    grid-template-columns: 1fr;
+  }
+}
+
+.note-item {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.note-item strong {
+  color: #0f172a;
+}
+
+/* Rate Type Badges */
+.badge-rate-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.badge-rate-type.circle_rate {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+.badge-rate-type.market_rate_listing {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* Table */
+.landrates-table-wrap {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.landrates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  text-align: left;
+}
+
+.landrates-table th {
+  background: #f8fafc;
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.landrates-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.landrates-table tr:hover td {
+  background: #f8faf9;
+}
+
+.rate-value-highlight {
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+

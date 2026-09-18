@@ -149,8 +149,66 @@ const swaggerSpec = {
           }
         }
       }
+    },
+    '/api/land-rates': {
+      get: {
+        summary: 'Query Unified Land Rates (Circle Rates & Market Listings)',
+        description: 'Retrieve normalized rates per acre across states, districts, and taluks with filter by rate_type (circle_rate vs market_rate_listing).',
+        parameters: [
+          { name: 'state', in: 'query', schema: { type: 'string' } },
+          { name: 'district', in: 'query', schema: { type: 'string' } },
+          { name: 'taluk', in: 'query', schema: { type: 'string' } },
+          { name: 'rate_type', in: 'query', schema: { type: 'string', enum: ['circle_rate', 'market_rate_listing'] } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 50 } },
+          { name: 'offset', in: 'query', schema: { type: 'integer', default: 0 } }
+        ],
+        responses: {
+          '200': {
+            description: 'List of land rates matching filters'
+          }
+        }
+      }
+    },
+    '/api/land-rates/compare': {
+      get: {
+        summary: 'Side-by-Side Government Circle Rate vs Market Rate Comparison',
+        description: 'Computes spread, premium %, minimum stamp duty benchmark, and lending prudence LTV recommendations.',
+        parameters: [
+          { name: 'state', in: 'query', required: true, schema: { type: 'string' } },
+          { name: 'district', in: 'query', schema: { type: 'string' } },
+          { name: 'taluk', in: 'query', schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': {
+            description: 'Side-by-side comparison analytics'
+          }
+        }
+      }
+    },
+    '/api/land-rates/stats': {
+      get: {
+        summary: 'Cross-State Land Rate Aggregation Statistics',
+        description: 'Overview of total circle rates vs market listings, districts covered, and premium spreads.',
+        responses: {
+          '200': {
+            description: 'State-by-state aggregation summary'
+          }
+        }
+      }
+    },
+    '/api/land-rates/sync': {
+      post: {
+        summary: 'Trigger On-Demand Scraper & Aggregator Sync',
+        description: 'Executes scrapers for Maharashtra IGR, Karnataka Kaveri, Telangana CARD, UP IGRS, 99acres, and MagicBricks.',
+        responses: {
+          '200': {
+            description: 'Sync operation result summary'
+          }
+        }
+      }
     }
   },
+
   components: {
     schemas: {
       FarmerProfileInput: {
