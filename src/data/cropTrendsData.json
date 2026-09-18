@@ -74,6 +74,24 @@
       { "crop": "Mentha (Mint) & Moong", "share": "75%", "trend": "Mentha oil extraction brings rapid cash returns", "waterRequirement": "Moderate" }
     ]
   },
+  "Bihar": {
+    "kharif": [
+      { "crop": "Paddy (Rice)", "share": "60%", "trend": "Monsoon staple across North & South Bihar Gangetic plains", "waterRequirement": "High" },
+      { "crop": "Makhana (Fox Nut)", "share": "18%", "trend": "Mithila wetland GI tag crop; Bihar produces 85%+ globally", "waterRequirement": "Very High" },
+      { "crop": "Maize", "share": "14%", "trend": "Major poultry feed & industrial starch grain", "waterRequirement": "Moderate" },
+      { "crop": "Jute", "share": "8%", "trend": "High cash fiber in Purnia, Katihar & Kishanganj", "waterRequirement": "High" }
+    ],
+    "rabi": [
+      { "crop": "Wheat", "share": "55%", "trend": "Core rabi foodgrain with assured state procurement", "waterRequirement": "Moderate" },
+      { "crop": "Rabi Maize", "share": "25%", "trend": "Highest per-hectare maize productivity in India", "waterRequirement": "Moderate" },
+      { "crop": "Pulses (Lentil/Masoor, Gram)", "share": "12%", "trend": "Major cash pulses cultivated in Tal lands", "waterRequirement": "Low" },
+      { "crop": "Mustard & Potato", "share": "8%", "trend": "Profitable winter cash oilseed & vegetable", "waterRequirement": "Moderate" }
+    ],
+    "zaid": [
+      { "crop": "Summer Moong & Makhana Harvest", "share": "50%", "trend": "Catch crop and wetland harvest season", "waterRequirement": "Moderate" },
+      { "crop": "Shahi Litchi & Vegetables", "share": "50%", "trend": "Muzaffarpur GI Shahi Litchi peak harvest (May-June)", "waterRequirement": "Moderate" }
+    ]
+  },
   "Telangana": {
     "kharif": [
       { "crop": "Cotton", "share": "45%", "trend": "Major commercial cash crop", "waterRequirement": "Moderate" },

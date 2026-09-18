@@ -14,14 +14,17 @@ const SCHEMES_FILE = path.join(__dirname, '..', 'data', 'schemesDatabase.json');
 
 // In-memory schemes cache
 let schemesCache = null;
+let schemesCacheMtime = 0;
 
 function getSchemesDatabase() {
-  if (!schemesCache) {
-    if (fs.existsSync(SCHEMES_FILE)) {
+  if (fs.existsSync(SCHEMES_FILE)) {
+    const stat = fs.statSync(SCHEMES_FILE);
+    if (!schemesCache || stat.mtimeMs > schemesCacheMtime) {
       schemesCache = JSON.parse(fs.readFileSync(SCHEMES_FILE, 'utf8'));
-    } else {
-      schemesCache = [];
+      schemesCacheMtime = stat.mtimeMs;
     }
+  } else {
+    schemesCache = [];
   }
   return schemesCache;
 }
@@ -30,6 +33,7 @@ function getSchemesDatabase() {
 function reloadSchemesCache() {
   if (fs.existsSync(SCHEMES_FILE)) {
     schemesCache = JSON.parse(fs.readFileSync(SCHEMES_FILE, 'utf8'));
+    schemesCacheMtime = fs.statSync(SCHEMES_FILE).mtimeMs;
   }
 }
 

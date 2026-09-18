@@ -8,16 +8,24 @@ const path = require('path');
 
 const SCHEMES_FILE = path.join(__dirname, '..', 'data', 'schemesDatabase.json');
 
+let cachedSchemes = null;
+let cachedMtime = 0;
+
 function readSchemes() {
   if (fs.existsSync(SCHEMES_FILE)) {
-    return JSON.parse(fs.readFileSync(SCHEMES_FILE, 'utf8'));
+    const stat = fs.statSync(SCHEMES_FILE);
+    if (!cachedSchemes || stat.mtimeMs > cachedMtime) {
+      cachedSchemes = JSON.parse(fs.readFileSync(SCHEMES_FILE, 'utf8'));
+      cachedMtime = stat.mtimeMs;
+    }
+    return cachedSchemes;
   }
   return [];
 }
 
 /**
  * GET /api/schemes
- * Query parameters: category, subCategory, provider, state, crop, maxInterestRate, search
+ * Query parameters: category, subCategory, provider, state, crop, maxRate, search, limit, offset
  */
 function getAllSchemes(req, res, next) {
   try {
@@ -26,22 +34,23 @@ function getAllSchemes(req, res, next) {
 
     if (category) {
       const cat = category.toLowerCase().trim();
-      schemes = schemes.filter(s => s.category.toLowerCase().includes(cat));
+      schemes = schemes.filter(s => s.category && s.category.toLowerCase().includes(cat));
     }
 
     if (subCategory) {
       const sub = subCategory.toLowerCase().trim();
-      schemes = schemes.filter(s => s.subCategory.toLowerCase().includes(sub));
+      schemes = schemes.filter(s => s.subCategory && s.subCategory.toLowerCase().includes(sub));
     }
 
     if (provider) {
       const prov = provider.toLowerCase().trim();
-      schemes = schemes.filter(s => s.provider.toLowerCase().includes(prov));
+      schemes = schemes.filter(s => s.provider && s.provider.toLowerCase().includes(prov));
     }
 
-    if (state) {
+    if (state && state.toLowerCase() !== 'all') {
       const st = state.toLowerCase().trim();
       schemes = schemes.filter(s => {
+        if (s.state && s.state.toLowerCase().includes(st)) return true;
         const applicable = (s.eligibilityCriteria && s.eligibilityCriteria.statesApplicable) || ['all'];
         return applicable.includes('all') || applicable.some(a => a.toLowerCase().includes(st));
       });
@@ -58,23 +67,24 @@ function getAllSchemes(req, res, next) {
     if (maxRate) {
       const rate = Number(maxRate);
       if (!isNaN(rate)) {
-        schemes = schemes.filter(s => (s.subsidizedInterestRate || s.baseInterestRate) <= rate);
+        schemes = schemes.filter(s => (s.subsidizedInterestRate !== undefined ? s.subsidizedInterestRate : s.baseInterestRate) <= rate);
       }
     }
 
     if (search) {
       const q = search.toLowerCase().trim();
       schemes = schemes.filter(s =>
-        s.name.toLowerCase().includes(q) ||
-        s.shortName.toLowerCase().includes(q) ||
+        (s.name && s.name.toLowerCase().includes(q)) ||
+        (s.shortName && s.shortName.toLowerCase().includes(q)) ||
         (s.tagline && s.tagline.toLowerCase().includes(q)) ||
-        (s.whatItIs && s.whatItIs.toLowerCase().includes(q))
+        (s.whatItIs && s.whatItIs.toLowerCase().includes(q)) ||
+        (s.state && s.state.toLowerCase().includes(q))
       );
     }
 
     const total = schemes.length;
     const off = Math.max(0, Number(offset) || 0);
-    const lim = limit ? Math.min(100, Math.max(1, Number(limit))) : 100;
+    const lim = limit ? Math.min(2000, Math.max(1, Number(limit))) : 1000;
     const paginated = schemes.slice(off, off + lim);
 
     res.json({

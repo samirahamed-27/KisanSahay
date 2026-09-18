@@ -193,6 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setLanguage(state.currentLang);
 
   // Load backend data
+  await loadCrops();
   await loadSchemes();
   await loadLoans();
 });
@@ -852,19 +853,43 @@ window.viewLoanLedger = function(loanId) {
 // Schemes Catalog (Matching Screenshot 3)
 // ==========================================================================
 
+// Pagination state for smooth browsing of 650+ schemes
+let currentSchemesBatch = 24;
+let activeSchemesFilteredList = [];
+
+async function loadCrops() {
+  try {
+    const res = await fetch('/api/crops');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        state.cropsList = json.data;
+        const datalist = document.getElementById('crop-suggestions');
+        if (datalist) {
+          datalist.innerHTML = json.data.map(c => 
+            `<option value="${c.name} (${c.hindiName})"></option>`
+          ).join('');
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('API /api/crops offline, using fallback crop datalist:', err);
+  }
+}
+
 async function loadSchemes() {
   if (window.KISAN_SCHEMES_DATA && (!state.schemes || state.schemes.length === 0)) {
     state.schemes = window.KISAN_SCHEMES_DATA;
-    renderSchemesGrid(state.schemes);
+    applySchemesFilters(true);
   }
 
   try {
-    const res = await fetch('/api/schemes');
+    const res = await fetch('/api/schemes?limit=1000');
     if (res.ok) {
       const json = await res.json();
       if (json.success && Array.isArray(json.data) && json.data.length > 0) {
         state.schemes = json.data;
-        renderSchemesGrid(state.schemes);
+        applySchemesFilters(true);
       }
     }
   } catch (err) {
@@ -872,17 +897,77 @@ async function loadSchemes() {
   }
 }
 
+function getActiveSchemesFiltered() {
+  const q = el.schemesSearchInput ? el.schemesSearchInput.value.toLowerCase().trim() : '';
+  const activeCategoryBtn = document.querySelector('.filter-chip-btn.active');
+  const catFilter = activeCategoryBtn ? activeCategoryBtn.getAttribute('data-filter') : 'all';
+  const activeStateBtn = document.querySelector('.state-chip-btn.active');
+  const stateFilter = activeStateBtn ? activeStateBtn.getAttribute('data-state') : 'all';
+
+  let list = state.schemes || [];
+
+  // 1. Regional State Filter
+  if (stateFilter && stateFilter !== 'all') {
+    const sf = stateFilter.toLowerCase();
+    list = list.filter(s => {
+      if (s.state && s.state.toLowerCase().includes(sf)) return true;
+      const applicable = (s.eligibilityCriteria && s.eligibilityCriteria.statesApplicable) || ['all'];
+      return applicable.includes('all') || applicable.some(a => a.toLowerCase().includes(sf));
+    });
+  }
+
+  // 2. Category Filter
+  if (catFilter !== 'all') {
+    if (catFilter === 'crop') {
+      list = list.filter(s => 
+        (s.category && s.category.toUpperCase().includes('CROP')) || 
+        ['kcc', 'miss', 'pmfby', 'pkvy'].includes(s.id)
+      );
+    } else if (catFilter === 'infra') {
+      list = list.filter(s => 
+        (s.category && (s.category.toUpperCase().includes('INFRASTRUCTURE') || s.category.toUpperCase().includes('EQUIPMENT'))) || 
+        ['aif', 'ahidf', 'smam'].includes(s.id)
+      );
+    } else if (catFilter === 'income') {
+      list = list.filter(s => 
+        (s.category && (s.category.toUpperCase().includes('INCOME') || s.category.toUpperCase().includes('RELIEF') || s.category.toUpperCase().includes('SUBSIDY'))) || 
+        ['pm-kisan', 'pm-kmy', 'brfsy'].some(x => s.id.includes(x))
+      );
+    } else if (catFilter === 'more') {
+      list = list.filter(s => 
+        (s.category && (s.category.toUpperCase().includes('ALLIED') || s.category.toUpperCase().includes('DAIRY') || s.category.toUpperCase().includes('FISHERIES'))) || 
+        ['pm-kusum', 'pmfme', 'acabc'].includes(s.id)
+      );
+    }
+  }
+
+  // 3. Search query
+  if (q) {
+    list = list.filter(s => 
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.shortName && s.shortName.toLowerCase().includes(q)) ||
+      (s.tagline && s.tagline.toLowerCase().includes(q)) ||
+      (s.category && s.category.toLowerCase().includes(q)) ||
+      (s.state && s.state.toLowerCase().includes(q)) ||
+      (s.whatItIs && s.whatItIs.toLowerCase().includes(q))
+    );
+  }
+
+  return list;
+}
+
+function applySchemesFilters(resetBatch = true) {
+  if (resetBatch) {
+    currentSchemesBatch = 24;
+  }
+  activeSchemesFilteredList = getActiveSchemesFiltered();
+  renderSchemesGrid(activeSchemesFilteredList);
+}
+
 function setupSchemesSearch() {
   if (el.schemesSearchInput) {
-    el.schemesSearchInput.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase().trim();
-      const filtered = state.schemes.filter(s => 
-        s.name.toLowerCase().includes(q) ||
-        s.shortName.toLowerCase().includes(q) ||
-        (s.tagline && s.tagline.toLowerCase().includes(q)) ||
-        (s.category && s.category.toLowerCase().includes(q))
-      );
-      renderSchemesGrid(filtered);
+    el.schemesSearchInput.addEventListener('input', () => {
+      applySchemesFilters(true);
     });
   }
 
@@ -890,42 +975,32 @@ function setupSchemesSearch() {
     btn.addEventListener('click', () => {
       el.filterChipBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      applySchemesFilters(true);
+    });
+  });
 
-      const filter = btn.getAttribute('data-filter');
-      let filtered = state.schemes;
-
-      if (filter === 'crop') {
-        filtered = state.schemes.filter(s => s.id === 'kcc' || s.id === 'miss' || s.id === 'pmfby' || s.id === 'pkvy');
-      } else if (filter === 'infra') {
-        filtered = state.schemes.filter(s => s.id === 'aif' || s.id === 'ahidf' || s.id === 'smam');
-      } else if (filter === 'income') {
-        filtered = state.schemes.filter(s => s.id === 'pm-kisan' || s.id === 'pm-kmy');
-      } else if (filter === 'more') {
-        filtered = state.schemes.filter(s => ['pm-kusum', 'pmfme', 'acabc'].includes(s.id));
-      }
-
-      renderSchemesGrid(filtered);
+  const stateBtns = document.querySelectorAll('.state-chip-btn');
+  stateBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      stateBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applySchemesFilters(true);
     });
   });
 
   // Schemes Sorting Dropdown Listener
   if (el.schemesSortSelect) {
     el.schemesSortSelect.addEventListener('change', () => {
-      const activeFilterBtn = document.querySelector('.filter-chip-btn.active');
-      const filter = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
-      let filtered = state.schemes;
+      applySchemesFilters(false);
+    });
+  }
 
-      if (filter === 'crop') {
-        filtered = state.schemes.filter(s => s.id === 'kcc' || s.id === 'miss' || s.id === 'pmfby' || s.id === 'pkvy');
-      } else if (filter === 'infra') {
-        filtered = state.schemes.filter(s => s.id === 'aif' || s.id === 'ahidf' || s.id === 'smam');
-      } else if (filter === 'income') {
-        filtered = state.schemes.filter(s => s.id === 'pm-kisan' || s.id === 'pm-kmy');
-      } else if (filter === 'more') {
-        filtered = state.schemes.filter(s => ['pm-kusum', 'pmfme', 'acabc'].includes(s.id));
-      }
-
-      renderSchemesGrid(filtered);
+  // Load More Schemes Button Listener
+  const btnLoadMore = document.getElementById('btn-load-more-schemes');
+  if (btnLoadMore) {
+    btnLoadMore.addEventListener('click', () => {
+      currentSchemesBatch += 24;
+      renderSchemesGrid(activeSchemesFilteredList);
     });
   }
 }
@@ -1052,13 +1127,30 @@ function renderSchemesGrid(schemes) {
     return 0;
   });
 
+  const loadMoreContainer = document.getElementById('schemes-load-more-container');
+  const renderedCountSpan = document.getElementById('schemes-rendered-count');
+  const totalCountSpan = document.getElementById('schemes-total-count');
+
+  // Slice batch for smooth rendering performance
+  const batchToRender = sortedSchemes.slice(0, currentSchemesBatch);
+
   // Update dynamic count text
   if (el.schemesCountText) {
     const topCount = sortedSchemes.filter(s => getSchemeTier(s).tier === 1).length;
-    el.schemesCountText.textContent = `Showing ${sortedSchemes.length} verified schemes (${topCount} Top Recommended on top)`;
+    el.schemesCountText.textContent = `Showing ${batchToRender.length} of ${sortedSchemes.length} verified schemes (${topCount} Top Recommended on top)`;
   }
 
-  sortedSchemes.forEach(scheme => {
+  if (loadMoreContainer) {
+    if (sortedSchemes.length > currentSchemesBatch) {
+      loadMoreContainer.style.display = 'block';
+      if (renderedCountSpan) renderedCountSpan.textContent = batchToRender.length;
+      if (totalCountSpan) totalCountSpan.textContent = sortedSchemes.length;
+    } else {
+      loadMoreContainer.style.display = 'none';
+    }
+  }
+
+  batchToRender.forEach(scheme => {
     const card = document.createElement('div');
     card.className = 'scheme-card-box';
 

@@ -252,8 +252,55 @@
         <div class="form-row-2">
           <div>
             <label class="input-label-clean" for="crop-input" data-i18n="cropLabel">Type of Crop / Cultivation *</label>
-            <input type="text" id="crop-input" class="input-clean" placeholder="e.g. Rice, Wheat, Cotton, Sugarcane"
-              value="Rice, Wheat" required>
+            <input type="text" id="crop-input" list="crop-suggestions" class="input-clean" placeholder="e.g. Rice, Wheat, Makhana, Soybean, Cotton, Sugarcane"
+              value="Rice, Wheat" required autocomplete="off">
+            <datalist id="crop-suggestions">
+              <option value="Wheat (गेहूं)"></option>
+              <option value="Paddy / Rice (धान / चावल)"></option>
+              <option value="Basmati Rice (बासमती धान)"></option>
+              <option value="Maize (Corn) (मक्का)"></option>
+              <option value="Pearl Millet (Bajra) (बाजरा)"></option>
+              <option value="Sorghum (Jowar) (ज्वार)"></option>
+              <option value="Finger Millet (Ragi / Madua) (रागी / मडुआ)"></option>
+              <option value="Barley (Jau) (जौ)"></option>
+              <option value="Kodo Millet (कोदो)"></option>
+              <option value="Kutki / Little Millet (कुटकी)"></option>
+              <option value="Chickpea / Gram (चना)"></option>
+              <option value="Pigeon Pea / Arhar / Tur (अरहर / तुअर)"></option>
+              <option value="Lentil (Masoor) (मसूर)"></option>
+              <option value="Green Gram (Moong) (मूँग)"></option>
+              <option value="Black Gram (Urad) (उड़द)"></option>
+              <option value="Field Pea / Matar (मटर)"></option>
+              <option value="Mustard / Rapeseed (सरसों / राई)"></option>
+              <option value="Yellow Mustard (पीली सरसों)"></option>
+              <option value="Soybean (सोयाबीन)"></option>
+              <option value="Groundnut / Peanut (मूंगफली)"></option>
+              <option value="Sesame (Til) (तिल)"></option>
+              <option value="Sunflower (सूरजमुखी)"></option>
+              <option value="Cotton (कपास)"></option>
+              <option value="Sugarcane (गन्ना)"></option>
+              <option value="Jute (पटसन / जूट)"></option>
+              <option value="Potato (आलू)"></option>
+              <option value="Onion (प्याज़)"></option>
+              <option value="Tomato (टमाटर)"></option>
+              <option value="Garlic (लहसुन)"></option>
+              <option value="Makhana / Fox Nut (मखाना)"></option>
+              <option value="Mentha / Japanese Mint (मेंथा / पिपरमेंट)"></option>
+              <option value="Litchi / Shahi Litchi (लीची)"></option>
+              <option value="Mango (आम)"></option>
+              <option value="Banana (केला)"></option>
+              <option value="Guava (अमरूद)"></option>
+              <option value="Chilli (लाल मिर्च)"></option>
+              <option value="Turmeric (हल्दी)"></option>
+              <option value="Coriander (धनिया)"></option>
+              <option value="Cumin / Jeera (जीरा)"></option>
+              <option value="Fennel / Saunf (सौंफ)"></option>
+              <option value="Fenugreek / Methi (मेथी)"></option>
+              <option value="Button Mushroom (मशरूम)"></option>
+              <option value="Oyster Mushroom (ढींगरी मशरूम)"></option>
+              <option value="Dairy / Cattle Feed (दुग्ध / हरा चारा)"></option>
+              <option value="Fisheries / Aquaculture (मत्स्य पालन)"></option>
+            </datalist>
           </div>
           <div>
             <label class="input-label-clean" for="land-size-input">Land Holding Size *</label>
@@ -400,13 +447,22 @@
           placeholder="Search schemes by name or keyword..." data-i18n-placeholder="searchPlaceholder">
       </div>
 
-      <!-- Filter Chips -->
+      <!-- Filter Chips: Categories -->
       <div class="schemes-filter-chips">
         <button class="filter-chip-btn active" data-filter="all" data-i18n="filterAll">All Schemes</button>
         <button class="filter-chip-btn" data-filter="crop" data-i18n="filterCrop">Crop Loans</button>
         <button class="filter-chip-btn" data-filter="infra" data-i18n="filterInfra">Infrastructure Loans</button>
         <button class="filter-chip-btn" data-filter="income" data-i18n="filterIncome">Income Support</button>
         <button class="filter-chip-btn" data-filter="more" data-i18n="filterMore">More Support</button>
+      </div>
+
+      <!-- State & Regional Filter Chips -->
+      <div class="schemes-state-chips" id="schemes-state-chips" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; align-items: center;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: #334155;">📍 State Filter:</span>
+        <button class="state-chip-btn active" data-state="all">🌍 All India (650+)</button>
+        <button class="state-chip-btn" data-state="Uttar Pradesh">🌾 Uttar Pradesh (270+)</button>
+        <button class="state-chip-btn" data-state="Madhya Pradesh">🌱 Madhya Pradesh (175+)</button>
+        <button class="state-chip-btn" data-state="Bihar">🚜 Bihar (175+)</button>
       </div>
 
       <!-- Schemes Sorting & Clean Priority Bar -->
@@ -430,6 +486,13 @@
     <!-- Schemes Grid (Matching Screenshot 3) -->
     <div class="schemes-grid-container" id="schemes-cards-container">
       <!-- Rendered dynamically -->
+    </div>
+
+    <!-- Pagination / Load More Schemes Container -->
+    <div id="schemes-load-more-container" style="text-align: center; margin: 2rem 0; display: none;">
+      <button id="btn-load-more-schemes" class="btn-clean btn-secondary" style="padding: 0.85rem 2.2rem; font-weight: 700; font-size: 0.95rem; border-radius: 9999px; box-shadow: 0 4px 14px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.2s ease;">
+        Load More Schemes (Showing <span id="schemes-rendered-count">24</span> of <span id="schemes-total-count">658</span>)
+      </button>
     </div>
   </main>
 
