@@ -21,6 +21,7 @@ function normalizeStateName(state = '') {
   if (s.includes('maha') || s.includes('mh')) return 'Maharashtra';
   if (s.includes('madhya') || s.includes('mp')) return 'Madhya Pradesh';
   if (s.includes('uttar pradesh') || s.includes('up')) return 'Uttar Pradesh';
+  if (s.includes('bihar') || s.includes('br')) return 'Bihar';
   if (s.includes('telangana') || s.includes('ts')) return 'Telangana';
   if (s.includes('andhra') || s.includes('ap')) return 'Andhra Pradesh';
   if (s.includes('karnataka') || s.includes('ka')) return 'Karnataka';
@@ -53,6 +54,9 @@ function reverseGeocodeEstimate(lat, lon) {
   }
   if (latitude >= 23.8 && latitude <= 30.4 && longitude >= 77.0 && longitude <= 84.6) {
     return { state: 'Uttar Pradesh', district: 'Muzaffarnagar' };
+  }
+  if (latitude >= 24.3 && latitude <= 27.8 && longitude >= 83.3 && longitude <= 88.3) {
+    return { state: 'Bihar', district: 'Patna' };
   }
   if (latitude >= 15.8 && latitude <= 19.8 && longitude >= 77.2 && longitude <= 81.8) {
     return { state: 'Telangana', district: 'Warangal' };

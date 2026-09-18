@@ -26,14 +26,47 @@
     "default": { "circleRatePerAcre": 350000, "marketValuePerAcre": 850000, "pricePerSqFt": 19.5, "irrigationPercentage": 48 },
     "districts": {
       "Indore": { "circleRatePerAcre": 900000, "marketValuePerAcre": 2400000, "pricePerSqFt": 55.1, "irrigationPercentage": 60 },
-      "Ujjain": { "circleRatePerAcre": 600000, "marketValuePerAcre": 1400000, "pricePerSqFt": 32.1, "irrigationPercentage": 55 }
+      "Ujjain": { "circleRatePerAcre": 600000, "marketValuePerAcre": 1400000, "pricePerSqFt": 32.1, "irrigationPercentage": 55 },
+      "Bhopal": { "circleRatePerAcre": 850000, "marketValuePerAcre": 2100000, "pricePerSqFt": 48.2, "irrigationPercentage": 58 },
+      "Gwalior": { "circleRatePerAcre": 550000, "marketValuePerAcre": 1300000, "pricePerSqFt": 29.8, "irrigationPercentage": 62 },
+      "Jabalpur": { "circleRatePerAcre": 600000, "marketValuePerAcre": 1500000, "pricePerSqFt": 34.4, "irrigationPercentage": 65 },
+      "Khargone": { "circleRatePerAcre": 480000, "marketValuePerAcre": 1100000, "pricePerSqFt": 25.3, "irrigationPercentage": 50 },
+      "Rewa": { "circleRatePerAcre": 380000, "marketValuePerAcre": 900000, "pricePerSqFt": 20.7, "irrigationPercentage": 42 },
+      "Sagar": { "circleRatePerAcre": 420000, "marketValuePerAcre": 980000, "pricePerSqFt": 22.5, "irrigationPercentage": 45 },
+      "Hoshangabad": { "circleRatePerAcre": 750000, "marketValuePerAcre": 1800000, "pricePerSqFt": 41.3, "irrigationPercentage": 88 },
+      "Ratlam": { "circleRatePerAcre": 520000, "marketValuePerAcre": 1250000, "pricePerSqFt": 28.7, "irrigationPercentage": 54 }
     }
   },
   "Uttar Pradesh": {
     "default": { "circleRatePerAcre": 650000, "marketValuePerAcre": 1500000, "pricePerSqFt": 34.4, "irrigationPercentage": 86 },
     "districts": {
       "Muzaffarnagar": { "circleRatePerAcre": 1400000, "marketValuePerAcre": 2800000, "pricePerSqFt": 64.3, "irrigationPercentage": 98 },
-      "Varanasi": { "circleRatePerAcre": 950000, "marketValuePerAcre": 2200000, "pricePerSqFt": 50.5, "irrigationPercentage": 88 }
+      "Varanasi": { "circleRatePerAcre": 950000, "marketValuePerAcre": 2200000, "pricePerSqFt": 50.5, "irrigationPercentage": 88 },
+      "Lucknow": { "circleRatePerAcre": 1200000, "marketValuePerAcre": 2900000, "pricePerSqFt": 66.6, "irrigationPercentage": 90 },
+      "Kanpur": { "circleRatePerAcre": 1100000, "marketValuePerAcre": 2500000, "pricePerSqFt": 57.4, "irrigationPercentage": 88 },
+      "Meerut": { "circleRatePerAcre": 1600000, "marketValuePerAcre": 3200000, "pricePerSqFt": 73.5, "irrigationPercentage": 99 },
+      "Agra": { "circleRatePerAcre": 900000, "marketValuePerAcre": 2100000, "pricePerSqFt": 48.2, "irrigationPercentage": 84 },
+      "Prayagraj": { "circleRatePerAcre": 920000, "marketValuePerAcre": 2150000, "pricePerSqFt": 49.4, "irrigationPercentage": 86 },
+      "Gorakhpur": { "circleRatePerAcre": 800000, "marketValuePerAcre": 1850000, "pricePerSqFt": 42.5, "irrigationPercentage": 85 },
+      "Jhansi": { "circleRatePerAcre": 450000, "marketValuePerAcre": 1050000, "pricePerSqFt": 24.1, "irrigationPercentage": 55 },
+      "Banda": { "circleRatePerAcre": 400000, "marketValuePerAcre": 950000, "pricePerSqFt": 21.8, "irrigationPercentage": 52 },
+      "Bareilly": { "circleRatePerAcre": 780000, "marketValuePerAcre": 1750000, "pricePerSqFt": 40.2, "irrigationPercentage": 89 },
+      "Aligarh": { "circleRatePerAcre": 850000, "marketValuePerAcre": 1950000, "pricePerSqFt": 44.8, "irrigationPercentage": 92 }
+    }
+  },
+  "Bihar": {
+    "default": { "circleRatePerAcre": 550000, "marketValuePerAcre": 1600000, "pricePerSqFt": 36.7, "irrigationPercentage": 68 },
+    "districts": {
+      "Patna": { "circleRatePerAcre": 1500000, "marketValuePerAcre": 4200000, "pricePerSqFt": 96.4, "irrigationPercentage": 82 },
+      "Muzaffarpur": { "circleRatePerAcre": 750000, "marketValuePerAcre": 2100000, "pricePerSqFt": 48.2, "irrigationPercentage": 75 },
+      "Darbhanga": { "circleRatePerAcre": 600000, "marketValuePerAcre": 1600000, "pricePerSqFt": 36.7, "irrigationPercentage": 70 },
+      "Purnia": { "circleRatePerAcre": 500000, "marketValuePerAcre": 1400000, "pricePerSqFt": 32.1, "irrigationPercentage": 65 },
+      "Gaya": { "circleRatePerAcre": 650000, "marketValuePerAcre": 1700000, "pricePerSqFt": 39.0, "irrigationPercentage": 60 },
+      "Rohtas": { "circleRatePerAcre": 700000, "marketValuePerAcre": 1900000, "pricePerSqFt": 43.6, "irrigationPercentage": 92 },
+      "Nalanda": { "circleRatePerAcre": 700000, "marketValuePerAcre": 1800000, "pricePerSqFt": 41.3, "irrigationPercentage": 78 },
+      "Bhagalpur": { "circleRatePerAcre": 600000, "marketValuePerAcre": 1500000, "pricePerSqFt": 34.4, "irrigationPercentage": 66 },
+      "Begusarai": { "circleRatePerAcre": 650000, "marketValuePerAcre": 1700000, "pricePerSqFt": 39.0, "irrigationPercentage": 72 },
+      "Samastipur": { "circleRatePerAcre": 550000, "marketValuePerAcre": 1500000, "pricePerSqFt": 34.4, "irrigationPercentage": 70 }
     }
   },
   "Telangana": {
