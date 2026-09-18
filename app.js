@@ -3395,7 +3395,7 @@ window.openCategorySchemes = function (categoryId = 'agriculture', initialScope 
   const bannerContainer = document.getElementById('category-hero-banner-container');
   if (bannerContainer && typeof window.getCategoryBannerHtml === 'function') {
     bannerContainer.innerHTML = `
-      ${window.getCategoryBannerHtml(cat.bannerTheme)}
+      ${window.getCategoryBannerHtml(cat.bannerTheme, cat)}
       <div class="category-hero-content-overlay">
         <div class="category-hero-overlay-title">${cat.name}</div>
         <div style="color: #cbd5e1; font-size: 0.95rem; margin-top: 0.4rem; max-width: 650px; line-height: 1.4;">
