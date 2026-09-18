@@ -2126,75 +2126,6 @@ function evaluateEligibilityClient(userInput, schemesList) {
 // Eligibility & Multi-Factor Recommendation Controller
 // ==========================================================================
 
-let eligDebounceTimer = null;
-
-function triggerDebouncedEligibility(delayMs = 300) {
-  if (eligDebounceTimer) clearTimeout(eligDebounceTimer);
-
-  const skeleton = document.getElementById('eligibility-skeleton-loader');
-  const resultsContainer = document.getElementById('elig-results-container');
-  if (skeleton) skeleton.style.display = 'flex';
-  if (resultsContainer) resultsContainer.style.opacity = '0.35';
-
-  eligDebounceTimer = setTimeout(async () => {
-    await checkEligibilityLive(true);
-    if (skeleton) skeleton.style.display = 'none';
-    if (resultsContainer) resultsContainer.style.opacity = '1';
-  }, delayMs);
-}
-
-function updateFacetCounts(facets) {
-  if (!facets) return;
-
-  const setEl = (id, count) => {
-    const node = document.getElementById(id);
-    if (node && count !== undefined) {
-      node.textContent = count;
-    }
-  };
-
-  if (facets.categories) {
-    setEl('count-cat-general', facets.categories.general);
-    setEl('count-cat-obc', facets.categories.obc);
-    setEl('count-cat-sc', facets.categories.sc);
-    setEl('count-cat-st', facets.categories.st);
-    setEl('count-cat-women', facets.categories.women);
-  }
-
-  if (facets.incomeBrackets) {
-    setEl('count-inc-all', facets.incomeBrackets.all);
-    setEl('count-inc-under1l', facets.incomeBrackets.under1l);
-    setEl('count-inc-1to3l', facets.incomeBrackets['1to3l']);
-    setEl('count-inc-3to6l', facets.incomeBrackets['3to6l']);
-    setEl('count-inc-above6l', facets.incomeBrackets.above6l);
-  }
-
-  if (facets.loanStatus) {
-    setEl('count-loan-none', facets.loanStatus.none);
-    setEl('count-loan-kcc', facets.loanStatus.has_kcc);
-    setEl('count-loan-other', facets.loanStatus.other_debt);
-  }
-
-  if (facets.collateral) {
-    setEl('count-collat-any', facets.collateral.any);
-    setEl('count-collat-yes', facets.collateral.yes);
-    setEl('count-collat-no', facets.collateral.no);
-  }
-
-  if (facets.irrigation) {
-    setEl('count-irrig-all', facets.irrigation.all);
-    setEl('count-irrig-irrigated', facets.irrigation.irrigated);
-    setEl('count-irrig-rainfed', facets.irrigation.rainfed);
-  }
-
-  if (facets.occupations) {
-    setEl('count-occ-owner', facets.occupations.owner);
-    setEl('count-occ-tenant', facets.occupations.tenant);
-    setEl('count-occ-share', facets.occupations.sharecropper);
-    setEl('count-occ-landless', facets.occupations.landless);
-  }
-}
-
 window.toggleScoreBreakdown = function(schemeId, evt) {
   if (evt) evt.stopPropagation();
   const target = document.getElementById(`match-container-${schemeId}`);
@@ -2212,111 +2143,14 @@ document.addEventListener('click', (e) => {
 });
 
 function setupEligibility() {
-  const sidebarForm = document.getElementById('eligibility-sidebar-form');
-  const stateSelect = document.getElementById('filter-state-select');
-  const districtInput = document.getElementById('filter-district-input');
-  const landSlider = document.getElementById('filter-land-slider');
-  const landSliderDisplay = document.getElementById('land-slider-display');
-  const btnToggleMore = document.getElementById('btn-toggle-more-filters');
-  const collapsibleSections = document.getElementById('collapsible-filter-sections');
-  const moreFiltersText = document.getElementById('more-filters-toggle-text');
-  const btnResetFilters = document.getElementById('btn-reset-filters');
-  const btnMobileDrawer = document.getElementById('btn-mobile-filter-drawer');
-  const btnCloseDrawerMobile = document.getElementById('btn-close-sidebar-mobile');
-  const sidebar = document.getElementById('eligibility-sidebar');
-
-  // 1. State & District Live Updates
-  if (stateSelect) {
-    stateSelect.addEventListener('change', () => triggerDebouncedEligibility(250));
-  }
-  if (districtInput) {
-    districtInput.addEventListener('input', () => triggerDebouncedEligibility(350));
-  }
-
-  // 2. Land Slider Live Updates
-  if (landSlider) {
-    landSlider.addEventListener('input', () => {
-      if (landSliderDisplay) {
-        landSliderDisplay.textContent = `${landSlider.value} Acres`;
-      }
-      triggerDebouncedEligibility(200);
+  if (el.eligibilityForm) {
+    el.eligibilityForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await checkEligibility();
     });
   }
 
-  // 3. Crops Multi-select Chips
-  const cropChips = document.querySelectorAll('.crops-chip-selector .crop-filter-chip');
-  cropChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      chip.classList.toggle('active');
-      triggerDebouncedEligibility(250);
-    });
-  });
-
-  // 4. Radio Filter Groups Live Updates
-  const radioInputs = document.querySelectorAll('#eligibility-sidebar-form input[type="radio"]');
-  radioInputs.forEach(radio => {
-    radio.addEventListener('change', () => triggerDebouncedEligibility(250));
-  });
-
-  // 5. Progressive Disclosure: "+ More Filters" Accordion
-  if (btnToggleMore && collapsibleSections) {
-    btnToggleMore.addEventListener('click', () => {
-      const isHidden = collapsibleSections.style.display === 'none';
-      collapsibleSections.style.display = isHidden ? 'block' : 'none';
-      if (moreFiltersText) {
-        moreFiltersText.textContent = isHidden 
-          ? '➖ Fewer Filters (Hide Additional Criteria)' 
-          : '➕ More Filters (Income, Debt, Title, Irrigation)';
-      }
-    });
-  }
-
-  // 6. Reset Filters to Defaults
-  if (btnResetFilters) {
-    btnResetFilters.addEventListener('click', () => {
-      if (stateSelect) stateSelect.value = 'Punjab';
-      if (districtInput) districtInput.value = 'Ludhiana';
-      if (landSlider) {
-        landSlider.value = '3.5';
-        if (landSliderDisplay) landSliderDisplay.textContent = '3.5 Acres';
-      }
-      cropChips.forEach(c => {
-        const cropName = c.getAttribute('data-crop');
-        if (cropName === 'Wheat' || cropName === 'Rice') {
-          c.classList.add('active');
-        } else {
-          c.classList.remove('active');
-        }
-      });
-      const checkRadio = (name, val) => {
-        const r = document.querySelector(`input[name="${name}"][value="${val}"]`);
-        if (r) r.checked = true;
-      };
-      checkRadio('filter-category', 'general');
-      checkRadio('filter-income-bracket', '1to3l');
-      checkRadio('filter-loan-status', 'has_kcc');
-      checkRadio('filter-collateral', 'any');
-      checkRadio('filter-irrigation', 'all');
-      checkRadio('filter-occupation', 'owner');
-
-      showToast('Filters reset to default farm profile.');
-      triggerDebouncedEligibility(150);
-    });
-  }
-
-  // 7. Mobile Drawer Toggle (<900px)
-  if (btnMobileDrawer && sidebar) {
-    btnMobileDrawer.addEventListener('click', () => {
-      sidebar.classList.add('open');
-    });
-  }
-  if (btnCloseDrawerMobile && sidebar) {
-    btnCloseDrawerMobile.addEventListener('click', () => {
-      sidebar.classList.remove('open');
-    });
-  }
-
-  // 8. Auto-detect GPS button
+  // Auto-detect GPS button
   if (el.btnDetectGps) {
     el.btnDetectGps.addEventListener('click', () => {
       if (!navigator.geolocation) {
@@ -2339,14 +2173,9 @@ function setupEligibility() {
               const data = await res.json();
               if (data.success && data.data && data.data.location) {
                 const loc = data.data.location;
-                if (stateSelect && loc.state) {
-                  // Find option matching state
-                  const opt = Array.from(stateSelect.options).find(o => o.value.toLowerCase().includes(loc.state.toLowerCase()));
-                  if (opt) stateSelect.value = opt.value;
-                }
-                if (districtInput && loc.district) districtInput.value = loc.district;
+                if (el.stateInput && loc.state) el.stateInput.value = loc.state;
+                if (el.districtInput && loc.district) el.districtInput.value = loc.district;
                 showToast(`📍 Location detected: ${loc.district}, ${loc.state}`);
-                triggerDebouncedEligibility(200);
               }
             }
           } catch (e) {
@@ -2356,70 +2185,38 @@ function setupEligibility() {
         },
         (error) => {
           console.warn('Geolocation error:', error);
-          if (el.gpsStatusText) el.gpsStatusText.textContent = 'GPS';
+          if (el.gpsStatusText) el.gpsStatusText.textContent = 'Detect GPS';
           showToast('GPS permission denied or unavailable. Enter state and district manually.');
         },
         { timeout: 10000, enableHighAccuracy: true }
       );
     });
   }
-
-  // Initial trigger to load live data on startup
-  checkEligibilityLive(true);
 }
 
-async function checkEligibilityLive(silent = false) {
-  const stateSelect = document.getElementById('filter-state-select');
-  const stateVal = (stateSelect && stateSelect.value !== 'all') ? stateSelect.value : (el.stateInput?.value || 'Punjab');
-  const districtInput = document.getElementById('filter-district-input');
-  const districtVal = districtInput ? districtInput.value.trim() : (el.districtInput?.value || 'Ludhiana');
+async function checkEligibility() {
+  const cropType = el.cropInput ? (el.cropInput.value.trim() || 'Wheat, Paddy') : 'Wheat, Paddy';
+  const rawLandSize = el.landSizeInput ? (Number(el.landSizeInput.value) || 2.5) : 2.5;
+  const landUnit = el.landUnitSelect ? el.landUnitSelect.value : 'acres';
+  const landSizeAcres = landUnit === 'hectares' ? Number((rawLandSize * 2.47105).toFixed(2)) : rawLandSize;
+  const landSizeHectares = landUnit === 'hectares' ? rawLandSize : Number((rawLandSize / 2.47105).toFixed(2));
 
-  const landSlider = document.getElementById('filter-land-slider');
-  const landSizeAcres = landSlider ? parseFloat(landSlider.value) || 3.5 : 3.5;
-  const landSliderDisplay = document.getElementById('land-slider-display');
-  if (landSliderDisplay) landSliderDisplay.textContent = `${landSizeAcres} Acres`;
-
-  // Crops
-  const activeCropChips = Array.from(document.querySelectorAll('.crops-chip-selector .crop-filter-chip.active'));
-  const cropsArr = activeCropChips.map(c => c.getAttribute('data-crop') || c.textContent.trim());
-  const cropType = cropsArr.length > 0 ? cropsArr.join(', ') : 'Wheat, Rice';
-
-  // Category
-  const categoryRadio = document.querySelector('input[name="filter-category"]:checked');
-  const category = categoryRadio ? categoryRadio.value : 'general';
-
-  // Income
-  const incomeRadio = document.querySelector('input[name="filter-income-bracket"]:checked');
-  const incomeBracket = incomeRadio ? incomeRadio.value : '1to3l';
-  let annualIncome = 250000;
-  if (incomeBracket === 'under1l') annualIncome = 85000;
-  else if (incomeBracket === '1to3l') annualIncome = 220000;
-  else if (incomeBracket === '3to6l') annualIncome = 450000;
-  else if (incomeBracket === 'above6l') annualIncome = 800000;
-
-  // Loan status
-  const loanRadio = document.querySelector('input[name="filter-loan-status"]:checked');
-  const loanStatus = loanRadio ? loanRadio.value : 'has_kcc';
-  const hasKcc = loanStatus === 'has_kcc';
-  const existingLoans = loanStatus === 'other_debt' ? 60000 : 0;
-
-  // Collateral, Irrigation, Occupation
-  const collateralRadio = document.querySelector('input[name="filter-collateral"]:checked');
-  const collateralAvailable = collateralRadio ? collateralRadio.value : 'any';
-
-  const irrigationRadio = document.querySelector('input[name="filter-irrigation"]:checked');
-  const irrigationType = irrigationRadio ? irrigationRadio.value : 'all';
-
-  const occupationRadio = document.querySelector('input[name="filter-occupation"]:checked');
-  const landOwnership = occupationRadio ? occupationRadio.value : 'owner';
-
+  const stateVal = el.stateInput ? (el.stateInput.value.trim() || 'Punjab') : 'Punjab';
+  const districtVal = el.districtInput ? (el.districtInput.value.trim() || 'Ludhiana') : 'Ludhiana';
   const latitude = el.geoLat && el.geoLat.value ? Number(el.geoLat.value) : undefined;
   const longitude = el.geoLong && el.geoLong.value ? Number(el.geoLong.value) : undefined;
+
+  const landOwnership = el.landSelect ? (el.landSelect.value || 'owner') : 'owner';
+  const category = el.categorySelect ? (el.categorySelect.value || 'general') : 'general';
+  const annualIncome = el.incomeInput ? (Number(el.incomeInput.value) || 250000) : 250000;
+  const existingLoans = el.existingLoansInput ? (Number(el.existingLoansInput.value) || 0) : 0;
+  const hasKcc = el.kccSelect ? (el.kccSelect.value === 'yes') : true;
+  const hasAadhaar = el.aadhaarSelect ? (el.aadhaarSelect.value === 'yes') : true;
 
   state.userFarmProfile = {
     cropType,
     landSizeAcres,
-    landSizeHectares: Number((landSizeAcres / 2.47105).toFixed(2)),
+    landSizeHectares,
     state: stateVal,
     district: districtVal,
     latitude,
@@ -2429,48 +2226,54 @@ async function checkEligibilityLive(silent = false) {
     annualIncome,
     existingLoans,
     hasKcc,
-    hasAadhaar: true,
-    collateralAvailable,
-    irrigationType
+    hasAadhaar
   };
 
   try {
-    let responseData = null;
-    const res = await fetch('/api/recommend', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(state.userFarmProfile)
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && Array.isArray(data.recommendations)) {
-        responseData = data;
-      }
+    if (el.btnSubmitEligibility) {
+      el.btnSubmitEligibility.disabled = true;
+      el.btnSubmitEligibility.innerHTML = '<span>⏳</span> Analyzing Schemes & Soil Data...';
     }
 
+    let responseData = null;
+
+    try {
+      const res = await fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.userFarmProfile)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.recommendations)) {
+          responseData = data;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Backend /api/recommend unreachable, evaluating locally:', apiErr);
+    }
+
+    // Fallback if backend API is not responding (e.g. VS Code Live Server port 5500)
     if (!responseData) {
       responseData = evaluateEligibilityClient(state.userFarmProfile, state.schemes);
     }
 
     renderAdvancedRecommendations(responseData);
-    if (responseData.filter_facets || responseData.filterFacets) {
-      updateFacetCounts(responseData.filter_facets || responseData.filterFacets);
-    }
 
-    if (!silent) {
-      const bestCount = (responseData.recommendations || []).filter(r => r.status === 'best').length;
-      const goodCount = (responseData.recommendations || []).filter(r => r.status === 'good').length;
-      showToast(`Updated matches: 1 Top Match + ${goodCount} Alternatives`);
-    }
+    const bestCount = (responseData.recommendations || []).filter(r => r.status === 'best').length;
+    const goodCount = (responseData.recommendations || []).filter(r => r.status === 'good').length;
+    showToast(`Matched with 1 Best Match and ${goodCount} Good Alternatives!`);
+    speakText(`Evaluation complete. Found 1 top recommended loan plan and ${goodCount} good alternatives for your farm.`);
+
   } catch (err) {
-    console.error('Live eligibility error:', err);
+    console.error('Eligibility evaluation error:', err);
+    showToast('Failed to evaluate schemes. Please check your inputs.');
+  } finally {
+    if (el.btnSubmitEligibility) {
+      el.btnSubmitEligibility.disabled = false;
+      el.btnSubmitEligibility.innerHTML = `<span>🔍</span> <span>${t('btnCheckElig') || 'Find Best Loan & Schemes'}</span>`;
+    }
   }
-}
-
-// Backward-compatible alias
-async function checkEligibility() {
-  await checkEligibilityLive(false);
 }
 
 function renderAdvancedRecommendations(data) {
