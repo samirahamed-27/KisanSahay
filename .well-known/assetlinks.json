@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kisansahay.app",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7F:0F:52:EA:CB:5C:30:E4:E1:D0:0E:0F:87:64:80:44:B6:5C:83:A2:3B:5D:F0:4B:39:E7:5F:F1:68"
+      ]
+    }
+  }
+]
