@@ -363,9 +363,22 @@ function setLanguage(langCode) {
     }
   });
 
-  // Re-render loans & schemes to reflect language
+  // Re-render home categories, loans & schemes to reflect language
+  if (typeof renderHomeCategories === 'function') renderHomeCategories();
   renderLoansList();
   renderSchemesGrid(state.schemes);
+
+  // If currently in category explorer view, re-render explorer with new language
+  if (state.currentTab === 'category-schemes' && typeof filterAndRenderCategorySchemes === 'function') {
+    const cat = (window.NATIONAL_CATEGORIES || []).find(c => c.id === currentCategoryState.categoryId) || (window.NATIONAL_CATEGORIES ? window.NATIONAL_CATEGORIES[0] : null);
+    if (cat && typeof getCategoryLocalizedName === 'function') {
+      const breadcrumb = document.getElementById('cat-breadcrumb-title');
+      if (breadcrumb) breadcrumb.textContent = getCategoryLocalizedName(cat);
+      const heroTitle = document.querySelector('.category-hero-overlay-title');
+      if (heroTitle) heroTitle.textContent = getCategoryLocalizedName(cat);
+    }
+    filterAndRenderCategorySchemes();
+  }
 }
 
 // ==========================================================================
@@ -4637,20 +4650,33 @@ function setupThemeToggle() {
 // 15 SCHEME CATEGORIES & CATEGORY EXPLORER ENGINE (Images 3, 4, 5)
 // ==========================================================================
 
+function getCategoryLocalizedName(cat) {
+  if (!cat) return '';
+  const lang = state.currentLang || 'en';
+  if (lang === 'en') return cat.name;
+  const key = 'cat_' + cat.id.replace(/-/g, '_');
+  const fromDict = t(key);
+  if (fromDict && fromDict !== key) return fromDict;
+  if (lang === 'hi' && cat.hindiName) return cat.hindiName;
+  if (cat.translations && cat.translations[lang]) return cat.translations[lang];
+  return cat.name;
+}
+
 function renderHomeCategories() {
   const container = document.getElementById('home-categories-grid');
   if (!container || !window.NATIONAL_CATEGORIES) return;
 
+  const schemesLabel = t('schemesCountLabel', 'Schemes');
   container.innerHTML = window.NATIONAL_CATEGORIES.map(cat => `
     <div class="category-card-item" style="--cat-accent: ${cat.accentColor}; --cat-bg-glow: ${cat.bgGlow};" onclick="openCategorySchemes('${cat.id}')">
       <div class="category-icon-disc">
         ${cat.iconSvg}
       </div>
       <div class="category-scheme-count-pill" style="color: ${cat.accentColor};">
-        ${cat.count} Schemes
+        ${cat.count} ${schemesLabel}
       </div>
       <div class="category-card-title">
-        ${cat.name}
+        ${getCategoryLocalizedName(cat)}
       </div>
     </div>
   `).join('');
@@ -4687,7 +4713,7 @@ window.openCategorySchemes = function (categoryId = 'agriculture', initialScope 
 
   // 2. Set Breadcrumb Title
   const breadcrumb = document.getElementById('cat-breadcrumb-title');
-  if (breadcrumb) breadcrumb.textContent = cat.name;
+  if (breadcrumb) breadcrumb.textContent = getCategoryLocalizedName(cat);
 
   // 3. Render Themed Illustrated Hero Banner
   const bannerContainer = document.getElementById('category-hero-banner-container');
@@ -4695,7 +4721,7 @@ window.openCategorySchemes = function (categoryId = 'agriculture', initialScope 
     bannerContainer.innerHTML = `
       ${window.getCategoryBannerHtml(cat.bannerTheme, cat)}
       <div class="category-hero-content-overlay">
-        <div class="category-hero-overlay-title">${cat.name}</div>
+        <div class="category-hero-overlay-title">${getCategoryLocalizedName(cat)}</div>
         <div style="color: #cbd5e1; font-size: 0.95rem; margin-top: 0.4rem; max-width: 650px; line-height: 1.4;">
           ${cat.description}
         </div>

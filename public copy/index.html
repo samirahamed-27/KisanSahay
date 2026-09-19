@@ -79,8 +79,8 @@
           <span class="vault-indicator-dot uninitialized" id="vault-indicator-dot" title="Vault status"></span>
         </button>
 
-        <!-- 15 Languages Dropdown / Selector Button -->
-        <button class="lang-select-btn" id="lang-toggle-btn" title="Choose from 15 Indian Languages / भाषा चुनें">
+        <!-- 25 Languages Dropdown / Selector Button -->
+        <button class="lang-select-btn" id="lang-toggle-btn" title="Choose from 25 Indian Languages / भाषा चुनें">
           <span>🌐</span>
           <span id="lang-text">English</span>
           <small>▾</small>
@@ -284,7 +284,7 @@
       </div>
       <div>
         <button type="button" class="btn-find-schemes-hero" onclick="switchView('eligibility')">
-          <span>Find Schemes For You</span>
+          <span data-i18n="findSchemesForYou">Find Schemes For You</span>
           <span>➔</span>
         </button>
       </div>
@@ -292,28 +292,28 @@
       <div class="hero-counters-grid">
         <div class="hero-counter-card" onclick="openCategorySchemes('agriculture')">
           <div class="hero-counter-number">5020+</div>
-          <div class="hero-counter-label">Total Schemes ➔</div>
+          <div class="hero-counter-label"><span data-i18n="totalSchemesLabel">Total Schemes</span> ➔</div>
         </div>
         <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'central')">
           <div class="hero-counter-number">740+</div>
-          <div class="hero-counter-label">Central Schemes ➔</div>
+          <div class="hero-counter-label"><span data-i18n="centralSchemesLabel">Central Schemes</span> ➔</div>
         </div>
         <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'state')">
           <div class="hero-counter-number">4280+</div>
-          <div class="hero-counter-label">States/UTs Schemes ➔</div>
+          <div class="hero-counter-label"><span data-i18n="statesSchemesLabel">States/UTs Schemes</span> ➔</div>
         </div>
       </div>
 
       <div class="hero-scope-tabs">
         <button type="button" class="hero-scope-tab-btn active"
           onclick="document.getElementById('home-categories-section')?.scrollIntoView({ behavior: 'smooth' })">
-          Categories
+          <span data-i18n="tabCategories">Categories</span>
         </button>
         <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'state')">
-          States/UTs
+          <span data-i18n="tabStates">States/UTs</span>
         </button>
         <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'central')">
-          Central Ministries
+          <span data-i18n="tabCentralMinistries">Central Ministries</span>
         </button>
       </div>
     </section>
@@ -322,8 +322,8 @@
          IMAGE 2: "HOW IT WORKS" 3-STEP FLOW PIPELINE
          ==================================================================== -->
     <section class="how-it-works-section">
-      <div class="how-it-works-sub">How it works</div>
-      <h2 class="how-it-works-title">Easy steps to apply for Government Schemes</h2>
+      <div class="how-it-works-sub" data-i18n="howItWorksTitle">How it works</div>
+      <h2 class="how-it-works-title" data-i18n="howItWorksSubtitle">Easy steps to apply for Government Schemes</h2>
 
       <div class="how-it-works-grid">
         <!-- Step 1: Enter Details -->
@@ -335,8 +335,8 @@
               <path d="m9 14 2 2 4-4" />
             </svg>
           </div>
-          <h3 class="step-title"><span class="step-num">1: </span>Enter Details</h3>
-          <p class="step-desc">Start by entering your <strong>basic farm and location details!</strong></p>
+          <h3 class="step-title"><span class="step-num">1: </span><span data-i18n="step1Title">Enter Details</span></h3>
+          <p class="step-desc" data-i18n="step1Desc">Start by entering your basic farm and location details!</p>
         </div>
 
         <div class="how-it-works-arrow">➔</div>
@@ -351,8 +351,8 @@
               <path d="m14.5 15.5 2.5 2.5" />
             </svg>
           </div>
-          <h3 class="step-title"><span class="step-num">2: </span>Search</h3>
-          <p class="step-desc">Our intelligent engine will <strong>find the most relevant schemes!</strong></p>
+          <h3 class="step-title"><span class="step-num">2: </span><span data-i18n="step2Title">Search</span></h3>
+          <p class="step-desc" data-i18n="step2Desc">Our intelligent engine will find the most relevant schemes!</p>
         </div>
 
         <div class="how-it-works-arrow">➔</div>
@@ -368,9 +368,8 @@
               <path d="M12 21a9 9 0 0 0 9-9c0-.7-.08-1.38-.23-2.03" />
             </svg>
           </div>
-          <h3 class="step-title"><span class="step-num">3: </span>Select &amp; Apply</h3>
-          <p class="step-desc"><strong>Select and apply</strong> for the best suited scheme with full document
-            checklist.</p>
+          <h3 class="step-title"><span class="step-num">3: </span><span data-i18n="step3Title">Select &amp; Apply</span></h3>
+          <p class="step-desc" data-i18n="step3Desc">Select and apply for the best suited scheme with full document checklist.</p>
         </div>
       </div>
     </section>
@@ -380,8 +379,8 @@
          ==================================================================== -->
     <section class="categories-section" id="home-categories-section">
       <div class="categories-section-header">
-        <h2 class="categories-title">Find schemes based on categories</h2>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">
+        <h2 class="categories-title" data-i18n="homeCategoriesTitle">Find schemes based on categories</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;" data-i18n="homeCategoriesSubtitle">
           Explore all Central & State government schemes, loans, and subsidies categorized across sectors.
         </p>
       </div>
@@ -1206,21 +1205,23 @@
 
 
   <!-- ==========================================================================
-       MODAL 1: 15 Indian Languages Selector
+       MODAL 1: 25 Indian Languages Selector
        ========================================================================== -->
   <div class="modal-overlay" id="lang-modal">
-    <div class="modal-dialog">
-      <button class="modal-close-x" id="lang-modal-close">✕</button>
-      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <span style="font-size: 1.4rem;">🌐</span>
-        <h2 style="font-size: 1.4rem; color: #0f172a;">Select Language / भाषा चुनें</h2>
+    <div class="modal-dialog lang-modal-dialog">
+      <button class="modal-close-x" id="lang-modal-close" title="Close">✕</button>
+      <div class="lang-modal-header">
+        <div class="lang-modal-icon-disc">🌐</div>
+        <div>
+          <h2 class="lang-modal-title" data-i18n="selectLanguageTitle">Select Language / भाषा चुनें</h2>
+          <p class="lang-modal-subtitle" data-i18n="selectLanguageSubtitle">
+            Choose from 25 major Indian languages. The entire application content will change instantly.
+          </p>
+        </div>
       </div>
-      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1rem;">
-        Choose from 15 major Indian languages. The entire application content will change instantly.
-      </p>
 
       <div class="lang-grid-selector" id="languages-grid-container">
-        <!-- 15 Languages rendered dynamically -->
+        <!-- 25 Languages rendered dynamically -->
       </div>
     </div>
   </div>
