@@ -9,7 +9,7 @@ const apiRoutes = require('./src/routes/apiRoutes');
 const docsRoutes = require('./src/routes/docsRoutes');
 const errorHandler = require('./src/middleware/errorHandler');
 const { startScheduledIngestion } = require('./src/services/ingestionService');
-const landRateAggregationService = require('./src/services/landRateAggregationService');
+const { startScheduledReminders } = require('./src/services/notificationService');
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -99,7 +99,11 @@ function enrichLoan(loan) {
     emisLeft,
     percentPaid,
     status,
-    isFullyPaid: due === 0
+    isFullyPaid: due === 0,
+    provider_name: loan.provider_name || loan.bankName || 'Gramin Kisan Cooperative Bank & NABARD',
+    source_name: loan.source_name || 'Ministry of Agriculture & Farmers Welfare / NABARD Portal',
+    source_url: loan.source_url || 'https://www.nabard.org/content1.aspx?id=591&catid=23&mid=530',
+    last_fetched_at: loan.last_fetched_at || '2026-09-18'
   };
 }
 
@@ -162,6 +166,28 @@ app.post('/api/eligibility', (req, res) => {
   const income = Number(annualIncome) || 0;
   const isAadhaarLinked = String(hasAadhaar).toLowerCase() === 'yes' || hasAadhaar === true;
   const isKccHolder = String(hasKcc).toLowerCase() === 'yes' || hasKcc === true;
+
+  // 0. Mandatory Aadhaar-Bank Account Linking Check (Statutory DBT Rule)
+  if (!isAadhaarLinked) {
+    return res.json({
+      success: false,
+      code: 'AADHAAR_LINKING_REQUIRED',
+      allowed_to_apply: false,
+      message: 'Aadhaar-bank account linking is mandatory under Government DBT & PFMS directives to qualify or apply for agricultural credit and interest subvention.',
+      aadhaar_linking_guide: {
+        title: 'Mandatory Aadhaar-Bank Account Seeding Instructions',
+        steps: [
+          'Visit your home bank branch with your original Aadhaar Card and bank passbook.',
+          'Request and submit the Aadhaar-Bank Account Seeding / DBT Mandate consent form.',
+          'Alternatively, log in to your Bank Mobile App -> Services -> Aadhaar Seeding / DBT Registration.',
+          'Verify your seeding status on the official UIDAI portal: https://myaadhaar.uidai.gov.in/'
+        ],
+        helpline: '1947 (UIDAI Helpline) or contact your local Lead Bank Manager.'
+      },
+      userInput: { cropType, annualIncome: income, district, landOwnership, mainActivity, hasKcc, hasAadhaar: 'no' },
+      results: []
+    });
+  }
 
   const results = schemes.map(scheme => {
     let eligible = true;
@@ -380,6 +406,11 @@ app.post('/api/loans', (req, res) => {
     schemeName = 'Custom Agriculture Loan',
     schemeSub = 'Agri Loan',
     bankName = 'State Bank of India',
+    provider_name,
+    source_name,
+    source_url,
+    last_fetched_at,
+    checklistCompleted = true,
     accountNumber = '•••• ' + Math.floor(1000 + Math.random() * 9000),
     cropOrPurpose = 'Crop Cultivation',
     principalAmount = 100000,
@@ -391,6 +422,15 @@ app.post('/api/loans', (req, res) => {
     status = 'Active',
     dueDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   } = req.body;
+
+  // Enforce Document Checklist completion if applying through a scheme
+  if (req.body.fromScheme && checklistCompleted === false) {
+    return res.status(400).json({
+      success: false,
+      error: 'DOCUMENT_CHECKLIST_INCOMPLETE',
+      message: 'You must verify and tick all required documents before applying for this loan.'
+    });
+  }
 
   const principal = Number(principalAmount || totalAmount) || 100000;
   const rate = Number(interestRate) || 7.0;
@@ -422,6 +462,11 @@ app.post('/api/loans', (req, res) => {
     schemeName,
     schemeSub: schemeSub || `${schemeName.slice(0, 8)} - Loan`,
     bankName,
+    provider_name: provider_name || bankName || 'Gramin Kisan Cooperative Bank & NABARD',
+    source_name: source_name || 'NABARD Official Portal / KCC Subvention',
+    source_url: source_url || 'https://www.nabard.org/content1.aspx?id=591&catid=23&mid=530',
+    last_fetched_at: last_fetched_at || new Date().toISOString().split('T')[0],
+    checklistCompleted: true,
     accountNumber,
     cropOrPurpose,
     sanctionDate: new Date().toISOString().split('T')[0],
@@ -454,18 +499,29 @@ app.post('/api/loans', (req, res) => {
   });
 });
 
-// 8. Delete a loan
+// 8. Delete a loan (ACTIVE LOANS CANNOT BE REMOVED - HTTP 403 Forbidden)
 app.delete('/api/loans/:id', (req, res) => {
   let loans = readJson(LOANS_FILE, []);
-  const initialLen = loans.length;
-  loans = loans.filter(l => l.id !== req.params.id);
+  const loan = loans.find(l => l.id === req.params.id);
 
-  if (loans.length === initialLen) {
+  if (!loan) {
     return res.status(404).json({ success: false, message: 'Loan not found' });
   }
 
+  // Enforce Protection: Active running loans cannot be removed
+  const enriched = enrichLoan(loan);
+  if (enriched.status === 'Active' || enriched.dueAmount > 0) {
+    return res.status(403).json({
+      success: false,
+      error: 'Forbidden',
+      message: 'Active loans cannot be removed or deleted. Active loans only change status automatically when fully repaid.'
+    });
+  }
+
+  // Only closed/ended loans with zero due can be archived
+  loans = loans.filter(l => l.id !== req.params.id);
   writeJson(LOANS_FILE, loans);
-  res.json({ success: true, message: 'Loan removed from tracker' });
+  res.json({ success: true, message: 'Closed loan archived from tracker' });
 });
 
 // Centralized RFC 7807 Error Handler
@@ -481,7 +537,7 @@ app.listen(PORT, () => {
   console.log(`🌾 KisanSahay Server running on http://localhost:${PORT}`);
   console.log(`📚 Interactive OpenAPI / Swagger Docs at: http://localhost:${PORT}/api/docs`);
   startScheduledIngestion();
-  landRateAggregationService.startMonthlyScheduler();
+  startScheduledReminders();
 });
 
 
