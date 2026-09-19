@@ -19,9 +19,24 @@
        ========================================================================== -->
   <header class="header">
     <div class="header-container">
-      <div class="logo-wrap" onclick="switchView('home')">
-        <div class="logo-badge">🌱</div>
-        <div class="logo-text">Kisan<span>Sahay</span></div>
+      <div class="header-left-wrap">
+        <!-- Live Internet Connection Speed Pill (Top Bar Left Corner) -->
+        <div class="net-speed-pill status-fast" id="net-speed-pill" title="Live Internet Connection Speed — Click to re-test" role="status" aria-live="polite">
+          <span class="net-wifi-icon-wrap" aria-hidden="true">
+            <svg class="net-wifi-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0" class="wifi-arc wifi-arc-mid"></path>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0" class="wifi-arc wifi-arc-outer"></path>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" class="wifi-arc wifi-arc-inner"></path>
+              <line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3.5" class="wifi-dot"></line>
+            </svg>
+          </span>
+          <span class="net-speed-val" id="net-speed-val">Checking...</span>
+        </div>
+
+        <div class="logo-wrap" onclick="switchView('home')">
+          <div class="logo-badge">🌱</div>
+          <div class="logo-text">Kisan<span>Sahay</span></div>
+        </div>
       </div>
 
       <!-- Desktop Nav -->

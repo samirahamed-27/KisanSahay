@@ -205,3 +205,36 @@ test('Feature 7: Neural TTS Service & Speed Rate Options', async () => {
   const voiceMapping = ttsService.getVoiceConfig('hi');
   assert.ok(voiceMapping.gcpVoice.includes('hi-IN'));
 });
+
+test('Feature 8: Top Bar Internet Speed Monitor (WiFi Icon with Green, Yellow, and Red States)', () => {
+  const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+  const copyHtml = fs.readFileSync(path.join(__dirname, '../public copy/index.html'), 'utf8');
+  const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
+  const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
+
+  // 1. Verify Top Bar structure & elements
+  assert.ok(indexHtml.includes('id="net-speed-pill"'), 'index.html must contain net-speed-pill in top bar');
+  assert.ok(indexHtml.includes('id="net-speed-val"'), 'index.html must contain net-speed-val');
+  assert.ok(indexHtml.includes('class="net-wifi-icon"'), 'index.html must contain WiFi SVG icon');
+  assert.ok(indexHtml.includes('header-left-wrap'), 'index.html must position speed pill in top bar left corner');
+
+  // 2. Parity check with public copy/
+  assert.equal(indexHtml, copyHtml, 'public/index.html and public copy/index.html must match exactly');
+
+  // 3. CSS styles verification (Normal, Yellow/Slow, Red/Too Slow, Dark Mode)
+  assert.ok(stylesCss.includes('.net-speed-pill.status-fast'), 'styles.css must style fast status');
+  assert.ok(stylesCss.includes('.net-speed-pill.status-slow'), 'styles.css must style slow status');
+  assert.ok(stylesCss.includes('.net-speed-pill.status-too-slow'), 'styles.css must style too-slow status');
+  assert.ok(stylesCss.includes('#ca8a04') || stylesCss.includes('#fde047') || stylesCss.includes('rgba(234, 179, 8'), 'Slow status must have yellow styling');
+  assert.ok(stylesCss.includes('#dc2626') || stylesCss.includes('#b91c1c') || stylesCss.includes('#ef4444'), 'Too-slow status must have red styling');
+  assert.ok(stylesCss.includes('body.dark-mode .net-speed-pill.status-slow'), 'styles.css must support dark mode slow styling');
+  assert.ok(stylesCss.includes('body.dark-mode .net-speed-pill.status-too-slow'), 'styles.css must support dark mode too-slow styling');
+
+  // 4. JS logic verification
+  assert.ok(appJs.includes('function setupNetworkSpeedMonitor()'), 'app.js must define setupNetworkSpeedMonitor');
+  assert.ok(appJs.includes('setupNetworkSpeedMonitor();'), 'app.js must invoke setupNetworkSpeedMonitor');
+  assert.ok(appJs.includes('too-slow'), 'app.js must handle too-slow state');
+  assert.ok(appJs.includes('slow'), 'app.js must handle slow state');
+  assert.ok(appJs.includes('fast'), 'app.js must handle fast state');
+});
+

@@ -1,16 +1,16 @@
 [
   {
-    "id": "notif-1789803305890-7d",
+    "id": "notif-1789828252914-7d",
     "userId": "default",
     "type": "emi_reminder",
     "title": "⏰ Upcoming EMI Due in 7 Days",
     "message": "Your monthly EMI of ₹4,200 for Kisan Credit Card Subsidized is due on 2026-09-26. Keep funds ready in your bank account.",
     "link": "#tracker",
-    "loanId": "test-loan-7d-1789803305878",
+    "loanId": "test-loan-7d-1789828252905",
     "schemeId": null,
-    "milestone": "emi-7d-test-loan-7d-1789803305878-2026-09-26",
+    "milestone": "emi-7d-test-loan-7d-1789828252905-2026-09-26",
     "read": true,
-    "createdAt": "2026-09-19T07:35:05.890Z"
+    "createdAt": "2026-09-19T14:30:52.914Z"
   },
   {
     "id": "notif-kcc-feature",
