@@ -10,6 +10,13 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#16a34a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KisanSahay">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
 </head>
 
 <body>
@@ -50,6 +57,12 @@
 
       <!-- Header Actions -->
       <div class="header-actions">
+        <!-- Install PWA App Button (Shown when installable) -->
+        <button class="btn-install-pwa" id="btn-install-pwa" style="display: none;" title="Install KisanSahay App / ऐप इंस्टॉल करें" aria-label="Install KisanSahay App">
+          <span class="install-pwa-icon">⬇️</span>
+          <span class="install-pwa-text" data-i18n="installApp">Install App</span>
+        </button>
+
         <!-- Farmer Document Vault Quick Access -->
         <button class="vault-nav-btn" id="btn-vault-nav" title="Farmer Encrypted Document Vault">
           <span class="vault-nav-icon" id="vault-nav-icon">
@@ -2340,6 +2353,17 @@
   <script src="multiuser.js"></script>
   <script src="voice_input.js"></script>
   <script src="app.js"></script>
+
+  <!-- Progressive Web App (PWA) Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('KisanSahay Service Worker registered with scope:', reg.scope))
+          .catch(err => console.error('KisanSahay Service Worker registration failed:', err));
+      });
+    }
+  </script>
 </body>
 
 </html>

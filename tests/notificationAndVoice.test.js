@@ -291,3 +291,71 @@ test('Feature 9: All-India State Selector, High-Contrast Cards & Multi-Step Qual
   assert.ok(schemesData.length >= 650, 'Database must contain comprehensive regional schemes (650+)');
 });
 
+test('Feature 10: Progressive Web App (PWA) Manifest, Service Worker & Install Button Parity', () => {
+  const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+  const copyHtml = fs.readFileSync(path.join(__dirname, '../public copy/index.html'), 'utf8');
+  const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
+  const copyStylesCss = fs.readFileSync(path.join(__dirname, '../public copy/styles.css'), 'utf8');
+  const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
+  const copyAppJs = fs.readFileSync(path.join(__dirname, '../public copy/app.js'), 'utf8');
+  const swJs = fs.readFileSync(path.join(__dirname, '../public/sw.js'), 'utf8');
+  const copySwJs = fs.readFileSync(path.join(__dirname, '../public copy/sw.js'), 'utf8');
+
+  // 1. Strict parity between public/ and public copy/
+  assert.equal(indexHtml, copyHtml, 'public/index.html and public copy/index.html must match exactly');
+  assert.equal(stylesCss, copyStylesCss, 'public/styles.css and public copy/styles.css must match exactly');
+  assert.equal(appJs, copyAppJs, 'public/app.js and public copy/app.js must match exactly');
+  assert.equal(swJs, copySwJs, 'public/sw.js and public copy/sw.js must match exactly');
+
+  // 2. Manifest file verification
+  const manifestPath = path.join(__dirname, '../public/manifest.json');
+  const copyManifestPath = path.join(__dirname, '../public copy/manifest.json');
+  assert.ok(fs.existsSync(manifestPath), 'public/manifest.json must exist');
+  assert.ok(fs.existsSync(copyManifestPath), 'public copy/manifest.json must exist');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  assert.equal(manifest.name, 'KisanSahay');
+  assert.equal(manifest.short_name, 'KisanSahay');
+  assert.equal(manifest.start_url, '/');
+  assert.equal(manifest.display, 'standalone');
+  assert.equal(manifest.background_color, '#0a0f1a');
+  assert.equal(manifest.theme_color, '#16a34a');
+  assert.ok(Array.isArray(manifest.icons) && manifest.icons.length >= 2, 'Manifest must have at least 192x192 and 512x512 icons');
+  assert.ok(manifest.icons.some(i => i.sizes === '192x192'));
+  assert.ok(manifest.icons.some(i => i.sizes === '512x512'));
+
+  // 3. Icons files verification
+  assert.ok(fs.existsSync(path.join(__dirname, '../public/icons/icon-192.png')), 'public/icons/icon-192.png must exist');
+  assert.ok(fs.existsSync(path.join(__dirname, '../public/icons/icon-512.png')), 'public/icons/icon-512.png must exist');
+  assert.ok(fs.existsSync(path.join(__dirname, '../public copy/icons/icon-192.png')), 'public copy/icons/icon-192.png must exist');
+  assert.ok(fs.existsSync(path.join(__dirname, '../public copy/icons/icon-512.png')), 'public copy/icons/icon-512.png must exist');
+
+  // 4. HTML Meta Tags and Elements
+  assert.ok(indexHtml.includes('<link rel="manifest" href="/manifest.json">'), 'index.html must include manifest link');
+  assert.ok(indexHtml.includes('<meta name="theme-color" content="#16a34a">'), 'index.html must include theme-color meta tag');
+  assert.ok(indexHtml.includes('<meta name="mobile-web-app-capable" content="yes">'), 'index.html must include mobile-web-app-capable');
+  assert.ok(indexHtml.includes('<meta name="apple-mobile-web-app-capable" content="yes">'), 'index.html must include apple-mobile-web-app-capable');
+  assert.ok(indexHtml.includes('<meta name="apple-mobile-web-app-title" content="KisanSahay">'), 'index.html must include apple-mobile-web-app-title');
+  assert.ok(indexHtml.includes('navigator.serviceWorker.register'), 'index.html must register service worker');
+  assert.ok(indexHtml.includes('id="btn-install-pwa"'), 'index.html must include #btn-install-pwa button');
+
+  // 5. Service Worker implementation
+  assert.ok(swJs.includes("const CACHE_NAME = 'kisansahay-v1'"), 'sw.js must define cache name kisansahay-v1');
+  assert.ok(swJs.includes('/index.html') && swJs.includes('/styles.css') && swJs.includes('/app.js') && swJs.includes('/manifest.json') && swJs.includes('/schemes_data.js'), 'sw.js must pre-cache shell files');
+  assert.ok(swJs.includes('caches.match(request)'), 'sw.js must implement Cache-First matching');
+  assert.ok(swJs.includes("url.pathname.startsWith('/api/')"), 'sw.js must handle API requests with network fallback');
+  assert.ok(swJs.includes("self.addEventListener('push'"), 'sw.js must support push notifications');
+
+  // 6. App.js PWA install prompt logic
+  assert.ok(appJs.includes('beforeinstallprompt'), 'app.js must handle beforeinstallprompt event');
+  assert.ok(appJs.includes('deferredPrompt.prompt()'), 'app.js must trigger deferredPrompt.prompt() on click');
+  assert.ok(appJs.includes('setupPWAInstallPrompt()'), 'app.js must define setupPWAInstallPrompt()');
+
+  // 7. Digital Asset Links verification
+  const assetlinksPath = path.join(__dirname, '../public/.well-known/assetlinks.json');
+  assert.ok(fs.existsSync(assetlinksPath), 'public/.well-known/assetlinks.json must exist');
+  const assetlinks = JSON.parse(fs.readFileSync(assetlinksPath, 'utf8'));
+  assert.ok(Array.isArray(assetlinks) && assetlinks.length > 0);
+  assert.equal(assetlinks[0].target.package_name, 'com.kisansahay.app');
+});
+
+

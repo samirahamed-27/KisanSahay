@@ -24,6 +24,7 @@ const INDIAN_LANGUAGES = [
 
 const TRANSLATIONS = {
   en: {
+    installApp: "Install App",
     navHome: "Home",
     navEligibility: "Check Eligibility",
     navSchemes: "Government Schemes",
@@ -170,6 +171,7 @@ const TRANSLATIONS = {
   },
 
   hi: {
+    installApp: "ऐप इंस्टॉल करें",
     navHome: "होम",
     navEligibility: "पात्रता जांचें",
     navSchemes: "सरकारी योजनाएं",

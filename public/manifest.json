@@ -1,0 +1,74 @@
+{
+  "name": "KisanSahay",
+  "short_name": "KisanSahay",
+  "description": "Accessible Agricultural Finance & Scheme Portal for Indian Farmers",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f1a",
+  "theme_color": "#16a34a",
+  "lang": "hi",
+  "dir": "ltr",
+  "categories": [
+    "finance",
+    "government",
+    "agriculture",
+    "business",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Government Schemes",
+      "short_name": "Schemes",
+      "description": "Explore 670+ Government Agricultural and Loan Schemes",
+      "url": "/#schemes",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Check Eligibility",
+      "short_name": "Eligibility",
+      "description": "Instant Eligibility Check for Small & Marginal Farmers",
+      "url": "/#eligibility",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My Loans & EMIs",
+      "short_name": "Loans",
+      "description": "Track active loans, EMIs and due dates",
+      "url": "/#loans",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

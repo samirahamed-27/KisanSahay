@@ -254,6 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupMultiuserStateListener();
   setupNetworkSpeedMonitor();
   setupFarmerQualificationModal();
+  setupPWAInstallPrompt();
 
   // Apply saved language
   setLanguage(state.currentLang);
@@ -5302,4 +5303,65 @@ window.__setSimulatedNetworkSpeed = function(status, label) {
   speedVal.textContent = label;
   return true;
 };
+
+// ==========================================================================
+// PWA Install Prompt Handler (#btn-install-pwa)
+// ==========================================================================
+let deferredPrompt = null;
+
+function setupPWAInstallPrompt() {
+  const installBtn = document.getElementById('btn-install-pwa');
+  if (!installBtn) return;
+
+  // Listen for the beforeinstallprompt event fired by Chromium browsers
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the default mini-infobar / browser banner
+    e.preventDefault();
+    // Stash the event so it can be triggered when the user clicks the button
+    deferredPrompt = e;
+    // Show the Install App button in navbar
+    installBtn.style.display = 'inline-flex';
+    console.log('PWA: beforeinstallprompt captured, #btn-install-pwa visible.');
+  });
+
+  // Handle user click on Install App button
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) {
+      // Helpful fallback instructions for iOS Safari users where beforeinstallprompt doesn't fire
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        alert('To install KisanSahay on iOS: Tap the Share button in Safari (icon at bottom) and choose "Add to Home Screen" 📲');
+      }
+      return;
+    }
+
+    // Show the native browser install prompt dialog
+    deferredPrompt.prompt();
+
+    // Await user's choice
+    try {
+      const choiceResult = await deferredPrompt.userChoice;
+      console.log(`PWA: User install outcome: ${choiceResult.outcome}`);
+      if (choiceResult.outcome === 'accepted') {
+        console.log('PWA: User accepted KisanSahay installation.');
+      } else {
+        console.log('PWA: User dismissed KisanSahay installation.');
+      }
+    } catch (err) {
+      console.warn('PWA: Install prompt error:', err);
+    }
+
+    // Reset prompt and hide button
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+
+  // Listen for the appinstalled event
+  window.addEventListener('appinstalled', (evt) => {
+    console.log('PWA: KisanSahay installed successfully.');
+    installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+}
+
 
