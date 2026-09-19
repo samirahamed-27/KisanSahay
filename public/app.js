@@ -1460,6 +1460,10 @@ function setupDocumentVault() {
   if (el.btnVaultCancel) {
     el.btnVaultCancel.addEventListener('click', closeVaultModal);
   }
+  const btnLockNow = document.getElementById('btn-vault-lock-now');
+  if (btnLockNow) {
+    btnLockNow.addEventListener('click', lockFarmerVault);
+  }
 
   // 6. Vault Save Submit Button
   if (el.btnVaultSaveSubmit) {
@@ -1645,6 +1649,64 @@ function drawPatternLines(targetPos = null, canvasId = 'pattern-canvas') {
   ctx.stroke();
 }
 
+// Helper to get active profile ID
+function getActiveVaultUserId() {
+  if (window.multiUserManager && typeof window.multiUserManager.getActiveProfile === 'function') {
+    const p = window.multiUserManager.getActiveProfile();
+    if (p && p.id) return p.id;
+  }
+  return 'farmer_primary';
+}
+
+// Client-side SHA-256 password verifier
+async function hashVaultPasswordClient(password, salt) {
+  try {
+    const enc = new TextEncoder();
+    const data = enc.encode(`${salt}:${password}:kisansahay_vault_v2`);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    const arr = Array.from(new Uint8Array(buf));
+    return arr.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    let hash = 0;
+    const str = `${salt}:${password}:kisansahay_vault_v2`;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return String(hash);
+  }
+}
+
+// Global Show/Hide password toggle function
+window.togglePasswordVisibility = function(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (btn) btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    if (btn) btn.textContent = '👁️';
+  }
+};
+
+// UI helper to display incorrect password feedback
+function showUnlockError(msg) {
+  showToast(`❌ ${msg}`);
+  const errNotice = document.getElementById('unlock-error-notice');
+  if (errNotice) {
+    errNotice.textContent = `❌ ${msg}`;
+    errNotice.style.display = 'block';
+  }
+  const input = document.getElementById('unlock-word-input') || document.getElementById('unlock-pin-input');
+  if (input) {
+    input.classList.add('input-error-shake');
+    input.value = '';
+    input.focus();
+    setTimeout(() => input.classList.remove('input-error-shake'), 600);
+  }
+}
+
 function openVaultModal(scheme = null, isOverview = false) {
   if (scheme) {
     if (el.vaultSchemePromptBanner && el.vaultTargetSchemeName) {
@@ -1655,6 +1717,28 @@ function openVaultModal(scheme = null, isOverview = false) {
     if (el.vaultSchemePromptBanner) el.vaultSchemePromptBanner.style.display = 'none';
   }
 
+  const btnLockNow = document.getElementById('btn-vault-lock-now');
+  const btnSaveText = document.getElementById('btn-vault-save-text');
+  const headerStatus = document.getElementById('vault-header-status');
+
+  if (state.vaultState.isUnlocked) {
+    if (btnLockNow) btnLockNow.style.display = 'inline-block';
+    if (btnSaveText) btnSaveText.textContent = 'Update & Secure Documents';
+    if (headerStatus) headerStatus.textContent = '✓ Unlocked & Verified';
+
+    // Populate existing verified documents
+    const docs = state.vaultState.documents || {};
+    if (el.vaultAadhaar && docs.aadhaarCard) el.vaultAadhaar.value = docs.aadhaarCard;
+    if (el.vaultLand && docs.landRecord) el.vaultLand.value = docs.landRecord;
+    if (el.vaultBank && docs.bankDetails) el.vaultBank.value = docs.bankDetails;
+    if (el.vaultCrop && docs.cropSowing) el.vaultCrop.value = docs.cropSowing;
+    if (el.vaultCategory && docs.categoryCert) el.vaultCategory.value = docs.categoryCert;
+  } else {
+    if (btnLockNow) btnLockNow.style.display = 'none';
+    if (btnSaveText) btnSaveText.textContent = 'Encrypt & Secure Documents';
+    if (headerStatus) headerStatus.textContent = 'Encrypted Farmer Vault';
+  }
+
   if (el.vaultModal) el.vaultModal.classList.add('active');
 }
 
@@ -1662,30 +1746,50 @@ function closeVaultModal() {
   if (el.vaultModal) el.vaultModal.classList.remove('active');
 }
 
+function lockFarmerVault() {
+  state.vaultState.isUnlocked = false;
+  state.vaultState.documents = {};
+  updateVaultNavIndicator('locked');
+  closeVaultModal();
+  showToast('🔒 Document Vault locked. Password required to access.');
+}
+
 function openVaultUnlockModal(vaultMeta = {}, scheme = null) {
   if (scheme) state.pendingChosenSchemeId = scheme.id;
   const pwType = vaultMeta.passwordType || 'word';
 
+  const errNotice = document.getElementById('unlock-error-notice');
+  if (errNotice) {
+    errNotice.style.display = 'none';
+    errNotice.textContent = '';
+  }
+
   if (el.unlockModalDesc) {
-    const typeLabel = pwType === 'word' ? 'Word Passphrase' : (pwType === 'number' ? '4-6 Digit Number PIN' : 'Pattern Lock');
-    el.unlockModalDesc.textContent = `Your documents are encrypted. Enter your ${typeLabel} to unlock.`;
+    const typeLabel = pwType === 'word' ? 'Secret Password' : (pwType === 'number' ? 'PIN (4-6 Digits)' : 'Pattern Lock');
+    el.unlockModalDesc.textContent = `Your documents are encrypted. Enter your ${typeLabel} to decrypt and access.`;
   }
 
   if (el.unlockInputContainer) {
     if (pwType === 'word') {
       el.unlockInputContainer.innerHTML = `
-        <label class="input-label-clean" for="unlock-word-input">Enter Secret Passphrase *</label>
-        <input type="password" id="unlock-word-input" class="input-clean" placeholder="Enter your secret word">
+        <label class="input-label-clean" for="unlock-word-input">Enter Secret Password *</label>
+        <div class="password-input-wrap">
+          <input type="password" id="unlock-word-input" class="input-clean" placeholder="Enter your secret password" autocomplete="current-password">
+          <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('unlock-word-input', this)" title="Show/Hide Password" aria-label="Show/Hide Password">👁️</button>
+        </div>
       `;
     } else if (pwType === 'number') {
       el.unlockInputContainer.innerHTML = `
-        <label class="input-label-clean" for="unlock-pin-input">Enter Number PIN *</label>
-        <input type="password" id="unlock-pin-input" class="input-clean" placeholder="• • • •" maxlength="6" style="letter-spacing: 0.35rem; font-size: 1.3rem; text-align: center;">
+        <label class="input-label-clean" for="unlock-pin-input">Enter PIN (4-6 Digits) *</label>
+        <div class="password-input-wrap">
+          <input type="password" id="unlock-pin-input" class="input-clean" placeholder="• • • •" maxlength="6" style="letter-spacing: 0.35rem; font-size: 1.3rem; text-align: center;" autocomplete="current-password">
+          <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('unlock-pin-input', this)" title="Show/Hide PIN" aria-label="Show/Hide PIN">👁️</button>
+        </div>
       `;
     } else if (pwType === 'pattern') {
       el.unlockInputContainer.innerHTML = `
         <div class="pattern-lock-wrap">
-          <p style="font-size: 0.84rem; color: #475569; margin-bottom: 0.5rem; text-align: center;">Draw your unlock pattern below:</p>
+          <p style="font-size: 0.84rem; color: #475569; margin-bottom: 0.5rem; text-align: center;">Draw your secret unlock pattern below:</p>
           <div class="pattern-container" id="unlock-pattern-container">
             <canvas id="unlock-pattern-canvas" width="240" height="240"></canvas>
             <div class="pattern-dots-grid" id="unlock-pattern-dots">
@@ -1700,7 +1804,7 @@ function openVaultUnlockModal(vaultMeta = {}, scheme = null) {
               <div class="pattern-dot" data-index="8"><span></span></div>
             </div>
           </div>
-          <div class="pattern-feedback" id="unlock-pattern-feedback">Connect your pattern</div>
+          <div class="pattern-feedback" id="unlock-pattern-feedback">Connect dots in sequence to draw pattern</div>
         </div>
       `;
       setupUnlockPatternLock();
@@ -1708,6 +1812,10 @@ function openVaultUnlockModal(vaultMeta = {}, scheme = null) {
   }
 
   if (el.vaultUnlockModal) el.vaultUnlockModal.classList.add('active');
+  setTimeout(() => {
+    const input = document.getElementById('unlock-word-input') || document.getElementById('unlock-pin-input');
+    if (input) input.focus();
+  }, 120);
 }
 
 function closeVaultUnlockModal() {
@@ -1790,22 +1898,22 @@ async function saveFarmerVault() {
   const categoryCert = el.vaultCategory ? el.vaultCategory.value.trim() : '';
 
   if (!aadhaarCard || aadhaarCard.length < 10) {
-    showToast('Please provide a valid 12-digit Aadhaar Card number.');
+    showToast('⚠️ Please provide a valid 12-digit Aadhaar Card number.');
     if (el.vaultAadhaar) el.vaultAadhaar.focus();
     return;
   }
   if (!landRecord) {
-    showToast('Please provide your Land Record / Khasra-Khatauni / Patta detail.');
+    showToast('⚠️ Please provide your Land Record / Khasra-Khatauni / Patta detail.');
     if (el.vaultLand) el.vaultLand.focus();
     return;
   }
   if (!bankDetails) {
-    showToast('Please provide your Bank Account & IFSC details.');
+    showToast('⚠️ Please provide your Bank Account & IFSC details.');
     if (el.vaultBank) el.vaultBank.focus();
     return;
   }
   if (!cropSowing) {
-    showToast('Please provide your Crop Sowing / Cultivation Proof.');
+    showToast('⚠️ Please provide your Crop Sowing / Cultivation Proof.');
     if (el.vaultCrop) el.vaultCrop.focus();
     return;
   }
@@ -1817,11 +1925,13 @@ async function saveFarmerVault() {
     const pass = el.vaultWordPass ? el.vaultWordPass.value : '';
     const confirm = el.vaultWordConfirm ? el.vaultWordConfirm.value : '';
     if (!pass || pass.length < 4) {
-      showToast('Word passphrase must be at least 4 characters.');
+      showToast('⚠️ Password must be at least 4 characters long.');
+      if (el.vaultWordPass) el.vaultWordPass.focus();
       return;
     }
     if (pass !== confirm) {
-      showToast('Word passphrases do not match. Please re-enter.');
+      showToast('⚠️ Passwords do not match. Please re-enter.');
+      if (el.vaultWordConfirm) el.vaultWordConfirm.focus();
       return;
     }
     chosenPassword = pass;
@@ -1829,17 +1939,19 @@ async function saveFarmerVault() {
     const pass = el.vaultPinPass ? el.vaultPinPass.value.trim() : '';
     const confirm = el.vaultPinConfirm ? el.vaultPinConfirm.value.trim() : '';
     if (!pass || !/^\d{4,6}$/.test(pass)) {
-      showToast('PIN must be 4 to 6 numeric digits.');
+      showToast('⚠️ PIN must be 4 to 6 numeric digits.');
+      if (el.vaultPinPass) el.vaultPinPass.focus();
       return;
     }
     if (pass !== confirm) {
-      showToast('PINs do not match. Please re-enter.');
+      showToast('⚠️ PINs do not match. Please re-enter.');
+      if (el.vaultPinConfirm) el.vaultPinConfirm.focus();
       return;
     }
     chosenPassword = pass;
   } else if (pwType === 'pattern') {
     if (state.patternSequence.length < 4) {
-      showToast('Pattern Lock must connect at least 4 dots.');
+      showToast('⚠️ Pattern Lock must connect at least 4 dots.');
       return;
     }
     chosenPassword = state.patternSequence.join('-');
@@ -1855,12 +1967,18 @@ async function saveFarmerVault() {
     isVerified: true
   };
 
+  const userId = getActiveVaultUserId();
+
+  // Generate client cryptographic salt and verifier hash
+  const clientSalt = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
+  const clientVerifierHash = await hashVaultPasswordClient(chosenPassword, clientSalt);
+
   try {
     const res = await fetch('/api/vault/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: 'farmer_primary',
+        userId,
         documents,
         password: chosenPassword,
         passwordType: pwType
@@ -1874,14 +1992,27 @@ async function saveFarmerVault() {
     console.warn('Backend vault save offline, persisting locally:', err);
   }
 
-  // Update client state
+  // Persist locally for offline validation
   const vaultMeta = {
     isInitialized: true,
+    userId,
     passwordType: pwType,
+    salt: clientSalt,
+    verifierHash: clientVerifierHash,
+    documents,
     updatedAt: new Date().toISOString(),
     docCount: 5
   };
+  localStorage.setItem(`kisansahay_vault_meta_${userId}`, JSON.stringify(vaultMeta));
   localStorage.setItem('kisansahay_vault_meta', JSON.stringify(vaultMeta));
+
+  // Clear password inputs from DOM for security
+  if (el.vaultWordPass) el.vaultWordPass.value = '';
+  if (el.vaultWordConfirm) el.vaultWordConfirm.value = '';
+  if (el.vaultPinPass) el.vaultPinPass.value = '';
+  if (el.vaultPinConfirm) el.vaultPinConfirm.value = '';
+  state.patternSequence = [];
+
   state.vaultState = {
     isInitialized: true,
     isUnlocked: true,
@@ -1891,7 +2022,7 @@ async function saveFarmerVault() {
 
   updateVaultNavIndicator('unlocked');
   closeVaultModal();
-  showToast(`🔒 Document Vault encrypted & secured with your ${pwType.toUpperCase()} lock!`);
+  showToast(`🔒 Document Vault encrypted & secured with your chosen ${pwType.toUpperCase()} password!`);
 
   // If prompted via "Choose Loan", seamlessly proceed to loan tracker modal!
   if (state.pendingChosenSchemeId) {
@@ -1904,7 +2035,9 @@ async function saveFarmerVault() {
 }
 
 async function unlockFarmerVault() {
-  const meta = JSON.parse(localStorage.getItem('kisansahay_vault_meta') || '{}');
+  const userId = getActiveVaultUserId();
+  const metaStr = localStorage.getItem(`kisansahay_vault_meta_${userId}`) || localStorage.getItem('kisansahay_vault_meta') || '{}';
+  const meta = JSON.parse(metaStr);
   const pwType = meta.passwordType || 'word';
   let enteredPassword = '';
 
@@ -1919,7 +2052,9 @@ async function unlockFarmerVault() {
   }
 
   if (!enteredPassword) {
-    showToast('Please enter your security key or draw your pattern.');
+    showToast('⚠️ Please enter your password or draw your pattern.');
+    const input = document.getElementById('unlock-word-input') || document.getElementById('unlock-pin-input');
+    if (input) input.focus();
     return;
   }
 
@@ -1928,14 +2063,14 @@ async function unlockFarmerVault() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: 'farmer_primary',
+        userId,
         password: enteredPassword
       })
     });
     const json = await res.json();
     if (res.ok && json.success) {
       state.vaultState.isUnlocked = true;
-      state.vaultState.documents = json.documents || {};
+      state.vaultState.documents = json.documents || meta.documents || {};
       updateVaultNavIndicator('unlocked');
       closeVaultUnlockModal();
       showToast('🔓 Document Vault successfully unlocked!');
@@ -1949,33 +2084,49 @@ async function unlockFarmerVault() {
       }
       return;
     } else {
-      showToast(`❌ ${json.message || 'Incorrect password. Access denied.'}`);
+      // Backend returned incorrect password or error
+      showUnlockError(json.message || 'Incorrect password. Access denied.');
       return;
     }
   } catch (err) {
-    console.warn('Backend unlock offline, unlocking locally:', err);
-    state.vaultState.isUnlocked = true;
-    updateVaultNavIndicator('unlocked');
-    closeVaultUnlockModal();
-    showToast('🔓 Document Vault unlocked locally!');
-    if (state.pendingChosenSchemeId) {
-      const scheme = state.schemes.find(s => s.id === state.pendingChosenSchemeId);
-      state.pendingChosenSchemeId = null;
-      if (scheme) {
-        setTimeout(() => openLoanTrackerModalForScheme(scheme), 350);
+    console.warn('Backend unlock offline, verifying locally with cryptographic verifier:', err);
+    // Offline verification against local cryptographic hash
+    if (meta.salt && meta.verifierHash) {
+      const testHash = await hashVaultPasswordClient(enteredPassword, meta.salt);
+      if (testHash === meta.verifierHash) {
+        state.vaultState.isUnlocked = true;
+        state.vaultState.documents = meta.documents || {};
+        updateVaultNavIndicator('unlocked');
+        closeVaultUnlockModal();
+        showToast('🔓 Document Vault successfully unlocked!');
+
+        if (state.pendingChosenSchemeId) {
+          const scheme = state.schemes.find(s => s.id === state.pendingChosenSchemeId);
+          state.pendingChosenSchemeId = null;
+          if (scheme) {
+            setTimeout(() => openLoanTrackerModalForScheme(scheme), 350);
+          }
+        }
+        return;
       }
     }
+
+    // STRICT DENIAL: Under no circumstances allow access if password doesn't match!
+    showUnlockError('Incorrect password. Access denied.');
+    return;
   }
 }
 
 async function checkVaultStatus() {
+  const userId = getActiveVaultUserId();
   try {
-    const res = await fetch('/api/vault/status?userId=farmer_primary');
+    const res = await fetch(`/api/vault/status?userId=${encodeURIComponent(userId)}`);
     if (res.ok) {
       const json = await res.json();
       if (json.success && json.data && json.data.isInitialized) {
         state.vaultState.isInitialized = true;
         state.vaultState.passwordType = json.data.passwordType || 'word';
+        localStorage.setItem(`kisansahay_vault_meta_${userId}`, JSON.stringify(json.data));
         localStorage.setItem('kisansahay_vault_meta', JSON.stringify(json.data));
         updateVaultNavIndicator(state.vaultState.isUnlocked ? 'unlocked' : 'locked');
         return;
@@ -1985,10 +2136,10 @@ async function checkVaultStatus() {
     console.warn('Vault status fetch fallback:', e);
   }
 
-  const meta = localStorage.getItem('kisansahay_vault_meta');
-  if (meta) {
+  const metaStr = localStorage.getItem(`kisansahay_vault_meta_${userId}`) || localStorage.getItem('kisansahay_vault_meta');
+  if (metaStr) {
     try {
-      const parsed = JSON.parse(meta);
+      const parsed = JSON.parse(metaStr);
       state.vaultState.isInitialized = true;
       state.vaultState.passwordType = parsed.passwordType || 'word';
       updateVaultNavIndicator(state.vaultState.isUnlocked ? 'unlocked' : 'locked');
@@ -2022,7 +2173,7 @@ function updateVaultNavIndicator(status) {
   }
   if (el.vaultStatusNavText) {
     if (status === 'unlocked') {
-      el.vaultStatusNavText.textContent = 'Vault (Verified)';
+      el.vaultStatusNavText.textContent = 'Vault (Unlocked)';
     } else if (status === 'locked') {
       el.vaultStatusNavText.textContent = 'Vault (Locked)';
     } else {

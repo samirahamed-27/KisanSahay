@@ -2,35 +2,35 @@
   "test-farmer-word": {
     "userId": "test-farmer-word",
     "passwordType": "word",
-    "salt": "aef22b70e1104ac9fa80c21912354e10",
-    "iv": "2f1bc130f4a5b9ec036c1370",
-    "authTag": "1b9caa6d9f00d9966d61c0650c08364d",
-    "encryptedData": "518207efa8df7f26c0d5e575d2f00110a2a81a367c1d4ff8118d1ecf19d28792914c31c642652ba6ffb3ef162ae3668d79959236e98969f99885fc219f51353a5f4ad1c151d36a16085f5cceda107d1e7a7847e43f94e3b44d4036f4926327dc1898a6ca4e066ab774fadfa5a8323ab9316bc1bcdc54fccdef36eb21c9922a72534c118648722c7ae99bf5f7efa8ab6a8e49e8c77341e8a408e0db2775bafbdd2b6db3ac61c153d063aed373c94d7e342310791fbe68c8a95cf068b9",
-    "verifierHash": "126fa3474a873b84c8f9f1b0274048d9",
+    "salt": "b25b1f371df2e1b8978fd41e35d80625",
+    "iv": "6a3650516bd24a4c0191abd1",
+    "authTag": "c0fe3876d54b8575a66d9e4a44f7be69",
+    "encryptedData": "22865249e7e33ba20ad303094cf45425614730f8e0255e241634375f25de3d2441b97d6031f1d5cc4b814afd2eb8245e6f1ce639d18b0f027e9b63405965e457aa4cc988d3a025150f10f636a7bdc87cd56e4ae619efc7a884c2329dee6b0947bd6773912ae0bd1cacdcd465b17954c18d228c9ead5bb4a63c636a7f839c8f9bb25aefa4c07d69d814f242a5118d6824be310b080cb4fa4e1620248ea3585615c3776731153c2d150320c2456e352fe637f1575d47d0b8b33e960001",
+    "verifierHash": "ba015506a9f4c6e7230eb382ac917371",
     "documentCount": 4,
-    "updatedAt": "2026-09-19T06:04:48.680Z"
+    "updatedAt": "2026-09-19T06:21:48.301Z"
   },
   "test-farmer-pin": {
     "userId": "test-farmer-pin",
     "passwordType": "number",
-    "salt": "5992790d636b04b4169013ea887adce6",
-    "iv": "25970331b80b4464d941496e",
-    "authTag": "d8fdfc655b7a6ed60f46778185fe6c7b",
-    "encryptedData": "7e6c36a2a0d6b1493c7e80a6fd587c00da09c261d26ddcfd7810369d59c5b82d9bf6103abe81823ce2ed4bc494a19386f82c8972c39645642dc363603443a3dd2cef69ca736f80e33dfafc2e36855ced2fd97350b1eec53c78962a5efa96fd727b60f6b5240c9a162d77f400cc6808341a9f",
-    "verifierHash": "0a4b3ce1c4fde2ac44f2f7caf12fb1bf",
+    "salt": "c3a8ffc954dadb38b2fb13f4ca8b2e27",
+    "iv": "9b9911757d00cfc5d2e33c65",
+    "authTag": "518c3300fe728e2d762c4deb4eb6c530",
+    "encryptedData": "c543eab644b592cd106f8fcf178ffaefa334ddce23fed74253f8235402a5cd94e851e81bb224001e34cabc3c2fd076cd223f4c1f4c4681bf7ea5b4bdd37138633f4a68157936782e0a10957a9584cb1d93141658d9ccd0b4c7e459e4d4471cbd9a5923a4d3b3f47a5d2a5b4afce1bdc003b5",
+    "verifierHash": "2db99cd5de492c5ca222eea6cc7b812e",
     "documentCount": 2,
-    "updatedAt": "2026-09-19T06:04:48.728Z"
+    "updatedAt": "2026-09-19T06:21:48.346Z"
   },
   "test-farmer-pattern": {
     "userId": "test-farmer-pattern",
     "passwordType": "pattern",
-    "salt": "0426fa05813d9d8ff13919b61d47b6c7",
-    "iv": "7c5dfc6d96a79249ddcbcb18",
-    "authTag": "73f2c34e3e4fc16e61ff71ff22147fca",
-    "encryptedData": "633fcfd3fc6de7a3634d52ee9b470cbdea226135595af3cffdecc8afb12354b002205e12492413a868e629b0164978a2f114d7a75c9cd1df7282bf8f6f2ea0f164b31302c18c77ae9c5d468a4a4f85a48197233becce4414215e0c9524492bf82c342fd8dcbf2deef65fd72eb96beb558041",
-    "verifierHash": "aade980dc0f7afcb83503419d84c1904",
+    "salt": "6ca8cf7872dbf0ba6523673fe91ede85",
+    "iv": "d069edeaac61296b6f8a3807",
+    "authTag": "be985fdb739f6738b5f414b50e84622a",
+    "encryptedData": "42eb97738a20f587611229e104b63f1e2a204b4476461a738612a47ecf265b6f868d632e129c22ee5e78a746b99f6c8a696721152f9414fb29eb38c58bb14bd815f02f3dbaa9babca8b758f8872f5982062e5ecaae4368e0378c562aabf1144b428a9e61b902d4684957c24895a9ed5f7d20",
+    "verifierHash": "9ed7eb2a38ef0890d2400536c2f8b8cb",
     "documentCount": 2,
-    "updatedAt": "2026-09-19T06:04:48.770Z"
+    "updatedAt": "2026-09-19T06:21:48.389Z"
   },
   "farmer_test": {
     "userId": "farmer_test",
@@ -42,5 +42,16 @@
     "verifierHash": "65272a2f2a138aa676a5bf16ca096e80",
     "documentCount": 2,
     "updatedAt": "2026-09-18T10:09:41.303Z"
+  },
+  "farmer-strict-exclusive-test": {
+    "userId": "farmer-strict-exclusive-test",
+    "passwordType": "word",
+    "salt": "6bee6756e1f9a081a258597157f9c4a5",
+    "iv": "2bcc28c8b9f3fad0473846fc",
+    "authTag": "56859718f306af80ee995a03e935e70b",
+    "encryptedData": "6ce581c18ccc0035201ab1cb43c2885f2efe537766b5bd1dd9399e7c48a77d42f908867b6f206f683dde48b91239ec3c7aee2b8eb28ec230a42270f1efa50cc4106335a3f38788c6c00e5e73479af704953bee3a12c51f6795168b884362c8246a34265c81f9fea6599a1244e80b9d3adbcd82d2d85dfbfe601400a8d9520488e102d0245e0df769965cfb488f76d5ad5b228a0c8ee769f91123290bad17c969",
+    "verifierHash": "67c40175e1a62bba54bd7ad5320f2591",
+    "documentCount": 3,
+    "updatedAt": "2026-09-19T06:21:48.431Z"
   }
 }

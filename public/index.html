@@ -1251,8 +1251,7 @@
           </div>
           <div class="input-with-icon">
             <span class="field-prefix-icon">🪪</span>
-            <input type="text" id="vault-aadhaar" class="input-clean" placeholder="XXXX-XXXX-XXXX" maxlength="14"
-              value="5482-9102-3847" required>
+            <input type="text" id="vault-aadhaar" class="input-clean" placeholder="e.g. 5482-9102-3847" maxlength="14" required>
           </div>
         </div>
 
@@ -1266,8 +1265,7 @@
           </div>
           <div class="input-with-icon">
             <span class="field-prefix-icon">📜</span>
-            <input type="text" id="vault-land" class="input-clean" placeholder="e.g. Khasra 142/5, Khatauni 28"
-              value="Khasra No. 142/5, Khatauni 28" required>
+            <input type="text" id="vault-land" class="input-clean" placeholder="e.g. Khasra No. 142/5, Khatauni 28" required>
           </div>
         </div>
 
@@ -1275,14 +1273,13 @@
         <div class="vault-input-group">
           <div class="vault-label-row">
             <label class="input-label-clean" for="vault-bank" style="margin-bottom: 0;">
-              <span data-i18n="docBank">Bank Account & IFSC</span> *
+              <span data-i18n="docBank">Bank Account & IFSC Code</span> *
             </label>
             <span class="doc-badge-req">Mandatory</span>
           </div>
           <div class="input-with-icon">
             <span class="field-prefix-icon">🏦</span>
-            <input type="text" id="vault-bank" class="input-clean" placeholder="Bank Name, A/C & IFSC"
-              value="SBI Agri Branch, A/C: 38291048192, IFSC: SBIN0001428" required>
+            <input type="text" id="vault-bank" class="input-clean" placeholder="e.g. State Bank of India, A/C: 38291048192, IFSC: SBIN0001428" required>
           </div>
         </div>
 
@@ -1296,8 +1293,7 @@
           </div>
           <div class="input-with-icon">
             <span class="field-prefix-icon">🌱</span>
-            <input type="text" id="vault-crop" class="input-clean" placeholder="e.g. Rabi 2024 Wheat Cultivation Slip"
-              value="Rabi 2024 Wheat Cultivation Certificate" required>
+            <input type="text" id="vault-crop" class="input-clean" placeholder="e.g. Rabi 2026 Wheat Cultivation Slip / Certificate" required>
           </div>
         </div>
 
@@ -1312,7 +1308,7 @@
           <div class="input-with-icon">
             <span class="field-prefix-icon">📑</span>
             <input type="text" id="vault-category" class="input-clean"
-              placeholder="Certificate No. (General / SC / ST / OBC / Women)" value="General / Not Applicable">
+              placeholder="e.g. General, SC, ST, OBC, or Women (or Not Applicable)">
           </div>
         </div>
       </div>
@@ -1321,17 +1317,16 @@
       <div class="vault-security-box">
         <div class="security-box-header">
           <span style="font-size: 1.15rem;">🔐</span>
-          <span style="font-weight: 700; color: #0f172a;" data-i18n="vaultPasswordChoice">Choose Security Lock
-            Option:</span>
+          <span style="font-weight: 700; color: #0f172a;" data-i18n="vaultPasswordChoice">Choose Security Lock Method:</span>
         </div>
 
         <!-- 3 Password Tabs: Word, PIN, Pattern -->
         <div class="security-type-tabs">
           <button type="button" class="sec-tab-btn active" data-tab="word" id="sec-tab-word">
-            <span>🔤</span> <span data-i18n="tabWord">Word Passphrase</span>
+            <span>🔤</span> <span data-i18n="tabWord">Password (Word)</span>
           </button>
           <button type="button" class="sec-tab-btn" data-tab="number" id="sec-tab-number">
-            <span>🔢</span> <span data-i18n="tabNumber">Number PIN</span>
+            <span>🔢</span> <span data-i18n="tabNumber">PIN (4-6 Digits)</span>
           </button>
           <button type="button" class="sec-tab-btn" data-tab="pattern" id="sec-tab-pattern">
             <span>⚡</span> <span data-i18n="tabPattern">Pattern Lock</span>
@@ -1342,18 +1337,21 @@
         <div class="sec-pane active" id="sec-pane-word">
           <div class="form-row-2">
             <div>
-              <label class="input-label-clean" for="vault-word-pass">Secret Word Passphrase *</label>
-              <input type="password" id="vault-word-pass" class="input-clean" placeholder="e.g. Kisan@2025"
-                value="Kisan@2025">
+              <label class="input-label-clean" for="vault-word-pass">Secret Password *</label>
+              <div class="password-input-wrap">
+                <input type="password" id="vault-word-pass" class="input-clean" placeholder="Create secret password" autocomplete="new-password">
+                <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-word-pass', this)" title="Show/Hide Password" aria-label="Show/Hide Password">👁️</button>
+              </div>
             </div>
             <div>
-              <label class="input-label-clean" for="vault-word-confirm">Confirm Passphrase *</label>
-              <input type="password" id="vault-word-confirm" class="input-clean" placeholder="Re-enter passphrase"
-                value="Kisan@2025">
+              <label class="input-label-clean" for="vault-word-confirm">Confirm Password *</label>
+              <div class="password-input-wrap">
+                <input type="password" id="vault-word-confirm" class="input-clean" placeholder="Re-enter secret password" autocomplete="new-password">
+                <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-word-confirm', this)" title="Show/Hide Password" aria-label="Show/Hide Password">👁️</button>
+              </div>
             </div>
           </div>
-          <small style="color: #64748b; margin-top: 0.35rem; display: block;">Letters, numbers, or words you remember
-            easily.</small>
+          <small style="color: #64748b; margin-top: 0.45rem; display: block;">Minimum 4 characters. Use letters, numbers, or symbols you remember easily.</small>
         </div>
 
         <!-- Tab Pane 2: Number PIN -->
@@ -1361,12 +1359,18 @@
           <div style="display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 200px;">
               <label class="input-label-clean" for="vault-pin-pass">4 to 6 Digit PIN *</label>
-              <input type="password" id="vault-pin-pass" class="input-clean" placeholder="• • • •" maxlength="6"
-                style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;">
+              <div class="password-input-wrap">
+                <input type="password" id="vault-pin-pass" class="input-clean" placeholder="• • • •" maxlength="6"
+                  style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
+                <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-pin-pass', this)" title="Show/Hide PIN" aria-label="Show/Hide PIN">👁️</button>
+              </div>
               <div style="margin-top: 0.75rem;">
                 <label class="input-label-clean" for="vault-pin-confirm">Confirm PIN *</label>
-                <input type="password" id="vault-pin-confirm" class="input-clean" placeholder="• • • •" maxlength="6"
-                  style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;">
+                <div class="password-input-wrap">
+                  <input type="password" id="vault-pin-confirm" class="input-clean" placeholder="• • • •" maxlength="6"
+                    style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
+                  <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-pin-confirm', this)" title="Show/Hide PIN" aria-label="Show/Hide PIN">👁️</button>
+                </div>
               </div>
             </div>
             <!-- Interactive Keypad -->
@@ -1391,7 +1395,7 @@
         <div class="sec-pane" id="sec-pane-pattern" style="display: none;">
           <div class="pattern-lock-wrap">
             <p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.6rem; text-align: center;">
-              Connect at least 4 dots to draw your secret gesture lock:
+              Connect at least 4 dots in sequence to create your secret pattern lock:
             </p>
             <!-- 3x3 Pattern Grid Container with Canvas Overlay -->
             <div class="pattern-container" id="pattern-container">
@@ -1408,8 +1412,8 @@
                 <div class="pattern-dot" data-index="8"><span></span></div>
               </div>
             </div>
-            <div class="pattern-feedback" id="pattern-feedback">Touch & drag or click dots to draw pattern</div>
-            <button type="button" class="btn-reset-pattern" id="btn-reset-pattern">🔄 Clear & Redraw Pattern</button>
+            <div class="pattern-feedback" id="pattern-feedback">Connect dots in sequence to draw pattern</div>
+            <button type="button" class="btn-reset-pattern" id="btn-reset-pattern">🔄 Reset Pattern</button>
           </div>
         </div>
       </div>
@@ -1418,6 +1422,10 @@
       <div class="vault-modal-footer">
         <button type="button" class="btn-icon-secondary" id="btn-vault-cancel"
           style="padding: 0.65rem 1.4rem; border-radius: var(--radius-pill);">Cancel</button>
+        <button type="button" class="btn-clean" id="btn-vault-lock-now"
+          style="display: none; padding: 0.65rem 1.2rem; border-radius: var(--radius-pill); background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-weight: 700; cursor: pointer;">
+          🔒 Lock Vault Now
+        </button>
         <button type="button" class="btn-vault-save-action" id="btn-vault-save-submit">
           <span id="btn-vault-save-icon">🔒</span>
           <span id="btn-vault-save-text" data-i18n="btnEncryptVault">Encrypt & Secure Documents</span>
@@ -1435,9 +1443,10 @@
           style="width: 52px; height: 52px; background: #dcfce7; color: #15803d; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.6rem;">
           🔒</div>
         <h2 style="font-size: 1.3rem; color: #0f172a; margin-bottom: 0.3rem;">Unlock Your Document Vault</h2>
-        <p style="font-size: 0.85rem; color: #64748b;" id="unlock-modal-desc">Enter your security key to access your
-          encrypted documents.</p>
+        <p style="font-size: 0.85rem; color: #64748b;" id="unlock-modal-desc">Enter your secret password to decrypt and access your documents.</p>
       </div>
+
+      <div id="unlock-error-notice" style="display: none; padding: 0.6rem 0.85rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; font-size: 0.84rem; margin-bottom: 0.9rem; text-align: center;"></div>
 
       <div id="unlock-input-container" style="margin-bottom: 1.4rem;">
         <!-- Populated dynamically based on whether password type is word, pin, or pattern -->
