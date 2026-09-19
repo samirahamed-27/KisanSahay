@@ -1,0 +1,258 @@
+{
+  "Punjab": {
+    "default": {
+      "soilType": "Alluvial Soil (Sandy Loam to Clayey)",
+      "texture": "Medium to Fine Texture",
+      "pH": 7.4,
+      "organicCarbon": "Medium (0.45% - 0.65%)",
+      "nitrogen": "Low to Medium",
+      "phosphorus": "Medium to High",
+      "potassium": "High",
+      "waterRetention": "Moderate to High",
+      "recommendedCrops": ["Wheat", "Paddy", "Cotton", "Maize", "Sugarcane", "Mustard", "Potato"],
+      "soilHealthAdvisory": "Incorporate green manuring (dhaincha) and super seeder straw retention to boost organic carbon. Monitor zinc and sulfur deficiency."
+    },
+    "districts": {
+      "Ludhiana": { "soilType": "Fine Alluvial Loam", "pH": 7.2, "waterRetention": "High", "suitableCrops": ["Wheat", "Paddy", "Potato", "Maize", "Dairy"] },
+      "Bathinda": { "soilType": "Sandy Loam to Desert Alluvial", "pH": 7.8, "waterRetention": "Moderate", "suitableCrops": ["Cotton", "Wheat", "Mustard", "Kinnow"] },
+      "Jalandhar": { "soilType": "Deep Alluvial Silt Loam", "pH": 7.1, "waterRetention": "High", "suitableCrops": ["Potato", "Paddy", "Wheat", "Vegetables"] }
+    }
+  },
+  "Haryana": {
+    "default": {
+      "soilType": "Alluvial & Sandy Loam",
+      "texture": "Light to Medium",
+      "pH": 7.6,
+      "organicCarbon": "Low to Medium",
+      "nitrogen": "Low",
+      "phosphorus": "Medium",
+      "potassium": "High",
+      "waterRetention": "Moderate",
+      "recommendedCrops": ["Wheat", "Paddy", "Mustard", "Cotton", "Sugarcane", "Pearl Millet (Bajra)"],
+      "soilHealthAdvisory": "Apply gypsum in saline-alkaline patches; use Drip irrigation with fertigation to conserve underground water table."
+    },
+    "districts": {
+      "Karnal": { "soilType": "Rich Fertile Alluvial", "pH": 7.3, "waterRetention": "High", "suitableCrops": ["Basmati Paddy", "Wheat", "Sugarcane", "Vegetables"] },
+      "Hisar": { "soilType": "Sandy to Loamy Sand", "pH": 7.9, "waterRetention": "Moderate", "suitableCrops": ["Cotton", "Mustard", "Bajra", "Wheat"] }
+    }
+  },
+  "Maharashtra": {
+    "default": {
+      "soilType": "Black Cotton Soil (Regur)",
+      "texture": "Clayey, Deep & Moisture-Retentive",
+      "pH": 7.8,
+      "organicCarbon": "Medium (0.50% - 0.70%)",
+      "nitrogen": "Low",
+      "phosphorus": "Low to Medium",
+      "potassium": "Very High",
+      "waterRetention": "Very High",
+      "recommendedCrops": ["Cotton", "Soybean", "Sugarcane", "Tur (Pigeon Pea)", "Pomegranate", "Grapes", "Onion"],
+      "soilHealthAdvisory": "Excellent clay retention but prone to waterlogging in monsoon; use broad bed furrow (BBF) planting for soybean and cotton."
+    },
+    "districts": {
+      "Pune": { "soilType": "Medium Black to Red Loam in Ghats", "pH": 7.2, "waterRetention": "High", "suitableCrops": ["Sugarcane", "Soybean", "Vegetables", "Floriculture", "Dairy"] },
+      "Nagpur": { "soilType": "Deep Black Regur Soil", "pH": 7.6, "waterRetention": "Very High", "suitableCrops": ["Mandarin Orange (Santra)", "Cotton", "Soybean", "Tur"] },
+      "Nashik": { "soilType": "Medium Black Loam", "pH": 7.4, "waterRetention": "High", "suitableCrops": ["Grapes", "Onion", "Tomato", "Pomegranate", "Wheat"] }
+    }
+  },
+  "Madhya Pradesh": {
+    "default": {
+      "soilType": "Medium to Deep Black Soil & Mixed Red-Black",
+      "texture": "Clay Loam",
+      "pH": 7.5,
+      "organicCarbon": "Medium",
+      "nitrogen": "Low",
+      "phosphorus": "Medium",
+      "potassium": "High",
+      "waterRetention": "High",
+      "recommendedCrops": ["Soybean", "Wheat (Sharbati)", "Gram (Chana)", "Mustard", "Garlic", "Coriander"],
+      "soilHealthAdvisory": "Maintain raised beds for Kharif pulses; add biofertilizers (Rhizobium & PSB) for chickpea and soybean nodules."
+    },
+    "districts": {
+      "Indore": { "soilType": "Deep Malwa Black Soil", "pH": 7.4, "waterRetention": "High", "suitableCrops": ["Soybean", "Wheat", "Potato", "Garlic"] },
+      "Ujjain": { "soilType": "Medium Black Soil", "pH": 7.5, "waterRetention": "High", "suitableCrops": ["Soybean", "Chana", "Wheat", "Onion"] },
+      "Bhopal": { "soilType": "Deep Black Clay Loam", "pH": 7.5, "waterRetention": "High", "suitableCrops": ["Wheat", "Soybean", "Gram", "Vegetables"] },
+      "Gwalior": { "soilType": "Alluvial & Mixed Clay Loam", "pH": 7.7, "waterRetention": "Moderate", "suitableCrops": ["Mustard", "Wheat", "Paddy", "Potato"] },
+      "Jabalpur": { "soilType": "Deep Black Clayey Soil (Haveli)", "pH": 7.3, "waterRetention": "Very High", "suitableCrops": ["Paddy", "Wheat", "Green Gram", "Peas"] },
+      "Khargone": { "soilType": "Nimar Black Cotton Soil", "pH": 7.8, "waterRetention": "High", "suitableCrops": ["Cotton", "Chilli (Nimadi)", "Soybean", "Maize"] },
+      "Rewa": { "soilType": "Mixed Red and Black Soil", "pH": 6.9, "waterRetention": "Moderate", "suitableCrops": ["Paddy", "Wheat", "Gram", "Mustard"] },
+      "Sagar": { "soilType": "Medium Black Soil", "pH": 7.4, "waterRetention": "High", "suitableCrops": ["Soybean", "Wheat", "Chana", "Lentil"] },
+      "Hoshangabad": { "soilType": "Deep Narmada Valley Alluvial Black", "pH": 7.2, "waterRetention": "Very High", "suitableCrops": ["Wheat (Sharbati)", "Paddy", "Summer Moong", "Soybean"] },
+      "Ratlam": { "soilType": "Medium to Deep Black Loam", "pH": 7.6, "waterRetention": "High", "suitableCrops": ["Garlic", "Soybean", "Wheat", "Opium/Spices"] }
+    }
+  },
+  "Uttar Pradesh": {
+    "default": {
+      "soilType": "Gangetic Alluvial Soil (Khadar & Bangar)",
+      "texture": "Loamy & Silt Loam",
+      "pH": 7.3,
+      "organicCarbon": "Medium",
+      "nitrogen": "Low to Medium",
+      "phosphorus": "Medium",
+      "potassium": "High",
+      "waterRetention": "High",
+      "recommendedCrops": ["Sugarcane", "Wheat", "Paddy", "Potato", "Mustard", "Mango", "Mentha"],
+      "soilHealthAdvisory": "Rich deep soil profile; practice balanced NPK (4:2:1) application rather than over-applying urea."
+    },
+    "districts": {
+      "Muzaffarnagar": { "soilType": "Deep Alluvial Loam", "pH": 7.2, "waterRetention": "Very High", "suitableCrops": ["Sugarcane", "Wheat", "Mustard", "Dairy"] },
+      "Varanasi": { "soilType": "Fine Alluvial Silt", "pH": 7.4, "waterRetention": "High", "suitableCrops": ["Paddy", "Wheat", "Vegetables", "Pulses"] },
+      "Lucknow": { "soilType": "Gangetic Silt Loam", "pH": 7.3, "waterRetention": "High", "suitableCrops": ["Dasheri Mango", "Paddy", "Wheat", "Mentha"] },
+      "Kanpur": { "soilType": "Old Alluvial Bangar Loam", "pH": 7.4, "waterRetention": "High", "suitableCrops": ["Wheat", "Paddy", "Potato", "Mustard"] },
+      "Meerut": { "soilType": "Fertile Upper Gangetic Alluvium", "pH": 7.1, "waterRetention": "Very High", "suitableCrops": ["Sugarcane", "Wheat", "Potato", "Vegetables"] },
+      "Agra": { "soilType": "Sandy Loam to Alluvial Bangar", "pH": 7.8, "waterRetention": "Moderate", "suitableCrops": ["Potato", "Mustard", "Bajra", "Wheat"] },
+      "Prayagraj": { "soilType": "Ganga-Yamuna Doab Alluvial", "pH": 7.3, "waterRetention": "High", "suitableCrops": ["Guava (Allahabadi)", "Wheat", "Paddy", "Mustard"] },
+      "Gorakhpur": { "soilType": "Terai & Tarai Alluvial Silt Loam", "pH": 7.0, "waterRetention": "Very High", "suitableCrops": ["Sugarcane", "Paddy", "Wheat", "Lentil"] },
+      "Jhansi": { "soilType": "Bundelkhand Red & Black (Rakar/Kabar)", "pH": 7.6, "waterRetention": "Moderate to Low", "suitableCrops": ["Gram (Chana)", "Mustard", "Sesame", "Wheat"] },
+      "Banda": { "soilType": "Bundelkhand Deep Clay Kabar/Mar", "pH": 7.7, "waterRetention": "High", "suitableCrops": ["Gram", "Paddy", "Wheat", "Lentil"] },
+      "Bareilly": { "soilType": "Rohilkhand Alluvial Loam", "pH": 7.2, "waterRetention": "High", "suitableCrops": ["Sugarcane", "Paddy", "Wheat", "Mentha"] },
+      "Aligarh": { "soilType": "Alluvial Sandy Loam", "pH": 7.6, "waterRetention": "Moderate to High", "suitableCrops": ["Wheat", "Mustard", "Potato", "Paddy"] }
+    }
+  },
+  "Bihar": {
+    "default": {
+      "soilType": "Middle Gangetic Alluvial Soil (Khadar, Bhangar & Tal Clay)",
+      "texture": "Sandy Loam to Deep Silty Clay",
+      "pH": 7.2,
+      "organicCarbon": "Medium to High (0.55% - 0.85%)",
+      "nitrogen": "Low to Medium",
+      "phosphorus": "Medium",
+      "potassium": "Medium to High",
+      "waterRetention": "High to Very High",
+      "recommendedCrops": ["Makhana (Fox Nut)", "Paddy", "Maize", "Wheat", "Litchi", "Potato", "Jute", "Pulses (Lentil/Gram)"],
+      "soilHealthAdvisory": "Rich alluvial silt replenished by Himalayan rivers; in North Bihar wetland/Tal areas, Makhana, water chestnut and Boro rice thrive. Optimize zinc and boron micro-nutrients."
+    },
+    "districts": {
+      "Patna": { "soilType": "Gangetic Alluvial & Tal Clay Loam", "pH": 7.3, "waterRetention": "High", "suitableCrops": ["Paddy", "Wheat", "Gram", "Lentil", "Vegetables"] },
+      "Muzaffarpur": { "soilType": "Calcareous Alluvial Sandy Loam", "pH": 7.6, "waterRetention": "High", "suitableCrops": ["Shahi Litchi", "Maize", "Paddy", "Wheat", "Turmeric"] },
+      "Darbhanga": { "soilType": "Wetland Alluvial & Silt Clay", "pH": 6.9, "waterRetention": "Very High", "suitableCrops": ["Makhana (Fox Nut)", "Paddy", "Fish Farming", "Wheat"] },
+      "Purnia": { "soilType": "Non-Calcareous Alluvial & Terai Loam", "pH": 6.5, "waterRetention": "Very High", "suitableCrops": ["Maize", "Makhana", "Jute", "Paddy", "Banana"] },
+      "Gaya": { "soilType": "Old Alluvial Silt Loam & Red Soil", "pH": 7.1, "waterRetention": "Moderate", "suitableCrops": ["Paddy", "Wheat", "Lentil", "Mustard", "Mushroom"] },
+      "Rohtas": { "soilType": "Rich Sone Canal Alluvial Loam (Rice Bowl)", "pH": 7.2, "waterRetention": "Very High", "suitableCrops": ["Paddy", "Wheat", "Pulses", "Oilseeds"] },
+      "Nalanda": { "soilType": "Deep Alluvial Loam", "pH": 7.2, "waterRetention": "High", "suitableCrops": ["Paddy", "Potato", "Onion", "Wheat", "Vegetables"] },
+      "Bhagalpur": { "soilType": "Gangetic Alluvial Silt Loam", "pH": 7.3, "waterRetention": "High", "suitableCrops": ["Silk Mulberry", "Katarni Paddy", "Jardalu Mango", "Wheat"] },
+      "Begusarai": { "soilType": "Calcareous Alluvial Loam", "pH": 7.5, "waterRetention": "High", "suitableCrops": ["Maize (Rabi & Kharif)", "Wheat", "Chilli", "Dairy"] },
+      "Samastipur": { "soilType": "Deep Alluvial & Calcareous Silt", "pH": 7.4, "waterRetention": "High", "suitableCrops": ["Tobacco", "Maize", "Potato", "Litchi", "Sugarcane"] }
+    }
+  },
+  "Telangana": {
+    "default": {
+      "soilType": "Red Sandy Loam (Chalka) & Black Soil (Regur)",
+      "texture": "Coarse to Medium",
+      "pH": 6.8,
+      "organicCarbon": "Low to Medium (0.35% - 0.55%)",
+      "nitrogen": "Low",
+      "phosphorus": "Low",
+      "potassium": "Medium to High",
+      "waterRetention": "Moderate",
+      "recommendedCrops": ["Cotton", "Paddy", "Red Gram (Tur)", "Maize", "Chilli", "Turmeric", "Oil Palm"],
+      "soilHealthAdvisory": "Red soils require split fertilizer application and organic compost addition to minimize nutrient leaching."
+    },
+    "districts": {
+      "Warangal": { "soilType": "Mixed Red and Black Soil", "pH": 7.0, "waterRetention": "Moderate to High", "suitableCrops": ["Cotton", "Chilli", "Paddy", "Turmeric"] },
+      "Nalgonda": { "soilType": "Red Sandy Loam", "pH": 6.9, "waterRetention": "Moderate", "suitableCrops": ["Sweet Orange (Mosambi)", "Paddy", "Cotton"] }
+    }
+  },
+  "Andhra Pradesh": {
+    "default": {
+      "soilType": "Coastal Alluvial & Red Sandy Loam",
+      "texture": "Light to Heavy Clay in Deltas",
+      "pH": 7.1,
+      "organicCarbon": "Medium",
+      "nitrogen": "Low to Medium",
+      "phosphorus": "Medium",
+      "potassium": "High",
+      "waterRetention": "High in Deltas",
+      "recommendedCrops": ["Paddy", "Chilli", "Cotton", "Tobacco", "Oil Palm", "Aquaculture (Fish & Shrimp)", "Mango"],
+      "soilHealthAdvisory": "In coastal delta zones, manage drainage to prevent salinity; test brackish water for aquaculture viability."
+    },
+    "districts": {
+      "Guntur": { "soilType": "Deep Black Clay & Delta Alluvial", "pH": 7.4, "waterRetention": "Very High", "suitableCrops": ["Guntur Chilli", "Cotton", "Tobacco", "Paddy"] },
+      "Krishna": { "soilType": "Deltaic Alluvial Soil", "pH": 7.2, "waterRetention": "Very High", "suitableCrops": ["Paddy", "Aquaculture", "Sugarcane", "Mango"] }
+    }
+  },
+  "Karnataka": {
+    "default": {
+      "soilType": "Red Loamy Soil & Coastal Laterite",
+      "texture": "Porous, Medium to Coarse",
+      "pH": 6.5,
+      "organicCarbon": "Medium to High",
+      "nitrogen": "Medium",
+      "phosphorus": "Low",
+      "potassium": "Medium",
+      "waterRetention": "Moderate",
+      "recommendedCrops": ["Ragi (Finger Millet)", "Coffee", "Arecanut", "Maize", "Sugarcane", "Cotton", "Sericulture"],
+      "soilHealthAdvisory": "Laterite and red soils benefit from lime/dolomite application to correct slight acidity (pH < 6.5)."
+    },
+    "districts": {
+      "Shimoga": { "soilType": "Red Sandy Loam to Laterite", "pH": 6.2, "waterRetention": "High", "suitableCrops": ["Arecanut", "Paddy", "Ginger", "Rubber"] },
+      "Belgaum": { "soilType": "Medium Black Soil", "pH": 7.5, "waterRetention": "High", "suitableCrops": ["Sugarcane", "Soybean", "Cotton", "Maize"] }
+    }
+  },
+  "Gujarat": {
+    "default": {
+      "soilType": "Black Cotton Soil & Coastal Alluvial / Sandy Loam",
+      "texture": "Medium to Heavy",
+      "pH": 7.7,
+      "organicCarbon": "Low to Medium",
+      "nitrogen": "Low",
+      "phosphorus": "Medium",
+      "potassium": "High",
+      "waterRetention": "Moderate to High",
+      "recommendedCrops": ["Cotton", "Groundnut", "Castor", "Cumin (Jeera)", "Wheat", "Dairy", "Dates"],
+      "soilHealthAdvisory": "Solar pump and drip irrigation under PM-KUSUM provides exceptional returns in Saurashtra and North Gujarat."
+    },
+    "districts": {
+      "Rajkot": { "soilType": "Medium Black Soil", "pH": 7.8, "waterRetention": "High", "suitableCrops": ["Groundnut", "Cotton", "Cumin", "Sesame"] },
+      "Anand": { "soilType": "Alluvial Goradu Soil", "pH": 7.3, "waterRetention": "High", "suitableCrops": ["Tobacco", "Dairy", "Vegetables", "Banana"] }
+    }
+  },
+  "West Bengal": {
+    "default": {
+      "soilType": "Deltaic Alluvial & Terai Acidic Soil",
+      "texture": "Fine Silt & Clay Loam",
+      "pH": 6.6,
+      "organicCarbon": "High (0.75% - 1.10%)",
+      "nitrogen": "Medium to High",
+      "phosphorus": "Medium",
+      "potassium": "Medium",
+      "waterRetention": "Very High",
+      "recommendedCrops": ["Paddy (Aman, Boro)", "Jute", "Potato", "Tea", "Mustard", "Fish Farming"],
+      "soilHealthAdvisory": "Rich organic content; ensure sub-surface drainage during heavy monsoon downpours."
+    },
+    "districts": {
+      "Burdwan": { "soilType": "Rich Alluvial Soil (Rice Bowl)", "pH": 6.8, "waterRetention": "Very High", "suitableCrops": ["Paddy", "Potato", "Mustard", "Vegetables"] }
+    }
+  },
+  "Odisha": {
+    "default": {
+      "soilType": "Red & Yellow Soil, Coastal Alluvial",
+      "texture": "Sandy Loam to Clay",
+      "pH": 6.4,
+      "organicCarbon": "Low to Medium",
+      "nitrogen": "Low",
+      "phosphorus": "Low",
+      "potassium": "Medium",
+      "waterRetention": "Moderate to High in Coast",
+      "recommendedCrops": ["Paddy", "Pulses", "Oilseeds", "Cashew", "Mushroom Cultivation", "Fisheries"],
+      "soilHealthAdvisory": "Use boron and zinc micro-nutrients for pulse yields; leverage KALIA convergence for zero-interest working capital."
+    },
+    "districts": {
+      "Cuttack": { "soilType": "Coastal Delta Alluvial", "pH": 6.7, "waterRetention": "High", "suitableCrops": ["Paddy", "Vegetables", "Fish Farming", "Dairy"] }
+    }
+  },
+  "General": {
+    "default": {
+      "soilType": "Mixed Agricultural Loam",
+      "texture": "Medium Texture Loam",
+      "pH": 7.0,
+      "organicCarbon": "Medium (0.50%)",
+      "nitrogen": "Medium",
+      "phosphorus": "Medium",
+      "potassium": "Medium",
+      "waterRetention": "Moderate",
+      "recommendedCrops": ["Wheat", "Paddy", "Pulses", "Vegetables", "Millets"],
+      "soilHealthAdvisory": "Conduct regular Soil Health Card testing every 2 years; balance chemical fertilizer with farmyard manure."
+    }
+  }
+}

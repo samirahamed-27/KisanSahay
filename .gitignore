@@ -10,3 +10,10 @@ ios/DerivedData/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Environment and Expo
+.env
+*.env.local
+.expo/
+web-build/
+dist/
