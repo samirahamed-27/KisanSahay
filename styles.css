@@ -2903,8 +2903,8 @@ body.dark-mode .footer {
 
 /* Security Box & Password Tabs */
 .vault-security-box {
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
+  background: var(--bg-card-hover);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1.25rem;
   margin-bottom: 1.5rem;
@@ -2925,13 +2925,13 @@ body.dark-mode .footer {
 }
 
 .sec-tab-btn {
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.5rem;
   font-size: 0.84rem;
   font-weight: 700;
-  color: #475569;
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2941,22 +2941,70 @@ body.dark-mode .footer {
 }
 
 .sec-tab-btn:hover {
-  border-color: #15803d;
-  color: #15803d;
+  border-color: var(--primary-main);
+  color: var(--primary-main);
 }
 
 .sec-tab-btn.active {
-  background: #15803d;
-  border-color: #15803d;
+  background: var(--primary-main);
+  border-color: var(--primary-main);
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(21, 128, 61, 0.25);
 }
 
 .sec-pane {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  padding: 1rem;
+  padding: 1.1rem;
+}
+
+/* Password Input with Show/Hide Eye Toggle */
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-wrap .input-clean {
+  padding-right: 2.8rem;
+  width: 100%;
+}
+
+.btn-toggle-pw {
+  position: absolute;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.35rem;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  user-select: none;
+}
+
+.btn-toggle-pw:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Shake Animation on Wrong Password */
+@keyframes shakeInput {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.input-error-shake {
+  animation: shakeInput 0.4s ease-in-out;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
 }
 
 /* PIN Keypad */
@@ -4559,6 +4607,58 @@ body.dark-mode .vault-nav-btn {
   background: #1e293b;
   border-color: #334155;
   color: #f8fafc;
+}
+
+body.dark-mode .vault-security-box {
+  background: #111c2e;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .sec-tab-btn {
+  background: #17243b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+}
+
+body.dark-mode .sec-tab-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+body.dark-mode .sec-tab-btn.active {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+body.dark-mode .sec-pane {
+  background: #0b131e;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .keypad-key {
+  background: #17243b;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+body.dark-mode .keypad-key:hover {
+  background: #1e2e4a;
+}
+
+body.dark-mode .keypad-key.action {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+body.dark-mode .pattern-container {
+  background: #0b131e;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode .btn-toggle-pw:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-mode .lang-select-btn {
