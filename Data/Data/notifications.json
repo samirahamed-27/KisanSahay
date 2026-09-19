@@ -1,0 +1,20 @@
+[
+  {
+    "id": "notif-kcc-feature",
+    "userId": "default",
+    "type": "new_scheme",
+    "title": "🌾 Kisan Credit Card (KCC) 4% Subvention Active",
+    "message": "Prompt repayment subvention is now active. Pay your crop loan on time to enjoy a net 4% annual interest rate.",
+    "read": true,
+    "createdAt": "2026-09-18T20:49:29.783Z"
+  },
+  {
+    "id": "notif-welcome",
+    "userId": "default",
+    "type": "system",
+    "title": "🌱 Welcome to KisanSahay Portal",
+    "message": "Your official portal for transparent agricultural credit, interest subvention, and land circle rates.",
+    "read": true,
+    "createdAt": "2026-09-18T20:19:29.783Z"
+  }
+]

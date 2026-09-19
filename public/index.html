@@ -1,44 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KisanSahay — Farmers Loan & Scheme Eligibility Portal</title>
-  <meta name="description" content="Empowering Indian farmers to check government scheme eligibility, get required document checklists, and track multiple loans, EMIs, and paid amounts in one place.">
+  <title>KisanSahay — Accessible Farmers Loan & Scheme Portal</title>
+  <meta name="description"
+    content="Empowering Indian farmers to check government scheme eligibility, get required document checklists, and track multiple loans, EMIs, and paid amounts in one place.">
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
 </head>
+
 <body>
 
   <!-- ==========================================================================
-      Header & Navigation
-      ========================================================================== -->
+       Header & Navigation (Matching Screenshot Navbar)
+       ========================================================================== -->
   <header class="header">
     <div class="header-container">
-      <div class="logo-wrap" onclick="switchView('home')">
-        <div class="logo-badge">🌱</div>
-        <div class="logo-text">Kisan<span>Sahay</span></div>
+      <div class="header-left-wrap">
+        <!-- Live Internet Connection Speed Pill (Top Bar Left Corner) -->
+        <div class="net-speed-pill status-fast" id="net-speed-pill" title="Live Internet Connection Speed — Click to re-test" role="status" aria-live="polite">
+          <span class="net-wifi-icon-wrap" aria-hidden="true">
+            <svg class="net-wifi-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0" class="wifi-arc wifi-arc-mid"></path>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0" class="wifi-arc wifi-arc-outer"></path>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" class="wifi-arc wifi-arc-inner"></path>
+              <line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3.5" class="wifi-dot"></line>
+            </svg>
+          </span>
+          <span class="net-speed-val" id="net-speed-val">Checking...</span>
+        </div>
+
+        <div class="logo-wrap" onclick="switchView('home')">
+          <div class="logo-badge">🌱</div>
+          <div class="logo-text">Kisan<span>Sahay</span></div>
+        </div>
       </div>
 
       <!-- Desktop Nav -->
       <nav class="nav-links" id="desktop-nav">
-        <button class="nav-item active" data-view="home">Home</button>
-        <button class="nav-item" data-view="eligibility">Check Eligibility</button>
-        <button class="nav-item" data-view="schemes">Government Schemes</button>
-        <button class="nav-item" data-view="loans">My Loans & EMIs</button>
+        <button class="nav-item active" data-view="home" data-i18n="navHome">Home</button>
+        <button class="nav-item" data-view="eligibility" data-i18n="navEligibility">Check Eligibility</button>
+        <button class="nav-item" data-view="schemes" data-i18n="navSchemes">Government Schemes</button>
+        <button class="nav-item" data-view="loans" data-i18n="navLoans">My Loans & EMIs</button>
       </nav>
+
 
       <!-- Header Actions -->
       <div class="header-actions">
-        <button class="lang-select-btn" id="lang-toggle-btn" title="Change Language / भाषा बदलें">
+        <!-- Farmer Document Vault Quick Access -->
+        <button class="vault-nav-btn" id="btn-vault-nav" title="Farmer Encrypted Document Vault">
+          <span class="vault-nav-icon" id="vault-nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </span>
+          <span id="vault-status-nav-text" data-i18n="navVault">Document Vault</span>
+          <span class="vault-indicator-dot uninitialized" id="vault-indicator-dot" title="Vault status"></span>
+        </button>
+
+        <!-- 15 Languages Dropdown / Selector Button -->
+        <button class="lang-select-btn" id="lang-toggle-btn" title="Choose from 15 Indian Languages / भाषा चुनें">
           <span>🌐</span>
           <span id="lang-text">English</span>
           <small>▾</small>
         </button>
 
-        <div class="user-profile" title="Farmer Account">
-          <div class="avatar-circle">V</div>
-          <small style="color: var(--text-muted); font-weight: 700;">▾</small>
+        <!-- Dark / Light Mode Toggle Button (Image 1) -->
+        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Dark / Light Mode"
+          aria-label="Toggle theme">
+          <span id="theme-icon-indicator">🌙</span>
+        </button>
+
+        <!-- Notification Bell & Dropdown (Upper Right Corner) -->
+        <div class="notification-header-container" id="notification-header-container">
+          <button class="notification-bell-btn" id="notification-bell-btn" title="Notifications / सूचनाएं"
+            aria-label="Notifications">
+            <span class="bell-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </span>
+            <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+          </button>
+          <div class="notification-dropdown-menu" id="notification-dropdown-menu">
+            <div class="notification-dropdown-header">
+              <div class="notification-dropdown-title">
+                <span data-i18n="notificationsTitle">Notifications</span>
+                <span class="notification-count-tag" id="notification-count-tag">0 unread</span>
+              </div>
+              <div class="notification-header-actions-right">
+                <button class="btn-text-action" id="btn-mark-all-read" data-i18n="markAllRead">Mark all read</button>
+                <button class="btn-push-toggle" id="btn-enable-push" title="Enable browser push notifications">
+                  <span>📲</span> <span id="push-status-text">Push</span>
+                </button>
+              </div>
+            </div>
+            <div class="notification-dropdown-list" id="notification-dropdown-list">
+              <div class="notification-empty">
+                <span>🌾</span>
+                <p data-i18n="noNotifications">No new notifications</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-User Profile Account Switcher (Clean avatar button; details shown on click) -->
+        <div id="user-profile-header-container">
+          <button class="user-profile-btn clean-avatar-btn" id="user-profile-toggle-btn" title="Farmer Account Profile">
+            <div class="avatar-circle">V<span class="avatar-online-dot"></span></div>
+          </button>
         </div>
 
         <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Navigation Menu">
@@ -49,42 +124,50 @@
   </header>
 
   <!-- Mobile Drawer -->
-  <div class="drawer-overlay" id="drawer-overlay"></div>
-  <aside class="mobile-drawer" id="mobile-drawer">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+  <div class="modal-overlay" id="drawer-overlay" style="z-index: 150;"></div>
+  <aside class="modal-dialog" id="mobile-drawer"
+    style="position: fixed; left: 0; top: 0; bottom: 0; width: 280px; max-width: 80%; border-radius: 0; z-index: 160; display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
       <div class="logo-wrap">
         <div class="logo-badge">🌱</div>
         <div class="logo-text">Kisan<span>Sahay</span></div>
       </div>
-      <button id="drawer-close-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+      <button id="drawer-close-btn" class="modal-close-x" style="position: static;">✕</button>
     </div>
-    <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
-      <button class="nav-item drawer-nav-item active" data-view="home">🏠 Home</button>
-      <button class="nav-item drawer-nav-item" data-view="eligibility">✅ Check Eligibility</button>
-      <button class="nav-item drawer-nav-item" data-view="schemes">🏛️ Government Schemes</button>
-      <button class="nav-item drawer-nav-item" data-view="loans">💳 My Loans & EMIs</button>
+    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+      <button class="nav-item active" data-view="home" style="justify-content: flex-start;" data-i18n="navHome">🏠
+        Home</button>
+      <button class="nav-item" data-view="eligibility" style="justify-content: flex-start;" data-i18n="navEligibility">✅
+        Check Eligibility</button>
+      <button class="nav-item" data-view="schemes" style="justify-content: flex-start;" data-i18n="navSchemes">🏛️
+        Government Schemes</button>
+      <button class="nav-item" data-view="loans" style="justify-content: flex-start;" data-i18n="navLoans">💳 My Loans &
+        EMIs</button>
     </div>
+
   </aside>
 
   <!-- ==========================================================================
-       VIEW: HOME
+       VIEW: HOME (Matching Screenshot 2)
        ========================================================================== -->
   <main id="view-home" class="page-view active">
-    
-    <!-- Hero Banner (Matching Reference) -->
+
+    <!-- Hero Banner with Background Image & Farmer in Field -->
     <section class="hero-section">
       <div class="hero-card">
         <div class="hero-content">
           <div class="hero-badge">
-            <span>🌱</span> Empowering Indian Farmers
+            <span>🌱</span> <span data-i18n="heroBadge">Empowering Indian Farmers</span>
           </div>
-          <h1 class="hero-title">KisanSahay</h1>
-          <p class="hero-subtitle">
-            Check your eligibility for government loans and schemes, get your document checklist, and track your EMIs — all in one simple place.
+          <h1 class="hero-title" data-i18n="heroTitle">KisanSahay</h1>
+          <p class="hero-subtitle" data-i18n="heroSubtitle">
+            Check your eligibility for government loans and schemes, get your document checklist, and track your EMIs —
+            all in one simple place.
           </p>
           <button class="cta-button" onclick="switchView('eligibility')">
-            Check My Eligibility
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <span data-i18n="heroCta">Check My Eligibility</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
@@ -93,24 +176,27 @@
       </div>
     </section>
 
-    <!-- Three Enlarged Action Cards (Fixed & Enlarged Images) -->
+    <!-- Three Action Cards (Matching Screenshot 2) -->
     <section class="action-cards-section">
       <div class="cards-grid">
 
         <!-- Card 1: Check My Eligibility -->
         <div class="action-card" onclick="switchView('eligibility')">
           <div class="card-media-wrap">
-            <img src="assets/check_eligibility.jpg" alt="Indian farmer holding loan papers in green crop field" class="card-img">
-            <div class="card-floating-icon">✓</div>
-            <button class="card-floating-speaker" title="Listen" onclick="event.stopPropagation(); speakText('Check My Eligibility. Answer a few simple questions about your farm and income to find out which government schemes you qualify for.')">🔊</button>
+            <img src="assets/check_eligibility.jpg" alt="Farmer checking eligibility in agricultural field"
+              class="card-img">
+            <div class="card-floating-icon" style="color: #15803d; font-weight: 900;">✓</div>
+            <button class="card-floating-speaker" title="Listen"
+              onclick="event.stopPropagation(); speakCard('card1')">🔊</button>
           </div>
           <div class="card-body">
-            <h2 class="card-title">Check My Eligibility</h2>
-            <p class="card-desc">
-              Answer a few simple questions about your farm and income to find out which government schemes you qualify for.
+            <h2 class="card-title" data-i18n="card1Title">Check My Eligibility</h2>
+            <p class="card-desc" data-i18n="card1Desc">
+              Answer a few simple questions about your farm and income to find out which government schemes you qualify
+              for.
             </p>
             <span class="card-action-link">
-              Get Started
+              <span data-i18n="card1Link">Get Started</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -122,17 +208,19 @@
         <!-- Card 2: Government Schemes -->
         <div class="action-card" onclick="switchView('schemes')">
           <div class="card-media-wrap">
-            <img src="assets/government_schemes.jpg" alt="Agriculture officer handing sanction documents to farmer" class="card-img">
+            <img src="assets/government_schemes.jpg" alt="Agriculture officers assisting farmers with scheme documents"
+              class="card-img">
             <div class="card-floating-icon">🏛️</div>
-            <button class="card-floating-speaker" title="Listen" onclick="event.stopPropagation(); speakText('Government Schemes. Browse all available loan and support schemes with full details on interest rates, limits, and benefits.')">🔊</button>
+            <button class="card-floating-speaker" title="Listen"
+              onclick="event.stopPropagation(); speakCard('card2')">🔊</button>
           </div>
           <div class="card-body">
-            <h2 class="card-title">Government Schemes</h2>
-            <p class="card-desc">
+            <h2 class="card-title" data-i18n="card2Title">Government Schemes</h2>
+            <p class="card-desc" data-i18n="card2Desc">
               Browse all available loan and support schemes with full details on interest rates, limits, and benefits.
             </p>
             <span class="card-action-link">
-              Explore Schemes
+              <span data-i18n="card2Link">Get Started</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -144,17 +232,20 @@
         <!-- Card 3: My Loans & EMIs -->
         <div class="action-card" onclick="switchView('loans')">
           <div class="card-media-wrap">
-            <img src="assets/loan_tracker.jpg" alt="Coins with plant sprout, calculator and loan ledger" class="card-img">
+            <img src="assets/loan_tracker.jpg" alt="Financial ledger, coins with seedling, and calculator"
+              class="card-img">
             <div class="card-floating-icon">💳</div>
-            <button class="card-floating-speaker" title="Listen" onclick="event.stopPropagation(); speakText('My Loans and EMIs. Track multiple loans and schemes in one place. See your EMIs, due amounts, and how much you have already paid.')">🔊</button>
+            <button class="card-floating-speaker" title="Listen"
+              onclick="event.stopPropagation(); speakCard('card3')">🔊</button>
           </div>
           <div class="card-body">
-            <h2 class="card-title">My Loans & EMIs</h2>
-            <p class="card-desc">
-              Track multiple loans and schemes in one place — see your EMIs, due amounts, and how much you have already paid.
+            <h2 class="card-title" data-i18n="card3Title">My Loans & EMIs</h2>
+            <p class="card-desc" data-i18n="card3Desc">
+              Track multiple loans and schemes in one place — see your EMIs, due amounts, and how much you have already
+              paid.
             </p>
             <span class="card-action-link">
-              View Tracker
+              <span data-i18n="card3Link">Get Started</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -166,353 +257,2089 @@
       </div>
     </section>
 
-    <!-- How It Works Section (Matching Reference) -->
-    <section class="how-it-works-section">
-      <div class="section-header">
-        <h2 class="section-title">How It Works</h2>
-        <p class="section-subtitle">Four simple steps to find and manage your schemes</p>
+    <!-- ====================================================================
+         IMAGE 1: HERO STATS & NATIONAL SCHEMES COUNTER BANNER
+         ==================================================================== -->
+    <section class="hero-stats-banner">
+      <div class="hero-stats-badge">
+        #GOVERNMENTSCHEMES &nbsp;/&nbsp; #SCHEMESFORYOU
+      </div>
+      <div>
+        <button type="button" class="btn-find-schemes-hero" onclick="switchView('eligibility')">
+          <span>Find Schemes For You</span>
+          <span>➔</span>
+        </button>
       </div>
 
-      <div class="steps-grid">
+      <div class="hero-counters-grid">
+        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture')">
+          <div class="hero-counter-number">5020+</div>
+          <div class="hero-counter-label">Total Schemes ➔</div>
+        </div>
+        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'central')">
+          <div class="hero-counter-number">740+</div>
+          <div class="hero-counter-label">Central Schemes ➔</div>
+        </div>
+        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'state')">
+          <div class="hero-counter-number">4280+</div>
+          <div class="hero-counter-label">States/UTs Schemes ➔</div>
+        </div>
+      </div>
+
+      <div class="hero-scope-tabs">
+        <button type="button" class="hero-scope-tab-btn active"
+          onclick="document.getElementById('home-categories-section')?.scrollIntoView({ behavior: 'smooth' })">
+          Categories
+        </button>
+        <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'state')">
+          States/UTs
+        </button>
+        <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'central')">
+          Central Ministries
+        </button>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         IMAGE 2: "HOW IT WORKS" 3-STEP FLOW PIPELINE
+         ==================================================================== -->
+    <section class="how-it-works-section">
+      <div class="how-it-works-sub">How it works</div>
+      <h2 class="how-it-works-title">Easy steps to apply for Government Schemes</h2>
+
+      <div class="how-it-works-grid">
+        <!-- Step 1: Enter Details -->
         <div class="step-card">
-          <div class="step-icon-wrap">📄</div>
-          <h3 class="step-title">Check Eligibility</h3>
-          <p class="step-desc">Enter your crop type and annual income manually</p>
+          <div class="step-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+              <path d="m9 14 2 2 4-4" />
+            </svg>
+          </div>
+          <h3 class="step-title"><span class="step-num">1: </span>Enter Details</h3>
+          <p class="step-desc">Start by entering your <strong>basic farm and location details!</strong></p>
         </div>
 
+        <div class="how-it-works-arrow">➔</div>
+
+        <!-- Step 2: Search -->
         <div class="step-card">
-          <div class="step-icon-wrap">🏛️</div>
-          <h3 class="step-title">Pick a Scheme</h3>
-          <p class="step-desc">Choose from matched schemes like KCC, MISS, PM-KISAN</p>
+          <div class="step-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
+              <path
+                d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+              <circle cx="12" cy="13" r="3" />
+              <path d="m14.5 15.5 2.5 2.5" />
+            </svg>
+          </div>
+          <h3 class="step-title"><span class="step-num">2: </span>Search</h3>
+          <p class="step-desc">Our intelligent engine will <strong>find the most relevant schemes!</strong></p>
         </div>
 
-        <div class="step-card">
-          <div class="step-icon-wrap">🌱</div>
-          <h3 class="step-title">Get Documents</h3>
-          <p class="step-desc">See exactly what papers you need before applying</p>
-        </div>
+        <div class="how-it-works-arrow">➔</div>
 
+        <!-- Step 3: Select & Apply -->
         <div class="step-card">
-          <div class="step-icon-wrap">📈</div>
-          <h3 class="step-title">Track Loans</h3>
-          <p class="step-desc">Monitor EMIs, due balance, and money already paid</p>
+          <div class="step-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
+              <path d="m14 15 2.5 2.5" />
+              <path d="M11 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+              <path d="m14 13-1.5-1.5" />
+              <path d="M12 21a9 9 0 0 0 9-9c0-.7-.08-1.38-.23-2.03" />
+            </svg>
+          </div>
+          <h3 class="step-title"><span class="step-num">3: </span>Select &amp; Apply</h3>
+          <p class="step-desc"><strong>Select and apply</strong> for the best suited scheme with full document
+            checklist.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         IMAGE 5: 15 SCHEME CATEGORIES GRID ("Find schemes based on categories")
+         ==================================================================== -->
+    <section class="categories-section" id="home-categories-section">
+      <div class="categories-section-header">
+        <h2 class="categories-title">Find schemes based on categories</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Explore all Central & State government schemes, loans, and subsidies categorized across sectors.
+        </p>
+      </div>
+
+      <!-- Injected dynamically via renderHomeCategories() -->
+      <div class="categories-grid-15" id="home-categories-grid">
+        <!-- Rendered by app.js from window.NATIONAL_CATEGORIES -->
       </div>
     </section>
 
   </main>
 
   <!-- ==========================================================================
-       VIEW: ELIGIBILITY CHECKER (Custom Inputs as requested)
+       CATEGORY SCHEMES EXPLORER VIEW (Deep-Dive Matching Images 3 & 4)
+       ========================================================================== -->
+  <main id="view-category-schemes" class="page-view">
+    <div class="category-explorer-container">
+
+      <!-- Breadcrumb & Back Navigation -->
+      <div class="category-explorer-top-bar">
+        <button type="button" class="btn-back-to-categories" id="btn-back-categories" onclick="switchView('home')">
+          <span>←</span> <span>Back</span>
+        </button>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          <a href="javascript:void(0)" onclick="switchView('home')"
+            style="color: inherit; text-decoration: none; font-weight: 500;">Home</a> &gt; Categories &gt; <span
+            id="cat-breadcrumb-title" style="color: var(--accent-emerald, #10b981); font-weight: 700;">Agriculture,
+            Rural &amp; Environment</span>
+        </div>
+      </div>
+
+      <!-- Illustrated Themed Hero Banner Container (Matching Images 3 & 4) -->
+      <div id="category-hero-banner-container" class="category-hero-art-wrapper">
+        <!-- Injected dynamically via window.getCategoryBannerHtml -->
+      </div>
+
+      <!-- Search Input with Exact Match Hint -->
+      <div class="cat-search-wrap">
+        <div class="cat-search-input-box">
+          <input type="text" id="cat-search-input" class="cat-search-input" placeholder="Search" autocomplete="off">
+          <button type="button" id="cat-search-btn" class="cat-search-btn" title="Search Schemes">
+            🔍
+          </button>
+        </div>
+        <div class="cat-search-hint">
+          ⓘ For an exact match, put the words in quotes. For example: "Scheme Name".
+        </div>
+      </div>
+
+      <!-- Segmented Scope Tabs (All Schemes | Central | State) -->
+      <div class="cat-scope-tabs-bar" id="cat-scope-tabs-bar">
+        <button type="button" class="cat-scope-tab active" data-cat-scope="all">All Schemes</button>
+        <button type="button" class="cat-scope-tab" data-cat-scope="central">Central</button>
+        <button type="button" class="cat-scope-tab" data-cat-scope="state">State</button>
+      </div>
+
+      <!-- Two-Column Explorer Layout -->
+      <div class="cat-explorer-two-col">
+        <!-- Left Filter Sidebar -->
+        <aside class="cat-filter-sidebar">
+          <div class="cat-sidebar-header">
+            <span class="cat-sidebar-title">Filter By</span>
+            <button type="button" class="cat-btn-reset-filters" id="cat-btn-reset-filters">Reset Filters</button>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-state">State/UT</label>
+            <select id="cat-filter-state" class="select-clean">
+              <option value="all">Select State</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Haryana">Haryana</option>
+            </select>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-gender">Gender</label>
+            <select id="cat-filter-gender" class="select-clean">
+              <option value="all">All Genders</option>
+              <option value="female">Female (Priority Subsidies)</option>
+              <option value="male">Male</option>
+            </select>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-age">Age</label>
+            <select id="cat-filter-age" class="select-clean">
+              <option value="all">Select Age Bracket</option>
+              <option value="18-35">18 - 35 Years (Youth)</option>
+              <option value="36-55">36 - 55 Years (Prime)</option>
+              <option value="56+">56+ Years (Senior)</option>
+            </select>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-benefit">Benefit Type</label>
+            <select id="cat-filter-benefit" class="select-clean">
+              <option value="all">All Benefit Types</option>
+              <option value="subsidy">Direct Subsidy & Grant</option>
+              <option value="loan">Concessional Loan / Subvention</option>
+              <option value="insurance">Insurance Coverage</option>
+              <option value="dbt">Direct Benefit Transfer (DBT)</option>
+            </select>
+          </div>
+
+          <div class="cat-filter-group">
+            <label class="cat-filter-label" for="cat-filter-caste">Caste / Social Category</label>
+            <select id="cat-filter-caste" class="select-clean">
+              <option value="all">All Social Categories</option>
+              <option value="general">General</option>
+              <option value="obc">OBC</option>
+              <option value="sc">SC (Subsidized)</option>
+              <option value="st">ST (Subsidized)</option>
+            </select>
+          </div>
+        </aside>
+
+        <!-- Right Schemes Stream -->
+        <section class="cat-schemes-stream">
+          <div class="cat-stream-header">
+            <div class="cat-found-count" id="cat-found-count">
+              We found <strong id="cat-schemes-count-num">110</strong> schemes based on your preferences
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Sort : <strong style="color: var(--text-dark);">Relevance ▾</strong>
+            </div>
+          </div>
+
+          <!-- Schemes Stream List -->
+          <div id="cat-schemes-cards-list" style="display: flex; flex-direction: column; gap: 1.2rem;">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Slide Pagination Control (Image 2: < 1 2 [3] 4 5 6 7 ... 91 >) -->
+          <div class="cat-pagination-wrapper" id="cat-pagination-container">
+            <!-- Rendered dynamically by renderCategoryPagination() -->
+          </div>
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       VIEW: CHECK ELIGIBILITY (Matching Screenshot 4)
        ========================================================================== -->
   <main id="view-eligibility" class="page-view">
-    <div style="margin-bottom: 2rem;">
-      <h1 style="font-size: 2.2rem; color: var(--primary-dark);">Farm & Loan Eligibility Checker</h1>
-      <p style="color: var(--text-muted);">Enter your crop type, annual income, and land details below. Our database will match you with eligible government schemes.</p>
-    </div>
+    <div class="eligibility-container">
 
-    <div class="checker-layout">
-      <!-- Form Panel -->
-      <div class="form-panel">
-        <div class="form-panel-title">
-          <span>Farmer Details</span>
-          <button class="card-floating-speaker" style="position: static; width: 34px; height: 34px;" title="Listen to form" onclick="speakText('Please enter your crop type, annual income, land size, and select if you are an owner or tenant farmer.')">🔊</button>
+      <div class="eligibility-header">
+        <div class="elig-pill-badge">
+          <span>🌱</span> <span data-i18n="eligBadge">Eligibility Checker</span>
         </div>
-        <p class="form-panel-desc">All inputs are processed against real government subvention rules.</p>
+        <h1 class="elig-title" data-i18n="eligTitle">Check Your Eligibility</h1>
+        <p class="elig-subtitle" data-i18n="eligSubtitle">
+          Fill in the details about your farm below. We'll match you with government schemes you qualify for and show
+          you the documents you need to apply.
+        </p>
+      </div>
 
-        <!-- 1. Type of Crop (Custom Input + Quick Selection) -->
-        <div class="input-group">
-          <label class="input-label" for="crop-input">
-            <span>🌱 Type of Crop or Activity (Manual Input):</span>
-            <span class="label-hint">Type or tap below</span>
-          </label>
-          <input type="text" id="crop-input" class="custom-input" placeholder="e.g. Wheat, Rice, Cotton, Dairy..." value="Wheat">
-          
-          <div class="quick-crops-wrap">
-            <span class="crop-chip selected" data-crop="Wheat">🌾 Wheat (गेहूँ)</span>
-            <span class="crop-chip" data-crop="Paddy / Rice">🍚 Rice/Paddy (धान)</span>
-            <span class="crop-chip" data-crop="Cotton">☁️ Cotton (कपास)</span>
-            <span class="crop-chip" data-crop="Sugarcane">🎋 Sugarcane (गन्ना)</span>
-            <span class="crop-chip" data-crop="Vegetables & Fruits">🥦 Vegetables</span>
-            <span class="crop-chip" data-crop="Dairy & Livestock">🥛 Dairy / Cattle</span>
-            <span class="crop-chip" data-crop="Fisheries">🐟 Fisheries</span>
-            <span class="crop-chip" data-crop="Cold Storage & Warehousing">🏭 Storage Infra</span>
-          </div>
-        </div>
-
-        <!-- 2. Annual Income (Manual Input) -->
-        <div class="input-group">
-          <label class="input-label" for="income-input">
-            <span>💰 Annual Farm Income (₹):</span>
-            <span class="label-hint">Enter yearly total</span>
-          </label>
-          <input type="number" id="income-input" class="custom-input" placeholder="e.g. 150000" value="120000" min="0">
-        </div>
-
-        <!-- 3. Landholding Size (Acres) -->
-        <div class="input-group">
-          <label class="input-label" for="land-input">
-            <span>📐 Agricultural Land Size (in Acres):</span>
-            <span class="label-hint">Enter 0 if landless</span>
-          </label>
-          <input type="number" id="land-input" class="custom-input" placeholder="e.g. 2.5" value="2.5" step="0.5" min="0">
-        </div>
-
-        <!-- 4. Farmer Category -->
-        <div class="input-group">
-          <label class="input-label">
-            <span>🧑‍🌾 Farmer Category:</span>
-          </label>
-          <div class="farmer-type-grid">
-            <div class="farmer-type-option selected" data-type="owner">
-              <span class="farmer-type-icon">🏡</span>
-              <div>
-                <div class="farmer-type-label">Owner Cultivator</div>
-                <div class="farmer-type-sub">Land in own name</div>
-              </div>
-            </div>
-
-            <div class="farmer-type-option" data-type="tenant">
-              <span class="farmer-type-icon">👨‍🌾</span>
-              <div>
-                <div class="farmer-type-label">Tenant Farmer</div>
-                <div class="farmer-type-sub">Cultivating leased land</div>
-              </div>
-            </div>
-
-            <div class="farmer-type-option" data-type="sharecropper">
-              <span class="farmer-type-icon">🤝</span>
-              <div>
-                <div class="farmer-type-label">Sharecropper / JLG</div>
-                <div class="farmer-type-sub">Self-Help or Joint Group</div>
-              </div>
-            </div>
-
-            <div class="farmer-type-option" data-type="entrepreneur">
-              <span class="farmer-type-icon">🏢</span>
-              <div>
-                <div class="farmer-type-label">Agri-FPO / MSME</div>
-                <div class="farmer-type-sub">Post-harvest processing</div>
-              </div>
+      <!-- Advance Ask Me Voice Guided Launcher Banner (With Modern Acoustic Soundwave Vector) -->
+      <div class="voice-guided-launcher-bar">
+        <div class="voice-guided-launcher-text">
+          <div class="voice-assistant-orb">
+            <svg class="voice-mic-vector" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+            <div class="sound-wave-bars">
+              <span class="bar b1"></span>
+              <span class="bar b2"></span>
+              <span class="bar b3"></span>
+              <span class="bar b4"></span>
             </div>
           </div>
+          <div>
+            <strong>Advance Ask Me — Voice Guided Assistant</strong>
+            <p>Speak in Hindi, Punjabi, Marathi, Bengali, Tamil, Telugu, Kannada, or English. We'll ask you questions and fill your form automatically.</p>
+          </div>
         </div>
-
-        <!-- 5. Aadhaar Linked Toggle -->
-        <div class="input-group">
-          <label class="toggle-group" for="aadhaar-toggle">
-            <div>
-              <div style="font-weight: 700; color: var(--text-dark);">Aadhaar Linked with Bank Account?</div>
-              <div style="font-size: 0.8rem; color: var(--text-muted);">Required for 3% prompt repayment subvention & DBT</div>
-            </div>
-            <input type="checkbox" id="aadhaar-toggle" class="toggle-checkbox" checked style="display:none;">
-            <div class="toggle-slider"></div>
-          </label>
-        </div>
-
-        <button class="btn-check-eligibility" id="btn-check-eligibility">
-          Check My Eligibility & Matches →
+        <button type="button" class="btn-advance-ask-me" id="btn-launch-ask-me">
+          <svg class="btn-mic-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          <span data-i18n="startVoiceMode">Start Voice Mode / बोलकर भरें</span>
         </button>
       </div>
 
-      <!-- Results Panel -->
-      <div>
-        <h2 style="font-size: 1.5rem; color: var(--primary-dark); margin-bottom: 1rem;">Matched Schemes & Subsidy Benefits</h2>
-        <div class="results-panel" id="eligibility-results-container">
-          <div style="text-align: center; padding: 3rem; background: #fff; border-radius: 16px; border: 1px dashed #cbd5e1;">
-            <p style="color: #64748b; font-size: 1rem;">Tap "Check My Eligibility & Matches" to view schemes tailored to your crop and landholding.</p>
+      <!-- Practical Agricultural Profile & Subsidy Assessment Form Matrix -->
+      <form class="elig-form-matrix" id="eligibility-form">
+        <!-- Matrix Top Header -->
+        <div class="elig-matrix-header">
+          <div class="matrix-title-wrap">
+            <div class="matrix-badge-icon">📋</div>
+            <div>
+              <h3 class="matrix-title">Farmer Agricultural Profile & Loan Assessment Form</h3>
+              <p class="matrix-subtitle">Complete your farm profile below for instant scheme matching, interest subventions & debt safety evaluation.</p>
+            </div>
+          </div>
+          <div class="matrix-step-badge">
+            <span>Step 1: Farm Details</span>
+            <span class="step-dot">•</span>
+            <span>Step 2: Instant Results</span>
+          </div>
+        </div>
+
+        <!-- Section 1: Crop Cultivation & Land Holding -->
+        <div class="elig-matrix-section">
+          <div class="matrix-section-title">
+            <span>🌾</span> <span>1. Crop Cultivation & Land Specifications</span>
+          </div>
+          <div class="form-row-2">
+            <div>
+              <label class="input-label-clean" for="crop-input" data-i18n="cropLabel">Primary Crop / Agricultural Focus *</label>
+              <div class="input-mic-wrapper">
+                <input type="text" id="crop-input" list="crop-suggestions" class="input-clean"
+                  placeholder="e.g. Wheat, Rice, Cotton, Sugarcane, Mustard" value="" required
+                  autocomplete="off">
+                <button type="button" class="btn-field-mic" data-target="crop-input"
+                  title="Speak to enter crop / बोलकर दर्ज करें">
+                  <svg class="field-mic-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </button>
+              </div>
+              <!-- Practical Quick-Select Crop Chips -->
+              <div class="crop-chips-wrap">
+                <span class="quick-chip-label">Quick Select:</span>
+                <button type="button" class="crop-chip-pill" data-crop="Wheat (गेहूं)">Wheat 🌾</button>
+                <button type="button" class="crop-chip-pill" data-crop="Paddy / Rice (धान / चावल)">Paddy 🌾</button>
+                <button type="button" class="crop-chip-pill" data-crop="Cotton (कपास)">Cotton ☁️</button>
+                <button type="button" class="crop-chip-pill" data-crop="Sugarcane (गन्ना)">Sugarcane 🎋</button>
+                <button type="button" class="crop-chip-pill" data-crop="Soybean (सोयाबीन)">Soybean 🌱</button>
+                <button type="button" class="crop-chip-pill" data-crop="Mustard / Rapeseed (सरसों / राई)">Mustard 🌼</button>
+                <button type="button" class="crop-chip-pill" data-crop="Pearl Millet (Bajra) (बाजरा)">Millets 🥣</button>
+              </div>
+              <datalist id="crop-suggestions">
+                <option value="Wheat (गेहूं)"></option>
+                <option value="Paddy / Rice (धान / चावल)"></option>
+                <option value="Basmati Rice (बासमती धान)"></option>
+                <option value="Maize (Corn) (मक्का)"></option>
+                <option value="Pearl Millet (Bajra) (बाजरा)"></option>
+                <option value="Sorghum (Jowar) (ज्वार)"></option>
+                <option value="Finger Millet (Ragi / Madua) (रागी / मडुआ)"></option>
+                <option value="Barley (Jau) (जौ)"></option>
+                <option value="Chickpea / Gram (चना)"></option>
+                <option value="Pigeon Pea / Arhar / Tur (अरहर / तुअर)"></option>
+                <option value="Lentil (Masoor) (मसूर)"></option>
+                <option value="Green Gram (Moong) (मूँग)"></option>
+                <option value="Black Gram (Urad) (उड़द)"></option>
+                <option value="Mustard / Rapeseed (सरसों / राई)"></option>
+                <option value="Soybean (सोयाबीन)"></option>
+                <option value="Groundnut / Peanut (मूंगफली)"></option>
+                <option value="Cotton (कपास)"></option>
+                <option value="Sugarcane (गन्ना)"></option>
+                <option value="Potato (आलू)"></option>
+                <option value="Onion (प्याज़)"></option>
+                <option value="Tomato (टमाटर)"></option>
+                <option value="Makhana / Fox Nut (मखाना)"></option>
+                <option value="Mentha / Japanese Mint (मेंथा / पिपरमेंट)"></option>
+                <option value="Dairy / Cattle Feed (दुग्ध / हरा चारा)"></option>
+                <option value="Fisheries / Aquaculture (मत्स्य पालन)"></option>
+              </datalist>
+            </div>
+            <div>
+              <label class="input-label-clean" for="land-size-input">Cultivable Land Area *</label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <div class="input-mic-wrapper" style="flex: 1;">
+                  <input type="number" id="land-size-input" class="input-clean" placeholder="e.g. 3.5" value=""
+                    step="0.1" min="0" required style="width: 100%;">
+                  <button type="button" class="btn-field-mic" data-target="land-size-input"
+                    title="Speak land size / बोलकर दर्ज करें">
+                    <svg class="field-mic-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                      <line x1="12" y1="19" x2="12" y2="23"></line>
+                      <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                  </button>
+                </div>
+                <select id="land-unit-select" class="select-clean" style="width: 120px;">
+                  <option value="acres" selected>Acres</option>
+                  <option value="hectares">Hectares</option>
+                  <option value="bigha">Bigha</option>
+                  <option value="guntha">Guntha</option>
+                </select>
+              </div>
+              <span class="field-helper-hint">💡 Holdings up to 2 Hectares (5 Acres) qualify for Small/Marginal priority subsidies & 0% subventions.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Farm Location & Agro-Climatic Intelligence -->
+        <div class="elig-matrix-section">
+          <div class="matrix-section-title">
+            <span>📍</span> <span>2. Location & Agro-Climatic Intelligence</span>
+          </div>
+          <div class="form-row-2">
+            <div>
+              <label class="input-label-clean" for="state-input">State / Union Territory *</label>
+              <div class="input-mic-wrapper">
+                <input type="text" id="state-input" class="input-clean" placeholder="e.g. Punjab, Maharashtra, Uttar Pradesh"
+                  value="" required>
+                <button type="button" class="btn-field-mic" data-target="state-input"
+                  title="Speak state / बोलकर दर्ज करें">
+                  <svg class="field-mic-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label class="input-label-clean" for="district-input" data-i18n="districtLabel"
+                  style="margin-bottom: 0;">District / Tehsil *</label>
+                <button type="button" id="btn-detect-gps" class="btn-clean-gps" title="Auto-detect current GPS location">
+                  📍 <span id="gps-status-text">Detect GPS</span>
+                </button>
+              </div>
+              <div class="input-mic-wrapper" style="margin-top: 0.4rem;">
+                <input type="text" id="district-input" class="input-clean" placeholder="e.g. Ludhiana, Pune, Karnal"
+                  value="" required>
+                <button type="button" class="btn-field-mic" data-target="district-input"
+                  title="Speak district / बोलकर दर्ज करें">
+                  <svg class="field-mic-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </button>
+              </div>
+              <span class="field-helper-hint">📍 Determines state agricultural top-ups, district disaster relief, and soil testing suitability.</span>
+              <input type="hidden" id="geo-lat" value="">
+              <input type="hidden" id="geo-long" value="">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Farmer Classification & Tenancy Status -->
+        <div class="elig-matrix-section">
+          <div class="matrix-section-title">
+            <span>👤</span> <span>3. Farmer Classification & Land Ownership</span>
+          </div>
+          <div class="form-row-2">
+            <div>
+              <label class="input-label-clean" for="land-ownership-select" data-i18n="landLabel">Land Tenancy Status *</label>
+              <select id="land-ownership-select" class="select-clean">
+                <option value="owner" data-i18n="landOwn">Owner / Title Holder (स्वयं की भूमि - Title Holder)</option>
+                <option value="tenant" data-i18n="landTenant">Tenant Farmer (बटाईदार / किरायेदार)</option>
+                <option value="sharecropper" data-i18n="landShare">Sharecropper (साझेदार कृषक)</option>
+                <option value="leaseholder" data-i18n="landLease">Leaseholder (पट्टेदार)</option>
+                <option value="landless">Landless Agricultural Worker (भूमिहीन कृषि श्रमिक)</option>
+              </select>
+              <span class="field-helper-hint">Tenants & sharecroppers qualify for JLG / SHG collateral-free credit lines.</span>
+            </div>
+            <div>
+              <label class="input-label-clean" for="category-select">Social Category & Special Subsidies *</label>
+              <select id="category-select" class="select-clean">
+                <option value="general" selected>General (सामान्य वर्ग)</option>
+                <option value="obc">OBC (अन्य पिछड़ा वर्ग)</option>
+                <option value="sc">SC (अनुसूचित जाति - Special 33-50% Subsidy)</option>
+                <option value="st">ST (अनुसूचित जनजाति - Special 33-50% Subsidy)</option>
+                <option value="women">Women Farmer (महिला कृषक - Priority Credit & 0% Subventions)</option>
+              </select>
+              <span class="field-helper-hint">Special categories receive preferential capital subsidies on farm machinery & solar pumps.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Financial Health & Safe Borrowing Limits -->
+        <div class="elig-matrix-section">
+          <div class="matrix-section-title">
+            <span>💰</span> <span>4. Financial Health & Safe Debt Limits</span>
+          </div>
+          <div class="form-row-2">
+            <div>
+              <label class="input-label-clean" for="income-input" data-i18n="incomeLabel">Estimated Annual Farm Income (₹) *</label>
+              <div class="input-mic-wrapper">
+                <input type="number" id="income-input" class="input-clean" placeholder="₹ e.g. 250000" value=""
+                  min="0" required>
+                <button type="button" class="btn-field-mic" data-target="income-input"
+                  title="Speak income / बोलकर दर्ज करें">
+                  <svg class="field-mic-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </button>
+              </div>
+              <span class="field-helper-hint">Net annual farm & allied harvest earnings across all seasons.</span>
+            </div>
+            <div>
+              <label class="input-label-clean" for="existing-loans-input">Current Outstanding Debt / Monthly EMIs (₹)</label>
+              <div class="input-mic-wrapper">
+                <input type="number" id="existing-loans-input" class="input-clean" placeholder="₹ 0 if debt-free"
+                  value="" min="0">
+                <button type="button" class="btn-field-mic" data-target="existing-loans-input"
+                  title="Speak debt / बोलकर दर्ज करें">
+                  <svg class="field-mic-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </button>
+              </div>
+              <span class="field-helper-hint">Used to evaluate Debt-to-Income (DTI) ratio and prevent debt traps.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 5: Banking & DBT Verification -->
+        <div class="elig-matrix-section">
+          <div class="matrix-section-title">
+            <span>🏛️</span> <span>5. Banking & Direct Benefit Transfer (DBT) Seeding</span>
+          </div>
+          <div class="form-row-2">
+            <div>
+              <label class="input-label-clean" for="kcc-status-select" data-i18n="kccQuestion">Hold an Active Kisan Credit Card (KCC)? *</label>
+              <select id="kcc-status-select" class="select-clean">
+                <option value="yes" data-i18n="yes">Yes — Already Have KCC (₹3 Lakh Subsidized Limit)</option>
+                <option value="no" data-i18n="no">No — Apply for Fresh KCC (4% Net Interest)</option>
+              </select>
+              <span class="field-helper-hint">KCC provides 7% base interest with 3% prompt repayment incentive (effective 4%).</span>
+            </div>
+            <div>
+              <label class="input-label-clean" for="aadhaar-status-select" data-i18n="aadhaarQuestion">Aadhaar Linked with Active Bank Account? *</label>
+              <select id="aadhaar-status-select" class="select-clean">
+                <option value="yes" data-i18n="yes">Yes — Aadhaar Linked (DBT Enabled)</option>
+                <option value="no" data-i18n="no">No — Not Linked Yet (Action Required)</option>
+              </select>
+              <span class="field-helper-hint">Mandatory for DBT credit transfers, interest subventions & PM-KISAN.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Matrix Action Bar -->
+        <div class="elig-matrix-actions">
+          <button type="button" class="btn-matrix-reset" id="btn-reset-elig-form" title="Clear all input fields">
+            <span>🔄</span> <span>Reset Form</span>
+          </button>
+          <button type="submit" class="btn-check-elig-submit" id="btn-submit-eligibility">
+            <span>🔍</span> <span data-i18n="btnCheckElig">Find Best Loan & Schemes (पात्र योजनाएं और ऋण खोजें)</span>
+          </button>
+        </div>
+
+        <!-- Mandatory Aadhaar-Bank Linking Warning & Step-by-Step Guide (Shown when Aadhaar is 'no') -->
+        <div id="aadhaar-unlinked-guide-box" class="aadhaar-guide-card" style="display: none;">
+          <div class="aadhaar-guide-header">
+            <span class="warning-icon">⚠️</span>
+            <div>
+              <h4 data-i18n="aadhaarMandatoryTitle">Aadhaar-Bank Linking is Mandatory</h4>
+              <p data-i18n="aadhaarMandatoryDesc">Aadhaar linking is strictly required for all government loan schemes,
+                interest subventions, and Direct Benefit Transfers (DBT). Loans cannot be applied for until your bank
+                account is Aadhaar seeded.</p>
+            </div>
+          </div>
+          <div class="aadhaar-steps-grid">
+            <div class="aadhaar-step-card">
+              <span class="step-num">1</span>
+              <div>
+                <strong>Visit Bank Branch</strong>
+                <p>Visit your bank branch with your original Aadhaar card and passbook for instant biometric
+                  authentication.</p>
+              </div>
+            </div>
+            <div class="aadhaar-step-card">
+              <span class="step-num">2</span>
+              <div>
+                <strong>Link via ATM</strong>
+                <p>Insert your debit card at any bank ATM &rarr; Go to Services &rarr; Select "Aadhaar Registration /
+                  Seeding".</p>
+              </div>
+            </div>
+            <div class="aadhaar-step-card">
+              <span class="step-num">3</span>
+              <div>
+                <strong>SMS / NetBanking</strong>
+                <p>Use your bank's official internet banking or SMS format to link your Aadhaar number instantly.</p>
+              </div>
+            </div>
+          </div>
+          <div class="aadhaar-portal-link-row">
+            <span>Check your live Aadhaar-Bank seeding status:</span>
+            <a href="https://myaadhaar.uidai.gov.in/" target="_blank" rel="noopener noreferrer"
+              class="btn-uidai-portal">
+              <span>🏛️</span> Check on UIDAI Portal (myaadhaar.uidai.gov.in) &nearr;
+            </a>
+          </div>
+        </div>
+      </form>
+
+      <!-- Empty State / Matched Results -->
+      <div id="eligibility-results-wrapper" style="margin-top: 2rem;">
+        <div class="elig-empty-state" id="elig-empty-state">
+          <div class="elig-empty-icon">🌱</div>
+          <p data-i18n="eligEmptyState">
+            Fill in your farm details above to generate ranked loan recommendations, soil intelligence, and safe
+            borrowing limits.
+          </p>
+        </div>
+
+        <!-- Dynamic Output Container -->
+        <div id="elig-results-container" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <!-- 1. Regional & Soil Context Intelligence Box -->
+          <div id="location-context-card" class="intelligence-card" style="display: none;"></div>
+
+          <!-- 2. Debt Trap Safety & Responsible Lending Meter -->
+          <div id="debt-safety-card" class="safety-card" style="display: none;"></div>
+
+          <!-- 3. Sequence Rankings Header Banner -->
+          <div id="recommendations-summary-banner" class="summary-banner" style="display: none;"></div>
+
+          <!-- View Mode Toggle: Cards vs Advanced Comparison Table -->
+          <div class="results-view-toggle-bar" id="results-view-toggle-bar" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem; margin-top: 0.5rem;">
+            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">View Mode:</span>
+            <button type="button" class="btn-view-toggle active" id="btn-view-cards" title="Show Card View">
+              <span>🗂️ Cards View</span>
+            </button>
+            <button type="button" class="btn-view-toggle" id="btn-view-table" title="Show Advanced Comparison Table View">
+              <span>📊 Advanced Comparison Table</span>
+            </button>
+          </div>
+
+          <!-- 4. Ranked Schemes Cards Stream -->
+          <div id="recommendations-cards-stream" class="cards-stream"
+            style="display: flex; flex-direction: column; gap: 1.25rem;"></div>
+
+          <!-- 5. Advanced Comparison Table Container -->
+          <div id="recommendations-table-container" class="advanced-table-container" style="display: none;">
+            <div class="advanced-table-scroll">
+              <table class="advanced-schemes-table" id="advanced-schemes-table">
+                <thead>
+                  <tr>
+                    <th>Match & Status</th>
+                    <th>Scheme Name & Details</th>
+                    <th>Net Interest Rate</th>
+                    <th>Max Loan / Grant</th>
+                    <th>Collateral-Free Limit</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="advanced-schemes-table-body">
+                  <!-- Populated dynamically via JS -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
   </main>
 
+
   <!-- ==========================================================================
-       VIEW: GOVERNMENT SCHEMES DIRECTORY
+       VIEW: GOVERNMENT SCHEMES (Matching Screenshot 3)
        ========================================================================== -->
   <main id="view-schemes" class="page-view">
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
-      <div>
-        <h1 style="font-size: 2.2rem; color: var(--primary-dark);">Government Schemes & Funds</h1>
-        <p style="color: var(--text-muted);">Explore official interest subvention, working capital, and direct benefit transfer schemes.</p>
+    <div class="schemes-top-header">
+      <div class="schemes-pill-badge">
+        <span>📄</span> <span data-i18n="schemesBadge">All Schemes</span>
       </div>
-
-      <div class="filter-bar">
-        <button class="filter-chip active" data-filter="all">All Schemes</button>
-        <button class="filter-chip" data-filter="crop">Crop Loans (KCC & MISS)</button>
-        <button class="filter-chip" data-filter="income">Income Support (PM-KISAN)</button>
-        <button class="filter-chip" data-filter="infra">Infrastructure (AIF & AHIDF)</button>
-        <button class="filter-chip" data-filter="more">More Farmer Support</button>
-      </div>
-    </div>
-
-    <div class="schemes-grid" id="schemes-grid">
-      <!-- Rendered dynamically from database.json -->
-    </div>
-  </main>
-
-  <!-- ==========================================================================
-       VIEW: MY LOANS & EMIS TRACKER (Multi-Loan & Already Paid Input)
-       ========================================================================== -->
-  <main id="view-loans" class="page-view">
-    <div class="tracker-container">
-      
-      <!-- Top Title & Controls -->
-      <div class="tracker-controls">
-        <div>
-          <h1 style="font-size: 2.2rem; color: var(--primary-dark);">My Loans & EMIs Tracker</h1>
-          <p style="color: var(--text-muted);">Track multiple loans, monitor repayments made, remaining due balance, and EMI deadlines.</p>
-        </div>
-        <button class="btn-primary-sm" id="btn-open-add-loan-modal" style="padding: 0.8rem 1.4rem; font-size: 1rem;">
-          ➕ Add Another Loan / Scheme
-        </button>
-      </div>
-
-      <!-- Financial Metric Cards -->
-      <div class="tracker-stats-banner">
-        <div class="stat-metric-card">
-          <div class="stat-icon-wrap blue">🏦</div>
-          <div class="stat-details">
-            <div class="metric-label">Total Borrowed</div>
-            <div class="metric-number" id="stat-borrowed">₹0</div>
-          </div>
-        </div>
-
-        <div class="stat-metric-card">
-          <div class="stat-icon-wrap green">✅</div>
-          <div class="stat-details">
-            <div class="metric-label">Amount Already Paid</div>
-            <div class="metric-number" id="stat-paid" style="color: #15803d;">₹0</div>
-          </div>
-        </div>
-
-        <div class="stat-metric-card">
-          <div class="stat-icon-wrap amber">⏳</div>
-          <div class="stat-details">
-            <div class="metric-label">Total Balance Due</div>
-            <div class="metric-number" id="stat-due" style="color: #d97706;">₹0</div>
-          </div>
-        </div>
-
-        <div class="stat-metric-card">
-          <div class="stat-icon-wrap purple">📅</div>
-          <div class="stat-details">
-            <div class="metric-label">Est. Monthly EMI</div>
-            <div class="metric-number" id="stat-emi">₹0</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Active Loans List -->
-      <div class="loans-list" id="loans-list">
-        <!-- Rendered dynamically from backend -->
-      </div>
-
-    </div>
-  </main>
-
-  <!-- ==========================================================================
-       MODAL: Document Checklist
-       ========================================================================== -->
-  <div class="modal-overlay" id="checklist-modal">
-    <div class="modal-card">
-      <button class="modal-close-btn" id="checklist-close-btn">✕</button>
-      <h2 id="checklist-modal-title" style="font-size: 1.5rem; color: var(--primary-dark); margin-bottom: 0.5rem;">
-        Required Documents Checklist
-      </h2>
-      <p style="font-size: 0.9rem; color: var(--text-muted);">
-        Make sure you have the following documents ready before visiting the bank branch or CSC center:
+      <h1 class="schemes-title" data-i18n="schemesTitle">Government Schemes</h1>
+      <p class="schemes-subtitle" data-i18n="schemesSubtitle">
+        Browse all available government loan and support schemes for farmers. Click any scheme to see full details,
+        benefits, and required documents.
       </p>
 
-      <div class="checklist-items" id="checklist-items-container">
-        <!-- Dynamic Checklist Items -->
+      <!-- Search Input -->
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-schemes-input" id="schemes-search-input"
+          placeholder="Search schemes by name or keyword..." data-i18n-placeholder="searchPlaceholder">
       </div>
 
-      <div style="display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
-        <button class="btn-secondary" onclick="document.getElementById('checklist-modal').classList.remove('active')">Close</button>
-        <button class="btn-primary-sm" id="btn-apply-from-checklist">
-          ✅ Add to My Loans Tracker
+      <!-- Filter Chips: Categories -->
+      <div class="schemes-filter-chips">
+        <button class="filter-chip-btn active" data-filter="all" data-i18n="filterAll">All Schemes</button>
+        <button class="filter-chip-btn" data-filter="crop" data-i18n="filterCrop">Crop Loans</button>
+        <button class="filter-chip-btn" data-filter="infra" data-i18n="filterInfra">Infrastructure Loans</button>
+        <button class="filter-chip-btn" data-filter="income" data-i18n="filterIncome">Income Support</button>
+        <button class="filter-chip-btn" data-filter="more" data-i18n="filterMore">More Support</button>
+      </div>
+
+      <!-- All-India State Loan Facilities Selector Bar (Matching Screenshot 5 Request) -->
+      <div class="all-india-state-bar" id="all-india-state-bar">
+        <div class="state-bar-left">
+          <span class="state-bar-pin">📍</span>
+          <label for="schemes-all-india-state-select" class="state-bar-label">
+            State Filter (All India):
+          </label>
+          <div class="state-select-wrapper">
+            <select id="schemes-all-india-state-select" class="select-clean state-dropdown-clean" aria-label="Select State from All Over India">
+              <option value="all" selected>🌍 All India (All 650+ National & State Loans)</option>
+              <optgroup label="── Northern India ──">
+                <option value="Chandigarh">Chandigarh</option>
+                <option value="Delhi">Delhi (NCT)</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Himachal Pradesh">Himachal Pradesh</option>
+                <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                <option value="Ladakh">Ladakh</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Uttarakhand">Uttarakhand</option>
+              </optgroup>
+              <optgroup label="── Central & Western India ──">
+                <option value="Chhattisgarh">Chhattisgarh</option>
+                <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra & Nagar Haveli and Daman & Diu</option>
+                <option value="Goa">Goa</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Maharashtra">Maharashtra</option>
+              </optgroup>
+              <optgroup label="── Eastern & North-Eastern India ──">
+                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                <option value="Assam">Assam</option>
+                <option value="Bihar">Bihar</option>
+                <option value="Jharkhand">Jharkhand</option>
+                <option value="Manipur">Manipur</option>
+                <option value="Meghalaya">Meghalaya</option>
+                <option value="Mizoram">Mizoram</option>
+                <option value="Nagaland">Nagaland</option>
+                <option value="Odisha">Odisha</option>
+                <option value="Sikkim">Sikkim</option>
+                <option value="Tripura">Tripura</option>
+                <option value="West Bengal">West Bengal</option>
+              </optgroup>
+              <optgroup label="── Southern India & Islands ──">
+                <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Kerala">Kerala</option>
+                <option value="Lakshadweep">Lakshadweep</option>
+                <option value="Puducherry">Puducherry</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Telangana">Telangana</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- State Quick Chips -->
+        <div class="schemes-state-chips" id="schemes-state-chips">
+          <button class="state-chip-btn active" data-state="all">🌍 All India</button>
+          <button class="state-chip-btn" data-state="Uttar Pradesh">🌾 Uttar Pradesh</button>
+          <button class="state-chip-btn" data-state="Madhya Pradesh">🌱 Madhya Pradesh</button>
+          <button class="state-chip-btn" data-state="Bihar">🚜 Bihar</button>
+          <button class="state-chip-btn" data-state="Punjab">🌾 Punjab</button>
+          <button class="state-chip-btn" data-state="Maharashtra">🌱 Maharashtra</button>
+          <button class="state-chip-btn" data-state="Rajasthan">🌾 Rajasthan</button>
+          <button class="state-chip-btn" data-state="Gujarat">🌾 Gujarat</button>
+        </div>
+      </div>
+
+      <!-- Schemes Sorting & Clean Priority Bar -->
+      <div class="schemes-sort-bar">
+        <div class="schemes-count-badge">
+          <span class="pulse-dot-green"></span>
+          <span id="schemes-count-text">Showing verified schemes (⭐ Top Recommended on top)</span>
+        </div>
+        <div class="schemes-sort-control">
+          <label for="schemes-sort-select" style="font-size: 0.85rem; font-weight: 700; color: #475569;">Sort
+            By:</label>
+          <select id="schemes-sort-select" class="select-clean"
+            style="padding: 0.4rem 0.85rem; font-size: 0.85rem; width: auto; font-weight: 600;">
+            <option value="recommended" selected>⭐ Top Recommended (Green First)</option>
+            <option value="interest_asc">📉 Lowest Interest Rate First</option>
+            <option value="amount_desc">💰 Highest Loan Limit First</option>
+            <option value="name_asc">🔤 Scheme Name (A-Z)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schemes Grid (Matching Screenshot 3) -->
+    <div class="schemes-grid-container" id="schemes-cards-container">
+      <!-- Rendered dynamically -->
+    </div>
+
+    <!-- Pagination / Load More Schemes Container -->
+    <div id="schemes-load-more-container" style="text-align: center; margin: 2rem 0; display: none;">
+      <button id="btn-load-more-schemes" class="btn-clean btn-secondary"
+        style="padding: 0.85rem 2.2rem; font-weight: 700; font-size: 0.95rem; border-radius: 9999px; box-shadow: 0 4px 14px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.2s ease;">
+        Load More Schemes (Showing <span id="schemes-rendered-count">24</span> of <span
+          id="schemes-total-count">658</span>)
+      </button>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       VIEW: MY LOANS & EMIS (Matching Screenshot 1)
+       ========================================================================== -->
+  <main id="view-loans" class="page-view">
+
+    <!-- Header Row -->
+    <div class="tracker-header-row">
+      <div>
+        <div class="tracker-pill-badge">
+          <span>📄</span> <span data-i18n="trackerBadge">Loan Tracker</span>
+        </div>
+        <h1 class="tracker-title" data-i18n="trackerTitle">My Loans & EMIs</h1>
+        <p class="tracker-subtitle" data-i18n="trackerSubtitle">Track all your loans and schemes in one place</p>
+      </div>
+      <button class="btn-add-loan-top" id="btn-open-add-loan">
+        <span data-i18n="btnAddLoan">+ Add Loan / Scheme</span>
+      </button>
+    </div>
+
+    <!-- 4 Top Metric Cards (Matching Screenshot 1) -->
+    <div class="tracker-stats-grid">
+      <!-- 1. Active Loans -->
+      <div class="stat-card-clean">
+        <div class="stat-icon-square blue">💳</div>
+        <div>
+          <div class="stat-label" data-i18n="statActiveLoans">Active Loans</div>
+          <div class="stat-value" id="val-stat-count">0</div>
+        </div>
+      </div>
+
+      <!-- 2. Total Paid -->
+      <div class="stat-card-clean">
+        <div class="stat-icon-square green">₹</div>
+        <div>
+          <div class="stat-label" data-i18n="statTotalPaid">Total Paid</div>
+          <div class="stat-value" id="val-stat-paid" style="color: #15803d;">₹0</div>
+        </div>
+      </div>
+
+      <!-- 3. Total Due -->
+      <div class="stat-card-clean">
+        <div class="stat-icon-square orange">⏳</div>
+        <div>
+          <div class="stat-label" data-i18n="statTotalDue">Total Due</div>
+          <div class="stat-value" id="val-stat-due" style="color: #ea580c;">₹0</div>
+        </div>
+      </div>
+
+      <!-- 4. Monthly EMIs -->
+      <div class="stat-card-clean">
+        <div class="stat-icon-square cyan">📈</div>
+        <div>
+          <div class="stat-label" data-i18n="statMonthlyEmi">Monthly EMIs</div>
+          <div class="stat-value" id="val-stat-emi">₹0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Bar: Active (Running) vs Ended Loans -->
+    <div class="tracker-tabs-bar">
+      <div class="loan-filter-tabs">
+        <button class="tab-pill-btn active" data-loan-tab="active">
+          <span data-i18n="tabActive">Active Loans</span>
+          <span class="tab-count-badge" id="badge-active-count">0</span>
         </button>
+        <button class="tab-pill-btn" data-loan-tab="ended">
+          <span data-i18n="tabEnded">Ended Loans</span>
+          <span class="tab-count-badge" id="badge-ended-count">0</span>
+        </button>
+        <button class="tab-pill-btn" data-loan-tab="all">
+          <span data-i18n="tabAll">All Loans</span>
+          <span class="tab-count-badge" id="badge-all-count">0</span>
+        </button>
+      </div>
+      <div style="font-size: 0.88rem; color: #64748b;" id="loan-list-status-note">
+        Showing currently running loans with due EMIs
+      </div>
+    </div>
+
+    <!-- Loan Cards 2-Column Grid (Matching Screenshot 1) -->
+    <div class="loans-grid-cards" id="loans-cards-grid">
+      <!-- Rendered dynamically -->
+    </div>
+
+  </main>
+
+
+  <!-- ==========================================================================
+       MODAL 1: 15 Indian Languages Selector
+       ========================================================================== -->
+  <div class="modal-overlay" id="lang-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-x" id="lang-modal-close">✕</button>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <span style="font-size: 1.4rem;">🌐</span>
+        <h2 style="font-size: 1.4rem; color: #0f172a;">Select Language / भाषा चुनें</h2>
+      </div>
+      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1rem;">
+        Choose from 15 major Indian languages. The entire application content will change instantly.
+      </p>
+
+      <div class="lang-grid-selector" id="languages-grid-container">
+        <!-- 15 Languages rendered dynamically -->
       </div>
     </div>
   </div>
 
   <!-- ==========================================================================
-       MODAL: Add Custom Loan to Tracker
+       MODAL 2: Record Payment Made (Interactive farmer payment)
        ========================================================================== -->
-  <div class="modal-overlay" id="add-loan-modal">
-    <div class="modal-card">
-      <button class="modal-close-btn" id="add-loan-close-btn">✕</button>
-      <h2 style="font-size: 1.5rem; color: var(--primary-dark); margin-bottom: 0.5rem;">Add Loan / Scheme to Tracker</h2>
-      <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Record a new loan or government scheme to track payments and EMIs.</p>
+  <div class="modal-overlay" id="payment-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-x" id="payment-modal-close">✕</button>
+      <h2 style="font-size: 1.4rem; color: #0f172a; margin-bottom: 0.4rem;" data-i18n="modalAddPaymentTitle">Add Payment
+        Made</h2>
+      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1.4rem;" data-i18n="modalAddPaymentDesc">
+        Record payment amount for this loan to reduce your due balance.
+      </p>
 
-      <form id="add-loan-form">
-        <div class="input-group">
-          <label class="input-label" for="modal-loan-name">Scheme or Loan Name:</label>
-          <input type="text" id="modal-loan-name" class="custom-input" placeholder="e.g. Kisan Credit Card or Tractor Loan" required>
-        </div>
-
-        <div class="input-group">
-          <label class="input-label" for="modal-bank-name">Bank / Lending Agency:</label>
-          <input type="text" id="modal-bank-name" class="custom-input" placeholder="e.g. State Bank of India, Gramin Bank" required>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="input-group">
-            <label class="input-label" for="modal-total-amount">Total Loan Amount (₹):</label>
-            <input type="number" id="modal-total-amount" class="custom-input" placeholder="e.g. 150000" min="1000" required>
-          </div>
-
-          <div class="input-group">
-            <label class="input-label" for="modal-paid-amount">Amount Already Paid (₹):</label>
-            <input type="number" id="modal-paid-amount" class="custom-input" placeholder="e.g. 30000" min="0" value="0">
+      <form id="record-payment-form">
+        <input type="hidden" id="pay-loan-id">
+        <div style="margin-bottom: 1.2rem;">
+          <label class="input-label-clean" id="pay-loan-title-label">Loan Scheme</label>
+          <div id="pay-loan-summary-box"
+            style="background: #f1f5f3; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-weight: 700; color: #0f172a; font-size: 0.95rem;">
+            Kisan Credit Card
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="input-group">
-            <label class="input-label" for="modal-interest-rate">Interest Rate (% p.a.):</label>
-            <input type="number" id="modal-interest-rate" class="custom-input" placeholder="e.g. 4.0" step="0.1" value="4.0" required>
-          </div>
-
-          <div class="input-group">
-            <label class="input-label" for="modal-tenure">Tenure (Months):</label>
-            <input type="number" id="modal-tenure" class="custom-input" placeholder="e.g. 12" value="12" required>
-          </div>
+        <div style="margin-bottom: 1.2rem;">
+          <label class="input-label-clean" for="pay-amount-input" data-i18n="modalAmountToPay">Payment Amount
+            (₹):</label>
+          <input type="number" id="pay-amount-input" class="input-clean" placeholder="e.g. 50000" min="100" required>
         </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-          <button type="button" class="btn-secondary" onclick="document.getElementById('add-loan-modal').classList.remove('active')">Cancel</button>
-          <button type="submit" class="btn-primary-sm">Save & Track Loan</button>
+        <div style="margin-bottom: 1.6rem;">
+          <label class="input-label-clean" for="pay-note-input" data-i18n="modalPaymentNote">Payment Note / Mandi
+            sale:</label>
+          <input type="text" id="pay-note-input" class="input-clean" placeholder="e.g. Wheat mandi harvest payment"
+            value="Mandi sale proceeds">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.8rem;">
+          <button type="button" class="btn-icon-secondary"
+            style="width: auto; padding: 0.6rem 1.2rem; border-radius: var(--radius-pill);" id="btn-cancel-payment"
+            data-i18n="btnCancel">Cancel</button>
+          <button type="submit" class="btn-add-payment-action" style="flex: initial; padding: 0.65rem 1.6rem;"
+            data-i18n="btnSubmitPayment">Record Payment</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- ==========================================================================
-       Illiterate-Friendly Audio Voice Reader (Speaker 🔊)
+       MODAL 3: Add Loan / Scheme to Tracker
        ========================================================================== -->
-  <button class="floating-speaker-btn" id="floating-speaker-btn" title="Tap to listen to this page (आवाज़ में सुनें)">
-    🔊
-  </button>
+  <div class="modal-overlay" id="add-loan-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-x" id="add-loan-close">✕</button>
+      <h2 style="font-size: 1.4rem; color: #0f172a; margin-bottom: 0.4rem;" data-i18n="modalAddLoanTitle">Add Loan /
+        Scheme to Tracker</h2>
+      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1.4rem;" data-i18n="modalAddLoanDesc">
+        Track a new agricultural loan, KCC, tractor finance, or infrastructure fund.
+      </p>
+
+      <form id="create-loan-form">
+        <div id="modal-farm-details-badge"
+          style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-sm); padding: 0.65rem 0.9rem; margin-bottom: 1.1rem; font-size: 0.86rem; color: #065f46;">
+          <div style="font-weight: 700; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.35rem;">
+            <span>🚜</span> Farm Profile Matched
+          </div>
+          <div id="modal-farm-details-text" style="color: #047857; font-size: 0.82rem;"></div>
+        </div>
+
+        <div style="margin-bottom: 1.1rem;">
+          <label class="input-label-clean" for="new-loan-scheme-select">Choose Scheme / Loan Type:</label>
+          <select id="new-loan-scheme-select" class="select-clean">
+            <option value="">-- Select a Government Scheme or Enter Custom --</option>
+            <option value="kcc" data-name="Kisan Credit Card" data-sub="KCC - Crop Loan" data-rate="4.0"
+              data-tenure="60" data-amount="300000">Kisan Credit Card (KCC) — 4% Subsidized Crop Loan</option>
+            <option value="miss" data-name="Modified Interest Subvention Scheme" data-sub="MISS - Loan" data-rate="4.0"
+              data-tenure="60" data-amount="300000">Modified Interest Subvention Scheme (MISS) — 4% Subvention</option>
+            <option value="aif" data-name="Agriculture Infrastructure Fund" data-sub="AIF - Loan" data-rate="5.0"
+              data-tenure="72" data-amount="2000000">Agriculture Infrastructure Fund (AIF) — 3% Subvention</option>
+            <option value="ahidf" data-name="Animal Husbandry Infrastructure Fund" data-sub="AHIDF - Loan"
+              data-rate="5.5" data-tenure="72" data-amount="1000000">Animal Husbandry Infrastructure Development Fund
+              (AHIDF)</option>
+            <option value="smam" data-name="Sub-Mission on Agricultural Mechanization" data-sub="SMAM - Tractor Loan"
+              data-rate="7.0" data-tenure="48" data-amount="500000">SMAM — Tractor & Machinery Loan (40-50% Subsidy)
+            </option>
+            <option value="pm-kusum" data-name="PM-KUSUM Solar Pump Loan" data-sub="KUSUM - Loan" data-rate="7.5"
+              data-tenure="60" data-amount="200000">PM-KUSUM — Solar Irrigation Pump Loan</option>
+            <option value="pmfme" data-name="PMFME Food Processing Loan" data-sub="PMFME - Loan" data-rate="8.0"
+              data-tenure="60" data-amount="500000">PMFME — Micro Food Processing (35% Subsidy)</option>
+            <option value="custom" data-name="Custom Agriculture Loan" data-sub="Agri Loan" data-rate="7.0"
+              data-tenure="36" data-amount="100000">Custom Bank / Private Farm Loan</option>
+          </select>
+          <div
+            style="font-size: 0.82rem; margin-top: 0.35rem; color: #64748b; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.25rem;">
+            <span>Select a government scheme or enter custom loan details</span>
+            <a href="#" id="link-fill-farm-details"
+              style="color: #15803d; font-weight: 600; text-decoration: underline;">
+              🌾 Find best loan by farm details →
+            </a>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.1rem;">
+          <label class="input-label-clean" for="new-loan-name" data-i18n="modalLoanName">Scheme or Loan Name:</label>
+          <input type="text" id="new-loan-name" class="input-clean" placeholder="e.g. Kisan Credit Card or Tractor Loan"
+            required>
+        </div>
+
+        <div style="margin-bottom: 1.1rem;">
+          <label class="input-label-clean" for="new-bank-name" data-i18n="modalBankName">Bank / Lending Agency:</label>
+          <input type="text" id="new-bank-name" class="input-clean" placeholder="e.g. State Bank of India, Gramin Bank"
+            required>
+        </div>
+
+        <div class="form-row-2" style="margin-bottom: 1.1rem;">
+          <div>
+            <label class="input-label-clean" for="new-loan-amount" data-i18n="modalTotalAmount">Total Loan Amount
+              (₹):</label>
+            <input type="number" id="new-loan-amount" class="input-clean" placeholder="e.g. 500000" min="5000" required>
+          </div>
+          <div>
+            <label class="input-label-clean" for="new-paid-amount" data-i18n="modalPaidAmount">Amount Already Paid
+              (₹):</label>
+            <input type="number" id="new-paid-amount" class="input-clean" placeholder="e.g. 100000" min="0" value="0">
+          </div>
+        </div>
+
+        <div class="form-row-2" style="margin-bottom: 1.1rem;">
+          <div>
+            <label class="input-label-clean" for="new-interest-rate" data-i18n="modalRate">Interest Rate (%
+              p.a.):</label>
+            <input type="number" id="new-interest-rate" class="input-clean" placeholder="e.g. 7.0" step="0.1"
+              value="7.0" required>
+          </div>
+          <div>
+            <label class="input-label-clean" for="new-tenure-months" data-i18n="modalTenure">Tenure (Months):</label>
+            <input type="number" id="new-tenure-months" class="input-clean" placeholder="e.g. 60" value="60" required>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.6rem;">
+          <label class="input-label-clean" for="new-loan-status" data-i18n="modalStatus">Loan Status:</label>
+          <select id="new-loan-status" class="select-clean">
+            <option value="Active" data-i18n="statusActive">Active (Running)</option>
+            <option value="Ended" data-i18n="statusEnded">Ended (Fully Paid)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.8rem;">
+          <button type="button" class="btn-icon-secondary"
+            style="width: auto; padding: 0.6rem 1.2rem; border-radius: var(--radius-pill);" id="btn-cancel-add-loan"
+            data-i18n="btnCancel">Cancel</button>
+          <button type="submit" class="btn-add-payment-action" style="flex: initial; padding: 0.65rem 1.6rem;"
+            data-i18n="btnSaveLoan">Save & Track Loan</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- ==========================================================================
-       Footer (Matching Reference)
+       MODAL 3B: Multi-Step Farmer Qualification Questionnaire (Matching Screenshots 2, 3, 4)
        ========================================================================== -->
-  <footer class="footer">
-    <div class="footer-container">
-      <div class="footer-logo">
-        <span style="font-size: 1.6rem;">🌱</span> KisanSahay
+  <div class="modal-overlay" id="farmer-qualification-modal" style="z-index: 165;">
+    <div class="modal-dialog fq-modal-dialog">
+      <button class="modal-close-x" id="fq-modal-close" aria-label="Close Questionnaire">✕</button>
+
+      <!-- Questionnaire Title -->
+      <div class="fq-header-wrap">
+        <h2 class="fq-main-title" id="fq-main-title">Help us find the best schemes for you</h2>
+        <p class="fq-main-subtitle" id="fq-main-subtitle">
+          Complete these quick questions to unlock personalized subsidies, zero-percent interest subventions, and priority quotas.
+        </p>
+
+        <!-- Stepper Indicators (Matching Screenshot 2, 3, 4) -->
+        <div class="fq-stepper-container" id="fq-stepper-container">
+          <div class="fq-step-item active" id="fq-step-indicator-1">
+            <span class="fq-step-circle">1</span>
+            <span class="fq-step-label">About You</span>
+          </div>
+          <div class="fq-step-connector" id="fq-connector-1"></div>
+          <div class="fq-step-item" id="fq-step-indicator-2">
+            <span class="fq-step-circle">2</span>
+            <span class="fq-step-label">Location</span>
+          </div>
+          <div class="fq-step-connector" id="fq-connector-2"></div>
+          <div class="fq-step-item" id="fq-step-indicator-3">
+            <span class="fq-step-circle">3</span>
+            <span class="fq-step-label">Eligibility</span>
+          </div>
+        </div>
       </div>
-      <p class="footer-tagline">
-        Helping farmers access government schemes and track loans with ease.
+
+      <!-- STEP 1: Gender & Age (Screenshot 4) -->
+      <div class="fq-screen-step active" id="fq-step-pane-1">
+        <div class="fq-question-block">
+          <label class="fq-question-label">
+            <span class="fq-req-star">*</span>Tell us about yourself, you are a...
+          </label>
+          <div class="fq-gender-grid" id="fq-gender-grid">
+            <button type="button" class="fq-gender-card active" data-gender="Male">
+              <span class="fq-gender-icon">♂</span>
+              <span class="fq-gender-text">Male</span>
+            </button>
+            <button type="button" class="fq-gender-card" data-gender="Female">
+              <span class="fq-gender-icon">♀</span>
+              <span class="fq-gender-text">Female</span>
+            </button>
+            <button type="button" class="fq-gender-card" data-gender="Transgender">
+              <span class="fq-gender-icon">⚧</span>
+              <span class="fq-gender-text">Transgender</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="fq-question-block" style="margin-top: 1.5rem;">
+          <label class="fq-question-label" for="fq-age-select">
+            <span class="fq-req-star">*</span>and your age is:
+          </label>
+          <div class="fq-inline-age-row">
+            <select id="fq-age-select" class="select-clean fq-select">
+              <option value="" disabled>-- Select Age --</option>
+              <option value="18">18 years</option>
+              <option value="19">19 years</option>
+              <option value="20">20 years</option>
+              <option value="21">21 years</option>
+              <option value="22">22 years</option>
+              <option value="23">23 years</option>
+              <option value="24">24 years</option>
+              <option value="25">25 years</option>
+              <option value="26">26 years</option>
+              <option value="27">27 years</option>
+              <option value="28">28 years</option>
+              <option value="29">29 years</option>
+              <option value="30">30 years</option>
+              <option value="32">32 years</option>
+              <option value="35" selected>35 years</option>
+              <option value="38">38 years</option>
+              <option value="40">40 years</option>
+              <option value="42">42 years</option>
+              <option value="45">45 years</option>
+              <option value="48">48 years</option>
+              <option value="50">50 years</option>
+              <option value="52">52 years</option>
+              <option value="55">55 years</option>
+              <option value="58">58 years</option>
+              <option value="60">60 years</option>
+              <option value="65">65 years</option>
+              <option value="70">70 years</option>
+              <option value="75">75 years</option>
+              <option value="80">80+ years</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="fq-footer-actions">
+          <button type="button" class="btn-clean btn-primary fq-btn-next" id="fq-step1-next">Next →</button>
+        </div>
+        <div style="text-align: center; margin-top: 0.6rem;">
+          <button type="button" class="fq-btn-reset-form" id="fq-step1-reset">🔄 Reset Form</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: State & Residence (Screenshot 2) -->
+      <div class="fq-screen-step" id="fq-step-pane-2" style="display: none;">
+        <div class="fq-back-nav-bar">
+          <button type="button" class="fq-back-btn" id="fq-step2-back">← Back</button>
+        </div>
+
+        <div class="fq-question-block">
+          <label class="fq-question-label" for="fq-state-select">
+            Please select your state
+          </label>
+          <select id="fq-state-select" class="select-clean fq-select">
+            <option value="" disabled selected>--Select One--</option>
+            <option value="Uttar Pradesh">Uttar Pradesh</option>
+            <option value="Madhya Pradesh">Madhya Pradesh</option>
+            <option value="Bihar">Bihar</option>
+            <option value="Punjab">Punjab</option>
+            <option value="Haryana">Haryana</option>
+            <option value="Rajasthan">Rajasthan</option>
+            <option value="Maharashtra">Maharashtra</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Karnataka">Karnataka</option>
+            <option value="Tamil Nadu">Tamil Nadu</option>
+            <option value="Andhra Pradesh">Andhra Pradesh</option>
+            <option value="Telangana">Telangana</option>
+            <option value="West Bengal">West Bengal</option>
+            <option value="Odisha">Odisha</option>
+            <option value="Kerala">Kerala</option>
+            <option value="Assam">Assam</option>
+            <option value="Chhattisgarh">Chhattisgarh</option>
+            <option value="Jharkhand">Jharkhand</option>
+            <option value="Himachal Pradesh">Himachal Pradesh</option>
+            <option value="Uttarakhand">Uttarakhand</option>
+            <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+            <option value="Goa">Goa</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Chandigarh">Chandigarh</option>
+            <option value="Puducherry">Puducherry</option>
+            <option value="Tripura">Tripura</option>
+            <option value="Meghalaya">Meghalaya</option>
+            <option value="Manipur">Manipur</option>
+            <option value="Nagaland">Nagaland</option>
+            <option value="Mizoram">Mizoram</option>
+            <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+            <option value="Sikkim">Sikkim</option>
+            <option value="Ladakh">Ladakh</option>
+          </select>
+        </div>
+
+        <div class="fq-question-block" style="margin-top: 1.5rem;">
+          <label class="fq-question-label">
+            <span class="fq-req-star">*</span>Please select your area of residence
+          </label>
+          <div class="fq-binary-options" id="fq-residence-options">
+            <button type="button" class="fq-choice-btn" data-residence="Urban">Urban</button>
+            <button type="button" class="fq-choice-btn active" data-residence="Rural">Rural</button>
+          </div>
+        </div>
+
+        <div class="fq-footer-actions fq-split-actions">
+          <button type="button" class="btn-clean btn-secondary fq-btn-skip" id="fq-step2-skip">Skip to Results</button>
+          <button type="button" class="btn-clean btn-primary fq-btn-next" id="fq-step2-next">Next →</button>
+        </div>
+        <div style="text-align: center; margin-top: 0.6rem;">
+          <button type="button" class="fq-btn-reset-form" id="fq-step2-reset">🔄 Reset Form</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Disability & Minority (Screenshot 3) -->
+      <div class="fq-screen-step" id="fq-step-pane-3" style="display: none;">
+        <div class="fq-back-nav-bar">
+          <button type="button" class="fq-back-btn" id="fq-step3-back">← Back</button>
+        </div>
+
+        <div class="fq-question-block">
+          <label class="fq-question-label">
+            <span class="fq-req-star">*</span>Do you identify as a person with a disability?
+            <span class="fq-info-pill" title="Eligible for specialized interest subvention & collateral-free credit lines">ℹ</span>
+          </label>
+          <div class="fq-binary-options" id="fq-disability-options">
+            <button type="button" class="fq-choice-btn" data-disability="Yes">Yes</button>
+            <button type="button" class="fq-choice-btn active" data-disability="No">No</button>
+          </div>
+        </div>
+
+        <div class="fq-question-block" style="margin-top: 1.5rem;">
+          <label class="fq-question-label">
+            <span class="fq-req-star">*</span>Do you belong to minority?
+            <span class="fq-info-pill" title="National Minorities Development & Finance Corporation (NMDFC) subsidized loans">ℹ</span>
+          </label>
+          <div class="fq-binary-options" id="fq-minority-options">
+            <button type="button" class="fq-choice-btn" data-minority="Yes">Yes</button>
+            <button type="button" class="fq-choice-btn active" data-minority="No">No</button>
+          </div>
+        </div>
+
+        <div class="fq-footer-actions fq-split-actions">
+          <button type="button" class="btn-clean btn-secondary fq-btn-skip" id="fq-step3-skip">Skip to Results</button>
+          <button type="button" class="btn-clean btn-primary fq-btn-next" id="fq-step3-submit">Confirm & Proceed to Loan →</button>
+        </div>
+        <div style="text-align: center; margin-top: 0.6rem;">
+          <button type="button" class="fq-btn-reset-form" id="fq-step3-reset">🔄 Reset Form</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 4: Document Checklist
+       ========================================================================== -->
+  <div class="modal-overlay" id="checklist-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-x" id="checklist-modal-close">✕</button>
+      <div
+        style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.4rem; padding-right: 2rem;">
+        <h2 style="font-size: 1.35rem; color: #0f172a; margin: 0;" id="checklist-modal-title"
+          data-i18n="docChecklistTitle">Required Documents Checklist</h2>
+        <button type="button" class="btn-read-aloud-checklist" id="btn-read-checklist-aloud"
+          title="Listen to checklist in your language">
+          <span>🔊</span> <span data-i18n="readAloud">Read Aloud</span>
+        </button>
+      </div>
+      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1rem;" data-i18n="docChecklistDesc">
+        Check each document you have ready. All documents must be confirmed before proceeding to apply:
       </p>
-      <div class="footer-copy">
-        © 2025 KisanSahay — Empowering Rural India with Transparent Agricultural Finance.
+
+      <div id="checklist-warning-box" class="checklist-missing-notice" style="display: none;">
+        <span>⚠️</span> <span id="checklist-missing-count-text">Missing documents required</span>
+      </div>
+
+      <div id="checklist-items-box" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.6rem;">
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+        <span id="checklist-completion-status" style="font-size: 0.85rem; font-weight: 700; color: #dc2626;">0
+          confirmed</span>
+        <div style="display: flex; gap: 0.8rem;">
+          <button type="button" class="btn-icon-secondary"
+            style="width: auto; padding: 0.6rem 1.2rem; border-radius: var(--radius-pill);" id="btn-close-checklist"
+            data-i18n="btnClose">Close</button>
+          <button type="button" class="btn-add-payment-action btn-apply-disabled"
+            style="flex: initial; padding: 0.65rem 1.4rem;" id="btn-track-from-checklist" data-i18n="btnApplyScheme"
+            disabled>Confirm & Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 5: Farmer Document Vault (Password Protected: Word, PIN, Pattern)
+       ========================================================================== -->
+  <div class="modal-overlay" id="vault-modal" style="z-index: 170;">
+    <div class="modal-dialog modal-vault-dialog" style="max-width: 650px;">
+      <button class="modal-close-x" id="vault-modal-close">✕</button>
+
+      <!-- Header Banner -->
+      <div class="vault-modal-header">
+        <div class="vault-modal-badge">
+          <span id="vault-header-icon">🔒</span>
+          <span id="vault-header-status">Encrypted Farmer Vault</span>
+        </div>
+        <h2 class="vault-modal-title" data-i18n="vaultTitle">Farmer Document Vault & Verification</h2>
+        <p class="vault-modal-desc" data-i18n="vaultSubtitle">
+          Before choosing any loan, verify your documents. They are safely encrypted with your personal password, PIN,
+          or Pattern Lock.
+        </p>
+      </div>
+
+      <!-- Required Notice if prompted via "Choose Loan" -->
+      <div id="vault-scheme-prompt-banner" class="vault-scheme-notice" style="display: none;">
+        <span style="font-size: 1.4rem;">🌾</span>
+        <div>
+          <strong id="vault-target-scheme-name">Scheme Application</strong>
+          <div style="font-size: 0.83rem; color: #166534; margin-top: 0.2rem;">
+            Document verification is mandatory before configuring this loan. Save your encrypted documents to continue.
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Inputs Form -->
+      <div class="vault-docs-grid">
+        <!-- 1. Aadhaar Card -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-aadhaar" style="margin-bottom: 0;">
+              <span data-i18n="docAadhaar">Aadhaar Card (12 Digits)</span> *
+            </label>
+            <span class="doc-badge-req">Mandatory</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">🪪</span>
+            <input type="text" id="vault-aadhaar" class="input-clean" placeholder="e.g. 5482-9102-3847" maxlength="14" required>
+          </div>
+        </div>
+
+        <!-- 2. Land Record -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-land" style="margin-bottom: 0;">
+              <span data-i18n="docLand">Land Record (Khasra/Khatauni/Patta)</span> *
+            </label>
+            <span class="doc-badge-req">Mandatory</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">📜</span>
+            <input type="text" id="vault-land" class="input-clean" placeholder="e.g. Khasra No. 142/5, Khatauni 28" required>
+          </div>
+        </div>
+
+        <!-- 3. Bank Account Details -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-bank" style="margin-bottom: 0;">
+              <span data-i18n="docBank">Bank Account & IFSC Code</span> *
+            </label>
+            <span class="doc-badge-req">Mandatory</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">🏦</span>
+            <input type="text" id="vault-bank" class="input-clean" placeholder="e.g. State Bank of India, A/C: 38291048192, IFSC: SBIN0001428" required>
+          </div>
+        </div>
+
+        <!-- 4. Crop Sowing / Girdawari -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-crop" style="margin-bottom: 0;">
+              <span data-i18n="docCrop">Crop Sowing / Girdawari Proof</span> *
+            </label>
+            <span class="doc-badge-req">Mandatory</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">🌱</span>
+            <input type="text" id="vault-crop" class="input-clean" placeholder="e.g. Rabi 2026 Wheat Cultivation Slip / Certificate" required>
+          </div>
+        </div>
+
+        <!-- 5. Category / Caste Certificate -->
+        <div class="vault-input-group">
+          <div class="vault-label-row">
+            <label class="input-label-clean" for="vault-category" style="margin-bottom: 0;">
+              <span data-i18n="docCategory">Category / Caste Certificate</span>
+            </label>
+            <span class="doc-badge-opt">Optional / Subsidies</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-prefix-icon">📑</span>
+            <input type="text" id="vault-category" class="input-clean"
+              placeholder="e.g. General, SC, ST, OBC, or Women (or Not Applicable)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Lock Password Choice (Word, PIN, Pattern) -->
+      <div class="vault-security-box">
+        <div class="security-box-header">
+          <span style="font-size: 1.15rem;">🔐</span>
+          <span style="font-weight: 700; color: #0f172a;" data-i18n="vaultPasswordChoice">Choose Security Lock Method:</span>
+        </div>
+
+        <!-- 3 Password Tabs: Word, PIN, Pattern -->
+        <div class="security-type-tabs">
+          <button type="button" class="sec-tab-btn active" data-tab="word" id="sec-tab-word">
+            <span>🔤</span> <span data-i18n="tabWord">Password (Word)</span>
+          </button>
+          <button type="button" class="sec-tab-btn" data-tab="number" id="sec-tab-number">
+            <span>🔢</span> <span data-i18n="tabNumber">PIN (4-6 Digits)</span>
+          </button>
+          <button type="button" class="sec-tab-btn" data-tab="pattern" id="sec-tab-pattern">
+            <span>⚡</span> <span data-i18n="tabPattern">Pattern Lock</span>
+          </button>
+        </div>
+
+        <!-- Tab Pane 1: Word Passphrase -->
+        <div class="sec-pane active" id="sec-pane-word">
+          <div class="form-row-2">
+            <div>
+              <label class="input-label-clean" for="vault-word-pass">Secret Password *</label>
+              <div class="password-input-wrap">
+                <input type="password" id="vault-word-pass" class="input-clean" placeholder="Create secret password" autocomplete="new-password">
+                <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-word-pass', this)" title="Show/Hide Password" aria-label="Show/Hide Password">👁️</button>
+              </div>
+            </div>
+            <div>
+              <label class="input-label-clean" for="vault-word-confirm">Confirm Password *</label>
+              <div class="password-input-wrap">
+                <input type="password" id="vault-word-confirm" class="input-clean" placeholder="Re-enter secret password" autocomplete="new-password">
+                <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-word-confirm', this)" title="Show/Hide Password" aria-label="Show/Hide Password">👁️</button>
+              </div>
+            </div>
+          </div>
+          <small style="color: #64748b; margin-top: 0.45rem; display: block;">Minimum 4 characters. Use letters, numbers, or symbols you remember easily.</small>
+        </div>
+
+        <!-- Tab Pane 2: Number PIN -->
+        <div class="sec-pane" id="sec-pane-number" style="display: none;">
+          <div style="display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <label class="input-label-clean" for="vault-pin-pass">4 to 6 Digit PIN *</label>
+              <div class="password-input-wrap">
+                <input type="password" id="vault-pin-pass" class="input-clean" placeholder="• • • •" maxlength="6"
+                  style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
+                <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-pin-pass', this)" title="Show/Hide PIN" aria-label="Show/Hide PIN">👁️</button>
+              </div>
+              <div style="margin-top: 0.75rem;">
+                <label class="input-label-clean" for="vault-pin-confirm">Confirm PIN *</label>
+                <div class="password-input-wrap">
+                  <input type="password" id="vault-pin-confirm" class="input-clean" placeholder="• • • •" maxlength="6"
+                    style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
+                  <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-pin-confirm', this)" title="Show/Hide PIN" aria-label="Show/Hide PIN">👁️</button>
+                </div>
+              </div>
+            </div>
+            <!-- Interactive Keypad -->
+            <div class="pin-keypad" id="pin-keypad">
+              <button type="button" class="keypad-key" data-digit="1">1</button>
+              <button type="button" class="keypad-key" data-digit="2">2</button>
+              <button type="button" class="keypad-key" data-digit="3">3</button>
+              <button type="button" class="keypad-key" data-digit="4">4</button>
+              <button type="button" class="keypad-key" data-digit="5">5</button>
+              <button type="button" class="keypad-key" data-digit="6">6</button>
+              <button type="button" class="keypad-key" data-digit="7">7</button>
+              <button type="button" class="keypad-key" data-digit="8">8</button>
+              <button type="button" class="keypad-key" data-digit="9">9</button>
+              <button type="button" class="keypad-key action" id="btn-pin-clear">C</button>
+              <button type="button" class="keypad-key" data-digit="0">0</button>
+              <button type="button" class="keypad-key action" id="btn-pin-back">⌫</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Pane 3: 3x3 Visual Pattern Lock -->
+        <div class="sec-pane" id="sec-pane-pattern" style="display: none;">
+          <div class="pattern-lock-wrap">
+            <p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.6rem; text-align: center;">
+              Connect at least 4 dots in sequence to create your secret pattern lock:
+            </p>
+            <!-- 3x3 Pattern Grid Container with Canvas Overlay -->
+            <div class="pattern-container" id="pattern-container">
+              <canvas id="pattern-canvas" width="240" height="240"></canvas>
+              <div class="pattern-dots-grid" id="pattern-dots-grid">
+                <div class="pattern-dot" data-index="0"><span></span></div>
+                <div class="pattern-dot" data-index="1"><span></span></div>
+                <div class="pattern-dot" data-index="2"><span></span></div>
+                <div class="pattern-dot" data-index="3"><span></span></div>
+                <div class="pattern-dot" data-index="4"><span></span></div>
+                <div class="pattern-dot" data-index="5"><span></span></div>
+                <div class="pattern-dot" data-index="6"><span></span></div>
+                <div class="pattern-dot" data-index="7"><span></span></div>
+                <div class="pattern-dot" data-index="8"><span></span></div>
+              </div>
+            </div>
+            <div class="pattern-feedback" id="pattern-feedback">Connect dots in sequence to draw pattern</div>
+            <button type="button" class="btn-reset-pattern" id="btn-reset-pattern">🔄 Reset Pattern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="vault-modal-footer">
+        <button type="button" class="btn-icon-secondary" id="btn-vault-cancel"
+          style="padding: 0.65rem 1.4rem; border-radius: var(--radius-pill);">Cancel</button>
+        <button type="button" class="btn-clean-reset-pw" id="btn-vault-reset-trigger" style="display: none;">
+          <span>🔑</span> Reset Password
+        </button>
+        <button type="button" class="btn-clean" id="btn-vault-lock-now"
+          style="display: none; padding: 0.65rem 1.2rem; border-radius: var(--radius-pill); background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-weight: 700; cursor: pointer;">
+          🔒 Lock Vault Now
+        </button>
+        <button type="button" class="btn-vault-save-action" id="btn-vault-save-submit">
+          <span id="btn-vault-save-icon">🔒</span>
+          <span id="btn-vault-save-text" data-i18n="btnEncryptVault">Encrypt & Secure Documents</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vault Unlock Prompt Modal (When locked vault exists) -->
+  <div class="modal-overlay" id="vault-unlock-modal" style="z-index: 180;">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <button class="modal-close-x" id="vault-unlock-close">✕</button>
+      <div style="text-align: center; margin-bottom: 1.2rem;">
+        <div
+          style="width: 52px; height: 52px; background: #dcfce7; color: #15803d; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.6rem;">
+          🔒</div>
+        <h2 style="font-size: 1.3rem; color: #0f172a; margin-bottom: 0.3rem;">Unlock Your Document Vault</h2>
+        <p style="font-size: 0.85rem; color: #64748b;" id="unlock-modal-desc">Enter your secret password to decrypt and access your documents.</p>
+      </div>
+
+      <div id="unlock-error-notice" style="display: none; padding: 0.6rem 0.85rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; font-size: 0.84rem; margin-bottom: 0.9rem; text-align: center;"></div>
+
+      <div id="unlock-input-container" style="margin-bottom: 1.4rem;">
+        <!-- Populated dynamically based on whether password type is word, pin, or pattern -->
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; padding: 0 0.2rem;">
+        <button type="button" class="btn-link-reset-pw" id="btn-vault-forgot-pass">
+          <span>🔄</span> Forgot / Reset Password?
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+        <button type="button" class="btn-icon-secondary" id="btn-unlock-cancel"
+          style="padding: 0.6rem 1.2rem; border-radius: var(--radius-pill);">Cancel</button>
+        <button type="button" class="btn-add-payment-action" id="btn-unlock-submit" style="padding: 0.6rem 1.6rem;">🔓
+          Unlock Vault</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vault Password Reset Modal -->
+  <div class="modal-overlay" id="vault-reset-modal" style="z-index: 190;">
+    <div class="modal-dialog" style="max-width: 460px;">
+      <button class="modal-close-x" id="vault-reset-close">✕</button>
+      <div style="text-align: center; margin-bottom: 1.2rem;">
+        <div style="width: 52px; height: 52px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.6rem;">🔄</div>
+        <h2 style="font-size: 1.3rem; color: #0f172a; margin-bottom: 0.3rem;">Reset Vault Password</h2>
+        <p style="font-size: 0.85rem; color: #64748b;">Set a new secret password, PIN, or pattern to protect your sensitive documents.</p>
+      </div>
+
+      <div id="reset-error-notice" style="display: none; padding: 0.6rem 0.85rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; font-size: 0.84rem; margin-bottom: 0.9rem; text-align: center;"></div>
+
+      <!-- Lock Method Choice for Reset -->
+      <div class="security-type-tabs" style="margin-bottom: 1.2rem;">
+        <button type="button" class="sec-tab-btn active" data-tab="word" id="reset-tab-word">
+          <span>🔤</span> <span>Password</span>
+        </button>
+        <button type="button" class="sec-tab-btn" data-tab="number" id="reset-tab-number">
+          <span>🔢</span> <span>PIN</span>
+        </button>
+        <button type="button" class="sec-tab-btn" data-tab="pattern" id="reset-tab-pattern">
+          <span>⚡</span> <span>Pattern</span>
+        </button>
+      </div>
+
+      <!-- Reset Tab Pane 1: Word -->
+      <div class="sec-pane active" id="reset-pane-word">
+        <div style="margin-bottom: 0.9rem;">
+          <label class="input-label-clean" for="vault-reset-word-pass">New Secret Password *</label>
+          <div class="password-input-wrap">
+            <input type="password" id="vault-reset-word-pass" class="input-clean" placeholder="Enter new secret password" autocomplete="new-password">
+            <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-reset-word-pass', this)" title="Show/Hide Password">👁️</button>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.9rem;">
+          <label class="input-label-clean" for="vault-reset-word-confirm">Confirm New Password *</label>
+          <div class="password-input-wrap">
+            <input type="password" id="vault-reset-word-confirm" class="input-clean" placeholder="Re-enter new password" autocomplete="new-password">
+            <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-reset-word-confirm', this)" title="Show/Hide Password">👁️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reset Tab Pane 2: Number PIN -->
+      <div class="sec-pane" id="reset-pane-number" style="display: none;">
+        <div style="margin-bottom: 0.9rem;">
+          <label class="input-label-clean" for="vault-reset-pin-pass">New 4 to 6 Digit PIN *</label>
+          <div class="password-input-wrap">
+            <input type="password" id="vault-reset-pin-pass" class="input-clean" placeholder="• • • •" maxlength="6"
+              style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
+            <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-reset-pin-pass', this)" title="Show/Hide PIN">👁️</button>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.9rem;">
+          <label class="input-label-clean" for="vault-reset-pin-confirm">Confirm New PIN *</label>
+          <div class="password-input-wrap">
+            <input type="password" id="vault-reset-pin-confirm" class="input-clean" placeholder="• • • •" maxlength="6"
+              style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
+            <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-reset-pin-confirm', this)" title="Show/Hide PIN">👁️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reset Tab Pane 3: Pattern Lock -->
+      <div class="sec-pane" id="reset-pane-pattern" style="display: none;">
+        <div class="pattern-lock-wrap">
+          <p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.6rem; text-align: center;">
+            Draw your new pattern (connect at least 4 dots):
+          </p>
+          <div class="pattern-container" id="reset-pattern-container">
+            <canvas id="reset-pattern-canvas" width="240" height="240"></canvas>
+            <div class="pattern-dots-grid" id="reset-pattern-dots-grid">
+              <div class="pattern-dot" data-index="0"><span></span></div>
+              <div class="pattern-dot" data-index="1"><span></span></div>
+              <div class="pattern-dot" data-index="2"><span></span></div>
+              <div class="pattern-dot" data-index="3"><span></span></div>
+              <div class="pattern-dot" data-index="4"><span></span></div>
+              <div class="pattern-dot" data-index="5"><span></span></div>
+              <div class="pattern-dot" data-index="6"><span></span></div>
+              <div class="pattern-dot" data-index="7"><span></span></div>
+              <div class="pattern-dot" data-index="8"><span></span></div>
+            </div>
+          </div>
+          <div class="pattern-feedback" id="reset-pattern-feedback">Connect dots in sequence</div>
+          <button type="button" class="btn-reset-pattern" id="btn-clear-reset-pattern">🔄 Redraw Pattern</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1.4rem;">
+        <button type="button" class="btn-icon-secondary" id="btn-reset-modal-cancel"
+          style="padding: 0.6rem 1.2rem; border-radius: var(--radius-pill);">Cancel</button>
+        <button type="button" class="btn-vault-save-action" id="btn-submit-vault-reset" style="padding: 0.6rem 1.6rem;">
+          <span>🔒</span> <span>Save New Password</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ==========================================================================
+       PART 2: SAHAY AI CHAT WIDGET (Agricultural Loan & Scheme Assistant)
+       ========================================================================== -->
+  <div id="sahay-ai-widget" class="sahay-widget-container">
+    <!-- Floating Action Button Launcher -->
+    <button type="button" id="sahay-launcher-btn" class="sahay-launcher-btn" title="Open Sahay AI Assistant"
+      aria-label="Open Sahay AI Assistant">
+      <span class="sahay-launcher-icon">🤖</span>
+      <span class="sahay-launcher-text">Sahay AI</span>
+      <span class="sahay-pulse-beacon"></span>
+    </button>
+
+    <!-- Floating Chat Window (380-420px wide) -->
+    <div id="sahay-chat-window" class="sahay-chat-window" style="display: none;">
+      <!-- Chat Header -->
+      <div class="sahay-header">
+        <div class="sahay-header-left">
+          <div class="sahay-avatar">🤖</div>
+          <div>
+            <div class="sahay-header-title">Sahay AI <span class="sahay-badge-official">Govt Verified</span></div>
+            <div class="sahay-header-sub">Farm Loans & Schemes Assistant</div>
+          </div>
+        </div>
+        <div class="sahay-header-actions">
+          <!-- Audio Read Aloud Toggle -->
+          <button type="button" id="sahay-tts-toggle" class="btn-sahay-header-action" title="Toggle Voice Read Aloud">
+            <span id="sahay-tts-icon">🔊</span>
+          </button>
+          <!-- Language Switcher EN / HI -->
+          <button type="button" id="sahay-lang-toggle" class="btn-sahay-lang" title="Switch Language">
+            <span id="sahay-lang-indicator">HI</span>
+          </button>
+          <!-- Reset Chat -->
+          <button type="button" id="sahay-reset-btn" class="btn-sahay-header-action" title="Reset Conversation">
+            🔄
+          </button>
+          <!-- Close Window -->
+          <button type="button" id="sahay-close-btn" class="btn-sahay-header-action" title="Close Assistant">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Message Stream -->
+      <div id="sahay-message-stream" class="sahay-message-stream">
+        <!-- Intro Card (Farmer-friendly original copy) -->
+        <div class="sahay-intro-card">
+          <div class="sahay-intro-icon">🌾</div>
+          <div class="sahay-intro-title">Namaste! I'm Sahay AI</div>
+          <p class="sahay-intro-text">
+            Your direct guide to agricultural credit, government subsidies, and scheme documentation. Ask me any
+            question in English or Hindi!
+          </p>
+        </div>
+
+        <!-- Suggested Prompt Chips -->
+        <div class="sahay-prompt-chips-container" id="sahay-prompt-chips">
+          <div class="sahay-chips-title">💡 Suggested Questions:</div>
+          <button type="button" class="sahay-chip" data-query="Am I eligible for KCC?">
+            🌱 Am I eligible for KCC?
+          </button>
+          <button type="button" class="sahay-chip" data-query="What documents do I need for a crop loan?">
+            📋 What documents do I need for a crop loan?
+          </button>
+          <button type="button" class="sahay-chip" data-query="Compare interest rates for my state">
+            📈 Compare interest rates for my state
+          </button>
+          <button type="button" class="sahay-chip" data-query="How to get 50% equipment subsidy?">
+            🚜 How to get 50% equipment subsidy?
+          </button>
+        </div>
+      </div>
+
+      <!-- Speech-to-Text Status Feedback Banner -->
+      <div id="sahay-speech-status" class="sahay-speech-status" style="display: none;">
+        <span class="recording-dot"></span> Listening... Speak your question now
+      </div>
+
+      <!-- Input Bar -->
+      <form id="sahay-input-form" class="sahay-input-form" onsubmit="return false;">
+        <div class="sahay-input-box">
+          <button type="button" id="sahay-mic-btn" class="btn-sahay-mic" title="Voice Input (Speech-to-Text)">
+            🎙️
+          </button>
+          <input type="text" id="sahay-user-input" class="sahay-text-input"
+            placeholder="Ask about loans, KCC, subsidies..." autocomplete="off">
+          <button type="submit" id="sahay-send-btn" class="btn-sahay-send" title="Send Query">
+            ➤
+          </button>
+        </div>
+        <div class="sahay-disclaimer">
+          AI assistant provides guidance grounded in official directives. Always verify with your local bank branch or
+          Krishi Vigyan Kendra.
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MULTI-USER PROFILE MODAL (Phone & Gmail Tabs)
+       ========================================================================== -->
+  <div class="modal-overlay" id="multiuser-add-modal"
+    style="display: none; z-index: 400; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 440px; width: 90%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin: 0;">➕ Add New Profile</h2>
+        <button type="button" class="modal-close-x" id="btn-close-add-profile" style="position: static;">✕</button>
+      </div>
+
+      <div class="modal-tab-row">
+        <button type="button" class="modal-tab-btn active" id="tab-btn-phone">📱 Mobile Phone</button>
+        <button type="button" class="modal-tab-btn" id="tab-btn-gmail">✉️ Gmail / Email</button>
+      </div>
+
+      <!-- Phone Number Option -->
+      <form id="form-add-phone" style="display: block;">
+        <div style="margin-bottom: 1rem;">
+          <label class="input-label-clean" for="add-profile-name-phone">Full Name *</label>
+          <input type="text" id="add-profile-name-phone" class="input-clean" placeholder="e.g. Ramesh Kumar" required>
+        </div>
+        <div style="margin-bottom: 1.4rem;">
+          <label class="input-label-clean" for="add-profile-phone">10-Digit Mobile Number *</label>
+          <input type="tel" id="add-profile-phone" class="input-clean" placeholder="e.g. 9876543210" maxlength="10"
+            required>
+        </div>
+        <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+          <button type="button" class="btn-cancel" id="btn-cancel-add-profile">Cancel</button>
+          <button type="submit" class="btn-primary-action">Create Profile</button>
+        </div>
+      </form>
+
+      <!-- Gmail Option with OTP -->
+      <form id="form-add-gmail" style="display: none;">
+        <div style="margin-bottom: 1rem;">
+          <label class="input-label-clean" for="add-profile-name-gmail">Full Name *</label>
+          <input type="text" id="add-profile-name-gmail" class="input-clean" placeholder="e.g. Priya Sharma" required>
+        </div>
+        <div style="margin-bottom: 1.4rem;">
+          <label class="input-label-clean" for="add-profile-email">Gmail / Email Address *</label>
+          <input type="email" id="add-profile-email" class="input-clean" placeholder="e.g. farmer.priya@gmail.com"
+            required>
+          <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 0.35rem;">
+            A 6-digit verification code (OTP) will be sent to verify this account.
+          </small>
+        </div>
+        <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+          <button type="button" class="btn-cancel"
+            onclick="document.getElementById('multiuser-add-modal').style.display='none'">Cancel</button>
+          <button type="submit" class="btn-primary-action">Send OTP ➔</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MULTI-USER OTP VERIFICATION MODAL
+       ========================================================================== -->
+  <div class="modal-overlay" id="multiuser-otp-modal"
+    style="display: none; z-index: 410; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 440px; width: 90%; text-align: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin: 0;">🔐 Verify Gmail Address</h2>
+        <button type="button" class="modal-close-x" id="btn-close-otp-modal" style="position: static;">✕</button>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.6rem;">
+        Enter the 6-digit OTP sent to <strong id="otp-target-email" style="color: var(--text-dark);">email</strong>
+      </p>
+
+      <div class="otp-demo-hint-box" id="otp-demo-hint" style="display: none;"></div>
+
+      <!-- 6 OTP input boxes -->
+      <div class="otp-boxes-grid">
+        <input type="text" id="otp-box-1" class="otp-digit-input" maxlength="1" inputmode="numeric"
+          autocomplete="one-time-code">
+        <input type="text" id="otp-box-2" class="otp-digit-input" maxlength="1" inputmode="numeric">
+        <input type="text" id="otp-box-3" class="otp-digit-input" maxlength="1" inputmode="numeric">
+        <input type="text" id="otp-box-4" class="otp-digit-input" maxlength="1" inputmode="numeric">
+        <input type="text" id="otp-box-5" class="otp-digit-input" maxlength="1" inputmode="numeric">
+        <input type="text" id="otp-box-6" class="otp-digit-input" maxlength="1" inputmode="numeric">
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.4rem;">
+        Resend code in: <span id="otp-timer-count" style="font-weight: 700; color: var(--primary-main);">60s</span>
+        &nbsp;•&nbsp;
+        <button type="button" id="btn-resend-otp"
+          style="background: none; border: none; color: var(--primary-main); font-weight: 700; cursor: pointer;"
+          disabled>
+          Resend OTP
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 0.8rem; justify-content: center;">
+        <button type="button" class="btn-cancel" id="btn-cancel-otp-modal">Cancel</button>
+        <button type="button" class="btn-primary-action" id="btn-confirm-verify-otp">Verify & Switch Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Official National Portal Footer (Matching Images 2 & 3) -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer-top-container">
+      <!-- Column 1: Brand & Ministry Attribution -->
+      <div class="footer-col footer-col-brand">
+        <div class="footer-brand-title">
+          <span class="footer-copy-symbol">©2026</span>
+          <span class="footer-brand-name">Kisan<span style="color: #10b981;">Sahay</span></span>
+        </div>
+        <div class="footer-powered-by">
+          <span class="footer-powered-text">Powered by</span>
+          <div class="digital-india-tag">
+            <span class="di-flag-dot" style="background: #f97316;"></span>
+            <span class="di-flag-dot" style="background: #ffffff;"></span>
+            <span class="di-flag-dot" style="background: #16a34a;"></span>
+            <strong>Digital India</strong>
+          </div>
+        </div>
+        <p class="footer-dept-text">
+          Digital India Corporation (DIC)<br>
+          Ministry of Electronics & IT (MeitY)<br>
+          Government of India<sup>®</sup>
+        </p>
+        <button class="footer-social-btn" onclick="openSocialMediaModal()">
+          Connect on Social Media
+        </button>
+      </div>
+
+      <!-- Column 2: Quick Links -->
+      <div class="footer-col footer-col-links">
+        <h3 class="footer-col-heading">Quick Links</h3>
+        <ul class="footer-links-list">
+          <li><a href="#about" onclick="openQuickLink('about'); return false;">› About Us</a></li>
+          <li><a href="#contact" onclick="openQuickLink('contact'); return false;">› Contact Us</a></li>
+          <li><a href="#screen-reader" onclick="openQuickLink('screen-reader'); return false;">› Screen Reader</a></li>
+          <li><a href="#accessibility" onclick="openQuickLink('accessibility'); return false;">› Accessibility
+              Statement</a></li>
+          <li><a href="#faq" onclick="openQuickLink('faq'); return false;">› Frequently Asked Questions</a></li>
+          <li><a href="#disclaimer" onclick="openQuickLink('disclaimer'); return false;">› Disclaimer</a></li>
+          <li><a href="#terms" onclick="openQuickLink('terms'); return false;">› Terms & Conditions</a></li>
+          <li><a href="#dashboard" onclick="openQuickLink('dashboard'); return false;">› Dashboard</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 3: Useful Links (Official Badges Grid matching Images 2 & 3) -->
+      <div class="footer-col footer-col-useful">
+        <h3 class="footer-col-heading">Useful Links</h3>
+        <div class="footer-badges-grid">
+          <!-- 1. Digital India -->
+          <a href="https://www.digitalindia.gov.in" target="_blank" rel="noopener noreferrer"
+            class="gov-badge-card badge-digital-india" title="Digital India Portal">
+            <div class="badge-di-content">
+              <span class="badge-di-icon">🇮🇳</span>
+              <div class="badge-text-wrap">
+                <span class="badge-top-sub">Digital India</span>
+                <span class="badge-bottom-sub">Power To Empower</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- 2. DigiLocker -->
+          <a href="https://www.digilocker.gov.in" target="_blank" rel="noopener noreferrer"
+            class="gov-badge-card badge-digilocker" title="DigiLocker - National Digital Document Wallet">
+            <div class="badge-digi-content">
+              <span class="badge-cloud-icon">☁️</span>
+              <div class="badge-text-wrap">
+                <span class="badge-title-digi">DigiLocker</span>
+                <span class="badge-sub-digi">Document Wallet</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- 3. UMANG -->
+          <a href="https://web.umang.gov.in" target="_blank" rel="noopener noreferrer"
+            class="gov-badge-card badge-umang" title="UMANG - Unified Mobile App for New-age Governance">
+            <div class="badge-umang-content">
+              <span class="badge-umang-icon">📱</span>
+              <div class="badge-text-wrap">
+                <span class="badge-title-umang">UMANG</span>
+                <span class="badge-sub-umang">One App Services</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- 4. india.gov.in -->
+          <a href="https://www.india.gov.in" target="_blank" rel="noopener noreferrer"
+            class="gov-badge-card badge-indiagov" title="National Portal of India">
+            <div class="badge-indiagov-content">
+              <span class="badge-ashoka-icon">🏛️</span>
+              <div class="badge-text-wrap">
+                <span class="badge-title-indiagov">india.gov.in</span>
+                <span class="badge-sub-indiagov">National Portal</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Column 4: Get in touch -->
+      <div class="footer-col footer-col-contact">
+        <h3 class="footer-col-heading">Get in touch</h3>
+        <div class="footer-contact-item">
+          <span class="footer-contact-label">Email:</span>
+          <a href="mailto:support-kisansahay@digitalindia.gov.in" class="footer-contact-link">
+            support-kisansahay[at]digitalindia[dot]gov[dot]in
+          </a>
+        </div>
+        <div class="footer-contact-item">
+          <span class="footer-contact-label">Helpline:</span>
+          <a href="tel:01124303714" class="footer-contact-link">
+            (011) 24303714 (9:00 AM to 5:30 PM)
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-footer Bar -->
+    <div class="footer-bottom-bar">
+      <div class="footer-bottom-container">
+        <span>Last Updated On : 19/09/2026 | v-3.1.27</span>
+        <span>© 2026 Government of India • All Rights Reserved</span>
       </div>
     </div>
   </footer>
 
+  <!-- Floating Neural Audio Player Bar (High Quality TTS with Speed Controls) -->
+  <div class="kisan-audio-player-bar" id="kisan-audio-player-bar" style="display: none;">
+    <div class="audio-player-inner">
+      <button type="button" class="btn-audio-control" id="audio-play-pause-btn" title="Play / Pause">
+        <span id="audio-play-icon">⏸️</span>
+      </button>
+      <div class="audio-wave-anim" id="audio-wave-anim">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="audio-info-text">
+        <span class="audio-label" id="audio-status-label">Reading Aloud...</span>
+        <span class="audio-sub" id="audio-lang-label">Natural Neural Voice</span>
+      </div>
+      <div class="audio-speed-control">
+        <label for="audio-speed-select">Speed:</label>
+        <select id="audio-speed-select" class="select-audio-speed">
+          <option value="1.0" selected>1.0x Normal</option>
+          <option value="0.8">0.8x Slow / स्पष्ट</option>
+        </select>
+      </div>
+      <button type="button" class="btn-audio-close" id="audio-close-btn" title="Stop & Close Player">✕</button>
+    </div>
+  <!-- Unlogged-in Visitor Permission Request Modal -->
+  <div class="modal-overlay" id="visitor-permission-modal" style="display: none; z-index: 9999;">
+    <div class="modal-dialog permission-modal-dialog" style="max-width: 480px; text-align: center; padding: 2.2rem 1.85rem; border-radius: 20px;">
+      <div class="permission-icon-badge" style="width: 58px; height: 58px; margin: 0 auto 1.25rem; border-radius: 50%; background: #f0fdf4; border: 2px solid #86efac; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+        🔔
+      </div>
+      <h3 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">Enable Notifications & Location</h3>
+      <p style="font-size: 0.92rem; color: #64748b; line-height: 1.55; margin-bottom: 1.4rem;">
+        KisanSahay needs your permissions to detect your district for local farming subsidies and send you alerts on scheme openings and loan EMI deadlines.
+      </p>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.1rem; text-align: left; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+        <div style="display: flex; gap: 0.85rem; align-items: flex-start;">
+          <span style="font-size: 1.3rem;">📍</span>
+          <div>
+            <strong style="font-size: 0.88rem; color: #1e293b; display: block;">Location Access</strong>
+            <span style="font-size: 0.8rem; color: #64748b;">Automatically detect your state & district for tailored regional subsidies.</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.85rem; align-items: flex-start;">
+          <span style="font-size: 1.3rem;">🔔</span>
+          <div>
+            <strong style="font-size: 0.88rem; color: #1e293b; display: block;">Notification Alerts</strong>
+            <span style="font-size: 0.8rem; color: #64748b;">Timely reminders for upcoming EMI payments and newly launched schemes.</span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <button type="button" class="btn-clean btn-secondary" id="btn-visitor-permission-skip" style="flex: 1; padding: 0.8rem 1rem; border-radius: 9999px; font-weight: 600; cursor: pointer;">
+          Maybe Later
+        </button>
+        <button type="button" class="btn-check-elig-submit" id="btn-visitor-permission-allow" style="flex: 1.4; padding: 0.8rem 1rem; border-radius: 9999px; font-size: 0.95rem; font-weight: 700; cursor: pointer;">
+          Allow Permissions ✓
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="different_languages.js"></script>
+  <script src="schemes_data.js"></script>
+  <script src="categories_data.js"></script>
+  <script src="multiuser.js"></script>
+  <script src="voice_input.js"></script>
   <script src="app.js"></script>
 </body>
+
 </html>
