@@ -356,6 +356,29 @@ test('Feature 10: Progressive Web App (PWA) Manifest, Service Worker & Install B
   const assetlinks = JSON.parse(fs.readFileSync(assetlinksPath, 'utf8'));
   assert.ok(Array.isArray(assetlinks) && assetlinks.length > 0);
   assert.equal(assetlinks[0].target.package_name, 'com.kisansahay.app');
+
+  // 8. Download App Bar inside Switch Profile Column
+  const multiuserJs = fs.readFileSync(path.join(__dirname, '../public/multiuser.js'), 'utf8');
+  const copyMultiuserJs = fs.readFileSync(path.join(__dirname, '../public copy/multiuser.js'), 'utf8');
+  assert.equal(multiuserJs, copyMultiuserJs, 'public/multiuser.js and public copy/multiuser.js must match exactly');
+  assert.ok(multiuserJs.includes('dropdown-pwa-download-bar'), 'multiuser.js must include dropdown-pwa-download-bar');
+  assert.ok(multiuserJs.includes('id="dropdown-btn-download-app"'), 'multiuser.js must include #dropdown-btn-download-app');
+  assert.ok(stylesCss.includes('.dropdown-pwa-download-bar'), 'styles.css must style .dropdown-pwa-download-bar');
+
+  // 9. Universal Download Modal & Shareable Link
+  assert.ok(indexHtml.includes('id="pwa-universal-download-modal"'), 'index.html must include #pwa-universal-download-modal');
+  assert.ok(indexHtml.includes('id="pwa-share-url-input"'), 'index.html must include shareable URL input');
+  assert.ok(indexHtml.includes('id="btn-copy-pwa-link"'), 'index.html must include copy link button');
+  assert.ok(indexHtml.includes('id="btn-whatsapp-pwa-share"'), 'index.html must include WhatsApp share button');
+  assert.ok(indexHtml.includes('id="pwa-qr-code-container"'), 'index.html must include QR code container');
+  assert.ok(appJs.includes('renderPWAQRCode'), 'app.js must define renderPWAQRCode');
+  assert.ok(appJs.includes('setupUniversalPWADownloadModal'), 'app.js must define setupUniversalPWADownloadModal');
+
+  // 10. Mobile Floating App Download Bar
+  assert.ok(indexHtml.includes('id="mobile-app-download-bar"'), 'index.html must include #mobile-app-download-bar');
+  assert.ok(stylesCss.includes('.mobile-app-download-bar'), 'styles.css must style .mobile-app-download-bar');
+  assert.ok(appJs.includes('setupMobileAppDownloadBar'), 'app.js must define setupMobileAppDownloadBar');
 });
+
 
 
