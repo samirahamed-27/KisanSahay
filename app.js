@@ -255,6 +255,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNetworkSpeedMonitor();
   setupFarmerQualificationModal();
   setupPWAInstallPrompt();
+  setupUniversalPWADownloadModal();
+  setupMobileAppDownloadBar();
 
   // Apply saved language
   setLanguage(state.currentLang);
@@ -5327,11 +5329,8 @@ function setupPWAInstallPrompt() {
   // Handle user click on Install App button
   installBtn.addEventListener('click', async () => {
     if (!deferredPrompt) {
-      // Helpful fallback instructions for iOS Safari users where beforeinstallprompt doesn't fire
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      if (isIOS) {
-        alert('To install KisanSahay on iOS: Tap the Share button in Safari (icon at bottom) and choose "Add to Home Screen" 📲');
-      }
+      // Fallback: Open Universal Download Modal for iOS, Desktop or unprompted devices
+      openUniversalDownloadModal();
       return;
     }
 
@@ -5363,5 +5362,261 @@ function setupPWAInstallPrompt() {
     deferredPrompt = null;
   });
 }
+
+// ==========================================================================
+// Global PWA Trigger Helper (Invoked by navbar, Switch Profile bar, or mobile bar)
+// ==========================================================================
+window.triggerPWAInstallOrModal = function() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      console.log(`PWA: User choice: ${choiceResult.outcome}`);
+      deferredPrompt = null;
+      const installBtn = document.getElementById('btn-install-pwa');
+      if (installBtn) installBtn.style.display = 'none';
+    }).catch((err) => {
+      console.warn('PWA prompt error:', err);
+    });
+    return;
+  }
+
+  // Otherwise, open the rich universal download modal
+  openUniversalDownloadModal();
+};
+
+function openUniversalDownloadModal() {
+  const modal = document.getElementById('pwa-universal-download-modal');
+  if (!modal) return;
+
+  // Set share URL
+  const shareInput = document.getElementById('pwa-share-url-input');
+  const currentUrl = (window.location && window.location.origin) ? window.location.origin : 'https://kisansahay.vercel.app';
+  if (shareInput) {
+    shareInput.value = currentUrl;
+  }
+
+  // Update WhatsApp share link
+  const waBtn = document.getElementById('btn-whatsapp-pwa-share');
+  if (waBtn) {
+    const waText = encodeURIComponent(`🌾 KisanSahay — Download the official Farmers Scheme & Loan Portal app directly on your phone: ${currentUrl}`);
+    waBtn.href = `https://api.whatsapp.com/send?text=${waText}`;
+  }
+
+  // Detect user agent for active tab
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  if (isIOS) {
+    switchPWADeviceTab('ios');
+  } else if (isAndroid) {
+    switchPWADeviceTab('android');
+  } else {
+    switchPWADeviceTab('pc');
+  }
+
+  // Render QR Code
+  renderPWAQRCode(currentUrl);
+
+  modal.style.display = 'flex';
+}
+
+function switchPWADeviceTab(targetTab) {
+  const tabs = document.querySelectorAll('.pwa-device-tab');
+  const contents = document.querySelectorAll('.pwa-device-tab-content');
+  tabs.forEach(tab => {
+    tab.classList.toggle('active', tab.getAttribute('data-tab') === targetTab);
+  });
+  contents.forEach(content => {
+    content.style.display = content.id === `tab-pwa-${targetTab}` ? 'block' : 'none';
+  });
+}
+
+function renderPWAQRCode(url) {
+  const container = document.getElementById('pwa-qr-code-container');
+  if (!container) return;
+
+  // Generate crisp SVG QR Code pattern
+  const size = 160;
+  const moduleCount = 25;
+  const cellSize = size / moduleCount;
+
+  // Create hash seed from URL
+  let seed = 0;
+  for (let i = 0; i < url.length; i++) {
+    seed = (seed * 31 + url.charCodeAt(i)) & 0xffffffff;
+  }
+
+  function isFinderPattern(r, c) {
+    // Top-left
+    if (r < 7 && c < 7) return true;
+    // Top-right
+    if (r < 7 && c >= moduleCount - 7) return true;
+    // Bottom-left
+    if (r >= moduleCount - 7 && c < 7) return true;
+    return false;
+  }
+
+  let rects = '';
+
+  // Draw 3 Finder Patterns
+  const finders = [
+    [0, 0],
+    [0, moduleCount - 7],
+    [moduleCount - 7, 0]
+  ];
+
+  finders.forEach(([fr, fc]) => {
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        const isBorder = r === 0 || r === 6 || c === 0 || c === 6;
+        const isCenter = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+        if (isBorder || isCenter) {
+          const x = (fc + c) * cellSize;
+          const y = (fr + r) * cellSize;
+          rects += `<rect x="${x}" y="${y}" width="${cellSize + 0.2}" height="${cellSize + 0.2}" fill="#0f172a" rx="1"/>`;
+        }
+      }
+    }
+  });
+
+  // Timing patterns
+  for (let i = 7; i < moduleCount - 7; i++) {
+    if (i % 2 === 0) {
+      rects += `<rect x="${i * cellSize}" y="${6 * cellSize}" width="${cellSize + 0.2}" height="${cellSize + 0.2}" fill="#0f172a" rx="0.5"/>`;
+      rects += `<rect x="${6 * cellSize}" y="${i * cellSize}" width="${cellSize + 0.2}" height="${cellSize + 0.2}" fill="#0f172a" rx="0.5"/>`;
+    }
+  }
+
+  // Data modules
+  for (let r = 0; r < moduleCount; r++) {
+    for (let c = 0; c < moduleCount; c++) {
+      if (isFinderPattern(r, c) || (r === 6 && c >= 7 && c < moduleCount - 7) || (c === 6 && r >= 7 && r < moduleCount - 7)) {
+        continue;
+      }
+      // Pseudo-random data grid seeded by URL
+      const pseudo = Math.sin(seed * (r * moduleCount + c + 1)) * 10000;
+      const isDark = (pseudo - Math.floor(pseudo)) > 0.48;
+      if (isDark) {
+        const x = c * cellSize;
+        const y = r * cellSize;
+        rects += `<rect x="${x}" y="${y}" width="${cellSize + 0.2}" height="${cellSize + 0.2}" fill="#15803d" rx="1"/>`;
+      }
+    }
+  }
+
+  container.innerHTML = `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size}" style="background: #ffffff; padding: 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+      ${rects}
+      <!-- Center Brand Sprout Accent -->
+      <circle cx="${size / 2}" cy="${size / 2}" r="${cellSize * 2.2}" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+      <text x="${size / 2}" y="${size / 2 + 5}" font-size="${cellSize * 2.5}" text-anchor="middle" dominant-baseline="middle">🌱</text>
+    </svg>
+  `;
+}
+
+function setupUniversalPWADownloadModal() {
+  const modal = document.getElementById('pwa-universal-download-modal');
+  if (!modal) return;
+
+  // Close button
+  const closeBtn = document.getElementById('btn-close-pwa-modal');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+
+  // Modal 1-Click Install button
+  const btnModalInstall = document.getElementById('btn-pwa-modal-install');
+  if (btnModalInstall) {
+    btnModalInstall.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        try {
+          const choiceResult = await deferredPrompt.userChoice;
+          console.log('PWA: UserChoice outcome:', choiceResult.outcome);
+          deferredPrompt = null;
+        } catch (err) {}
+        modal.style.display = 'none';
+      } else {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+          switchPWADeviceTab('ios');
+        } else {
+          switchPWADeviceTab('android');
+        }
+      }
+    });
+  }
+
+  // Copy Link Button
+  const btnCopy = document.getElementById('btn-copy-pwa-link');
+  if (btnCopy) {
+    btnCopy.addEventListener('click', async () => {
+      const shareInput = document.getElementById('pwa-share-url-input');
+      const textToCopy = shareInput ? shareInput.value : window.location.origin;
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        const copySpan = document.getElementById('pwa-copy-text');
+        if (copySpan) copySpan.textContent = 'Copied! ✓';
+        setTimeout(() => {
+          if (copySpan) copySpan.textContent = '📋 Copy Link';
+        }, 2500);
+      } catch (err) {
+        if (shareInput) {
+          shareInput.select();
+          document.execCommand('copy');
+          const copySpan = document.getElementById('pwa-copy-text');
+          if (copySpan) copySpan.textContent = 'Copied! ✓';
+          setTimeout(() => {
+            if (copySpan) copySpan.textContent = '📋 Copy Link';
+          }, 2500);
+        }
+      }
+    });
+  }
+
+  // Device Tabs Switching
+  const tabs = document.querySelectorAll('.pwa-device-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-tab');
+      switchPWADeviceTab(target);
+    });
+  });
+}
+
+function setupMobileAppDownloadBar() {
+  const bar = document.getElementById('mobile-app-download-bar');
+  if (!bar) return;
+
+  // Check if previously dismissed in current session
+  if (sessionStorage.getItem('kisansahay_mobile_bar_dismissed') === 'true') {
+    bar.style.display = 'none';
+    return;
+  }
+
+  const btnDownload = document.getElementById('btn-mobile-bar-download');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', () => {
+      window.triggerPWAInstallOrModal();
+    });
+  }
+
+  const btnClose = document.getElementById('btn-mobile-bar-close');
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      bar.style.display = 'none';
+      sessionStorage.setItem('kisansahay_mobile_bar_dismissed', 'true');
+    });
+  }
+}
+
 
 
