@@ -85,6 +85,35 @@ async function getRecommendations(req, res, next) {
       requestedLoanAmount: requestedLoanAmount ? Number(requestedLoanAmount) : null
     };
 
+    // Mandatory Aadhaar-Bank Account Linking Check (Government DBT Rule)
+    const isAadhaarLinked = farmerProfile.hasAadhaar !== false && String(farmerProfile.hasAadhaar).toLowerCase() !== 'no';
+    if (!isAadhaarLinked) {
+      const steps = [
+        '1. Branch Visit: Visit your home bank branch with your original Aadhaar Card and bank passbook.',
+        '2. Seeding Form: Request and submit the Aadhaar-Bank Account Seeding / DBT Mandate consent form.',
+        '3. Net Banking / Mobile App: Log in to your Bank Mobile App -> Services -> Aadhaar Seeding / DBT Registration.',
+        '4. Verification: Check your seeding status on the official UIDAI portal: https://myaadhaar.uidai.gov.in/'
+      ];
+
+      return res.status(200).json({
+        success: false,
+        code: 'AADHAAR_LINKING_REQUIRED',
+        allowed_to_apply: false,
+        message: 'Aadhaar-bank account linking is mandatory under Government DBT rules to qualify or apply for agricultural credit and interest subvention.',
+        instructions: steps,
+        uidai_portal_url: 'https://myaadhaar.uidai.gov.in/',
+        aadhaar_linking_guide: {
+          title: 'Mandatory Aadhaar-Bank Account Seeding Instructions',
+          steps: steps,
+          helpline: '1947 (UIDAI Helpline) or contact your local Lead Bank Manager.'
+        },
+        farmer_location: '',
+        farmer_context: {},
+        debt_safety_assessment: {},
+        recommendations: []
+      });
+    }
+
     // 1. Fetch Location Intelligence (Soil, Land Price, Crop Trends)
     const locationContext = getLocationContext({
       state: farmerProfile.state,

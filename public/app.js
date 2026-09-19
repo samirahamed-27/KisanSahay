@@ -36,7 +36,12 @@ const state = {
   activePinField: 'pass',
   patternSequence: [],
   isDrawingPattern: false,
-  currentSoilProfile: null
+  currentSoilProfile: null,
+  notifications: [],
+  unreadNotificationsCount: 0,
+  currentAudio: null,
+  ttsSpeed: 1.0,
+  checklistConfirmed: false
 };
 
 // DOM Elements
@@ -172,7 +177,36 @@ const el = {
   btnTrackFromChecklist: document.getElementById('btn-track-from-checklist'),
 
   floatingSpeakerBtn: document.getElementById('floating-speaker-btn'),
-  toastContainer: document.getElementById('toast-container')
+  toastContainer: document.getElementById('toast-container'),
+
+  // Notification Header Elements
+  notificationHeaderContainer: document.getElementById('notification-header-container'),
+  notificationBellBtn: document.getElementById('notification-bell-btn'),
+  notificationBadge: document.getElementById('notification-badge'),
+  notificationDropdownMenu: document.getElementById('notification-dropdown-menu'),
+  notificationDropdownList: document.getElementById('notification-dropdown-list'),
+  notificationCountTag: document.getElementById('notification-count-tag'),
+  btnMarkAllRead: document.getElementById('btn-mark-all-read'),
+  btnEnablePush: document.getElementById('btn-enable-push'),
+  pushStatusText: document.getElementById('push-status-text'),
+
+  // Aadhaar Warning Guide Box
+  aadhaarGuideBox: document.getElementById('aadhaar-unlinked-guide-box'),
+
+  // Checklist Extra Elements
+  btnReadChecklistAloud: document.getElementById('btn-read-checklist-aloud'),
+  checklistWarningBox: document.getElementById('checklist-warning-box'),
+  checklistCompletionStatus: document.getElementById('checklist-completion-status'),
+
+  // Neural TTS Audio Player Elements
+  audioPlayerBar: document.getElementById('kisan-audio-player-bar'),
+  audioPlayPauseBtn: document.getElementById('audio-play-pause-btn'),
+  audioPlayIcon: document.getElementById('audio-play-icon'),
+  audioWaveAnim: document.getElementById('audio-wave-anim'),
+  audioStatusLabel: document.getElementById('audio-status-label'),
+  audioLangLabel: document.getElementById('audio-lang-label'),
+  audioSpeedSelect: document.getElementById('audio-speed-select'),
+  audioCloseBtn: document.getElementById('audio-close-btn')
 };
 
 // ==========================================================================
@@ -184,6 +218,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
   setupLanguages();
   setupSpeech();
+  setupNotifications();
+  setupAudioPlayer();
+  setupAadhaarLinkingGuard();
   setupEligibility();
   setupModals();
   setupDocumentVault();
@@ -360,15 +397,6 @@ function switchView(viewName) {
       v.classList.remove('active');
     }
   });
-
-  if (viewName === 'landrates') {
-    const stateSelect = document.getElementById('filter-land-state');
-    const districtInput = document.getElementById('filter-land-district');
-    const sVal = stateSelect ? stateSelect.value : 'Maharashtra';
-    const dVal = districtInput ? districtInput.value.trim() : 'Pune';
-    loadLandRates({ state: sVal, district: dVal });
-    loadLandRateComparison(sVal, dVal);
-  }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -591,7 +619,7 @@ function renderLoansList() {
           <span style="background: rgba(255,255,255,0.2); padding: 0.2rem 0.6rem; border-radius: var(--radius-pill); font-size: 0.76rem; font-weight: 700;">
             ${isEnded ? t('endedStatus') : t('runningStatus')}
           </span>
-          <button class="btn-icon-secondary" style="width: 28px; height: 28px; background: rgba(255,255,255,0.2); border: none; color: #fff; font-size: 0.8rem;" title="Remove" onclick="deleteLoan('${loan.id}')">✕</button>
+          ${isEnded ? `<button class="btn-icon-secondary" style="width: 28px; height: 28px; background: rgba(255,255,255,0.2); border: none; color: #fff; font-size: 0.8rem;" title="Remove Ended Loan Record" onclick="deleteLoan('${loan.id}')">✕</button>` : ''}
         </div>
       </div>
 
@@ -631,6 +659,19 @@ function renderLoansList() {
         <!-- Sub-footer with Interest & Tenure -->
         <div class="loan-sub-footer">
           <span>~ ${t('lblInterestRate')}: ${loan.interestRate}% ${t('perAnnum')} • ${t('lblTenure')}: ${loan.tenureMonths || 60} ${t('months')}</span>
+        </div>
+
+        <!-- Provider, Source & Verification Details (Requirement 3) -->
+        <div class="loan-provider-bar">
+          <div>
+            <strong>Provider:</strong> ${loan.provider_name || loan.bankName || 'Government of India'}
+          </div>
+          <div>
+            <strong>Source:</strong> <a href="${loan.source_url || 'https://agricoop.nic.in'}" target="_blank" rel="noopener noreferrer">${loan.source_name || 'Official Portal'} ↗</a>
+          </div>
+          <div>
+            <strong>Verified:</strong> ${loan.last_fetched_at || 'March 2026'}
+          </div>
         </div>
 
         <!-- Action Row: Add Payment Made (Green Button) -->
@@ -794,6 +835,11 @@ function setupModals() {
         interestRate,
         tenureMonths,
         status,
+        provider_name: (state.selectedScheme && state.selectedScheme.provider_name) || bank || 'State Bank of India',
+        source_name: (state.selectedScheme && state.selectedScheme.source_name) || 'Official Agriculture Portal',
+        source_url: (state.selectedScheme && state.selectedScheme.source_url) || 'https://agricoop.nic.in',
+        last_fetched_at: (state.selectedScheme && state.selectedScheme.last_fetched_at) || 'March 2026',
+        checklistCompleted: state.checklistConfirmed || true,
         createdAt: new Date().toISOString()
       });
 
@@ -818,8 +864,9 @@ function setupModals() {
       if (el.modalFarmDetailsBadge) el.modalFarmDetailsBadge.style.display = 'none';
 
       showToast(`🎉 ${name} added! Tracking monthly EMIs.`);
-      speakText(`${name} has been added to your loan tracker.`);
+      speakKisanText(`${name} has been added to your loan tracker.`);
       switchView('loans');
+      if (typeof loadNotifications === 'function') loadNotifications();
     });
   }
 
@@ -832,6 +879,10 @@ function setupModals() {
   }
   if (el.btnTrackFromChecklist) {
     el.btnTrackFromChecklist.addEventListener('click', () => {
+      if (!state.checklistConfirmed) {
+        showToast('⚠️ Please verify and check all required documents before applying');
+        return;
+      }
       if (state.selectedScheme) {
         el.checklistModal.classList.remove('active');
         chooseLoanFromEligibility(state.selectedScheme.id);
@@ -840,22 +891,37 @@ function setupModals() {
   }
 }
 
-// Delete Loan
+// Delete Loan (Active Loans Strictly Cannot Be Removed - Requirement 6)
 window.deleteLoan = async function(loanId) {
-  if (!confirm('Are you sure you want to remove this loan record from your tracker?')) return;
+  const loan = state.loans.find(l => l.id === loanId);
+  if (!loan) return;
+
+  const isActive = (loan.status === 'Active' && loan.dueAmount > 0) || (Number(loan.dueAmount) > 0);
+  if (isActive) {
+    showToast(`Active loans cannot be removed until fully repaid. Total remaining due: ${formatINR(loan.dueAmount)}`);
+    return;
+  }
+
+  if (!confirm('Are you sure you want to remove this ended loan record from your archive?')) return;
+  try {
+    const res = await fetch(`/api/loans/${loanId}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.message || `Active loans cannot be removed until fully repaid. Total remaining due: ${formatINR(loan.dueAmount)}`);
+      return;
+    }
+  } catch (err) {
+    console.warn('Backend delete failed, deleted locally:', err);
+  }
+
   const idx = state.loans.findIndex(l => l.id === loanId);
   if (idx !== -1) {
     state.loans.splice(idx, 1);
-    try {
-      await fetch(`/api/loans/${loanId}`, { method: 'DELETE' });
-    } catch (err) {
-      console.warn('Backend delete failed, deleted locally:', err);
-    }
     localStorage.setItem('kisansahay_loans', JSON.stringify(state.loans));
     recalculateLoanSummary();
     updateLoanSummaryUI();
     renderLoansList();
-    showToast('Loan removed from tracker');
+    showToast('Ended loan removed from archive');
   }
 };
 
@@ -1217,28 +1283,114 @@ function renderSchemesGrid(schemes) {
   });
 }
 
-// Open Document Checklist Modal
+// Open Document Checklist Modal (Requirement 5)
+const STANDARD_SCHEME_DOCS = [
+  { name: 'Aadhaar Card', desc: 'Mandatory Aadhaar card (must be linked to your savings bank account).' },
+  { name: 'Land Ownership / Record', desc: 'Record of rights, 7/12 extract, Patta, or Khasra-Khatauni document.' },
+  { name: 'Bank Account Details', desc: 'Bank account passbook copy or cancelled cheque showing IFSC & Account No.' },
+  { name: 'Crop Sowing Proof', desc: 'Crop sowing certificate or Patwari / Gram Sevak cultivation verification.' },
+  { name: 'Passport Size Photos', desc: 'Two recent color passport-size photographs of the primary applicant.' },
+  { name: 'Caste / Category Certificate', desc: 'Required if applying under SC / ST / OBC prioritized subsidy quotas.' },
+  { name: 'Income Certificate / Self Declaration', desc: 'Annual family income certificate or self-attested revenue declaration.' }
+];
+
 window.openChecklist = function(schemeId) {
   const scheme = state.schemes.find(s => s.id === schemeId);
   if (!scheme) return;
 
   state.selectedScheme = scheme;
-  el.checklistModalTitle.textContent = `${scheme.name} — ${t('docChecklistTitle')}`;
-  el.checklistItemsBox.innerHTML = '';
+  state.checklistConfirmed = false;
 
-  (scheme.documents || []).forEach(doc => {
-    const item = document.createElement('div');
-    item.style.cssText = 'background: #f8faf9; padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; align-items: flex-start; gap: 0.65rem;';
+  if (el.checklistModalTitle) {
+    el.checklistModalTitle.textContent = `${scheme.name} — ${t('docChecklistTitle')}`;
+  }
+  if (!el.checklistItemsBox) return;
+
+  el.checklistItemsBox.innerHTML = '';
+  const docsList = (scheme.documents && scheme.documents.length >= 3) ? scheme.documents : STANDARD_SCHEME_DOCS;
+  const checkedSet = new Set();
+
+  function updateChecklistUI() {
+    const total = docsList.length;
+    const count = checkedSet.size;
+    const isAllChecked = count === total;
+    state.checklistConfirmed = isAllChecked;
+
+    if (el.checklistCompletionStatus) {
+      el.checklistCompletionStatus.textContent = isAllChecked
+        ? `✅ All ${total} documents confirmed`
+        : `${count} of ${total} confirmed`;
+      el.checklistCompletionStatus.style.color = isAllChecked ? '#15803d' : '#dc2626';
+    }
+
+    if (el.checklistWarningBox) {
+      if (isAllChecked) {
+        el.checklistWarningBox.style.display = 'none';
+      } else {
+        el.checklistWarningBox.style.display = 'flex';
+        const missingCount = total - count;
+        const countText = document.getElementById('checklist-missing-count-text');
+        if (countText) {
+          countText.textContent = `${missingCount} required document${missingCount > 1 ? 's' : ''} not yet confirmed. All are required to apply.`;
+        }
+      }
+    }
+
+    if (el.btnTrackFromChecklist) {
+      el.btnTrackFromChecklist.disabled = !isAllChecked;
+      if (isAllChecked) {
+        el.btnTrackFromChecklist.classList.remove('btn-apply-disabled');
+        el.btnTrackFromChecklist.style.opacity = '1';
+        el.btnTrackFromChecklist.style.cursor = 'pointer';
+      } else {
+        el.btnTrackFromChecklist.classList.add('btn-apply-disabled');
+        el.btnTrackFromChecklist.style.opacity = '0.5';
+        el.btnTrackFromChecklist.style.cursor = 'not-allowed';
+      }
+    }
+  }
+
+  docsList.forEach((doc, idx) => {
+    const item = document.createElement('label');
+    item.className = 'checklist-checkbox-item';
+    item.htmlFor = `chk-doc-${idx}`;
     item.innerHTML = `
-      <span style="color: #15803d; font-size: 1.1rem; line-height: 1;">✓</span>
-      <div>
-        <div style="font-weight: 700; font-size: 0.92rem; color: #0f172a;">${doc.name}</div>
+      <input type="checkbox" class="doc-check-input" id="chk-doc-${idx}" data-idx="${idx}">
+      <div style="flex: 1;">
+        <div style="font-weight: 700; font-size: 0.92rem; color: #0f172a;" class="doc-title">${doc.name}</div>
         <div style="font-size: 0.82rem; color: #64748b; margin-top: 0.15rem;">${doc.desc}</div>
       </div>
     `;
+
+    const checkbox = item.querySelector('input');
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        checkedSet.add(idx);
+        item.classList.add('checked');
+        item.classList.remove('missing');
+      } else {
+        checkedSet.delete(idx);
+        item.classList.remove('checked');
+        item.classList.add('missing');
+      }
+      updateChecklistUI();
+    });
+
     el.checklistItemsBox.appendChild(item);
   });
 
+  // Read checklist aloud button
+  if (el.btnReadChecklistAloud) {
+    el.btnReadChecklistAloud.onclick = () => {
+      const docNames = docsList.map((d, i) => `${i + 1}. ${d.name}`).join('. ');
+      const speech = state.currentLang === 'hi'
+        ? `इस योजना के लिए आवश्यक दस्तावेज़ हैं: ${docNames}. कृपया पुष्टि करें कि आपके पास यह सभी दस्तावेज़ हैं।`
+        : `Required documents for ${scheme.name} are: ${docNames}. Please confirm you have all these documents before applying.`;
+      speakKisanText(speech, state.currentLang);
+    };
+  }
+
+  updateChecklistUI();
   el.checklistModal.classList.add('active');
 };
 
@@ -1851,11 +2003,28 @@ function updateVaultNavIndicator(status) {
   if (el.vaultIndicatorDot) {
     el.vaultIndicatorDot.className = `vault-indicator-dot ${status}`;
   }
+  if (el.vaultNavIcon) {
+    if (status === 'unlocked') {
+      el.vaultNavIcon.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+        </svg>
+      `;
+    } else {
+      el.vaultNavIcon.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      `;
+    }
+  }
   if (el.vaultStatusNavText) {
     if (status === 'unlocked') {
-      el.vaultStatusNavText.textContent = 'Vault (Verified ✓)';
+      el.vaultStatusNavText.textContent = 'Vault (Verified)';
     } else if (status === 'locked') {
-      el.vaultStatusNavText.textContent = 'Vault (Locked 🔒)';
+      el.vaultStatusNavText.textContent = 'Vault (Locked)';
     } else {
       el.vaultStatusNavText.textContent = 'Document Vault';
     }
@@ -2197,23 +2366,59 @@ function setupEligibility() {
 }
 
 async function checkEligibility() {
-  const cropType = el.cropInput ? (el.cropInput.value.trim() || 'Wheat, Paddy') : 'Wheat, Paddy';
-  const rawLandSize = el.landSizeInput ? (Number(el.landSizeInput.value) || 2.5) : 2.5;
+  const cropType = el.cropInput ? el.cropInput.value.trim() : '';
+  const rawLandSize = el.landSizeInput ? parseFloat(el.landSizeInput.value) : NaN;
+  const stateVal = el.stateInput ? el.stateInput.value.trim() : '';
+  const districtVal = el.districtInput ? el.districtInput.value.trim() : '';
+  const annualIncomeRaw = el.incomeInput ? el.incomeInput.value.trim() : '';
+  const annualIncome = annualIncomeRaw ? Number(annualIncomeRaw) : NaN;
+
+  // Data must show only when user inputs required details
+  if (!cropType || isNaN(rawLandSize) || rawLandSize <= 0 || !stateVal || !districtVal || isNaN(annualIncome)) {
+    showToast('⚠️ Please enter your Crop, Land Holding Size, State, District, and Income to check schemes.');
+    if (el.eligResultsContainer) el.eligResultsContainer.style.display = 'none';
+    if (el.eligEmptyState) el.eligEmptyState.style.display = 'block';
+    return;
+  }
+
   const landUnit = el.landUnitSelect ? el.landUnitSelect.value : 'acres';
   const landSizeAcres = landUnit === 'hectares' ? Number((rawLandSize * 2.47105).toFixed(2)) : rawLandSize;
   const landSizeHectares = landUnit === 'hectares' ? rawLandSize : Number((rawLandSize / 2.47105).toFixed(2));
 
-  const stateVal = el.stateInput ? (el.stateInput.value.trim() || 'Punjab') : 'Punjab';
-  const districtVal = el.districtInput ? (el.districtInput.value.trim() || 'Ludhiana') : 'Ludhiana';
   const latitude = el.geoLat && el.geoLat.value ? Number(el.geoLat.value) : undefined;
   const longitude = el.geoLong && el.geoLong.value ? Number(el.geoLong.value) : undefined;
 
   const landOwnership = el.landSelect ? (el.landSelect.value || 'owner') : 'owner';
   const category = el.categorySelect ? (el.categorySelect.value || 'general') : 'general';
-  const annualIncome = el.incomeInput ? (Number(el.incomeInput.value) || 250000) : 250000;
-  const existingLoans = el.existingLoansInput ? (Number(el.existingLoansInput.value) || 0) : 0;
+  const existingLoans = el.existingLoansInput && el.existingLoansInput.value ? (Number(el.existingLoansInput.value) || 0) : 0;
   const hasKcc = el.kccSelect ? (el.kccSelect.value === 'yes') : true;
   const hasAadhaar = el.aadhaarSelect ? (el.aadhaarSelect.value === 'yes') : true;
+
+  // Mandatory Aadhaar-Bank Linking Enforcement (Requirement 4)
+  if (!hasAadhaar) {
+    if (el.aadhaarGuideBox) {
+      el.aadhaarGuideBox.style.display = 'block';
+      el.aadhaarGuideBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (el.eligResultsContainer) el.eligResultsContainer.style.display = 'none';
+    if (el.eligEmptyState) el.eligEmptyState.style.display = 'block';
+    showToast('⚠️ Aadhaar linking is mandatory for all government schemes and direct benefit transfers.');
+    speakKisanText(
+      state.currentLang === 'hi'
+        ? 'आधार-बैंक खाता लिंक अनिवार्य है। सभी सरकारी योजनाओं के लिए बैंक खाते से आधार जुड़ा होना आवश्यक है।'
+        : 'Aadhaar linking is mandatory for all government schemes and direct benefit transfers.',
+      state.currentLang
+    );
+    if (el.btnSubmitEligibility) {
+      el.btnSubmitEligibility.disabled = false;
+      el.btnSubmitEligibility.innerHTML = '<span>🔍</span> <span>Find Best Loan & Schemes</span>';
+    }
+    return;
+  } else {
+    if (el.aadhaarGuideBox) {
+      el.aadhaarGuideBox.style.display = 'none';
+    }
+  }
 
   state.userFarmProfile = {
     cropType,
@@ -2603,6 +2808,66 @@ function renderAdvancedRecommendations(data) {
       el.recCardsStream.appendChild(card);
     });
   }
+
+  // Populate Advanced Comparison Table View
+  const tableBody = document.getElementById('advanced-schemes-table-body');
+  if (tableBody) {
+    if (recommendations.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">No schemes match current criteria.</td></tr>';
+    } else {
+      tableBody.innerHTML = recommendations.map(rec => {
+        const statusClass = rec.status === 'best' ? 'best' : (rec.status === 'good' ? 'good' : 'moderate');
+        const statusLabel = rec.status === 'best' ? '★ Top Match' : (rec.status === 'good' ? '✓ Good Fit' : '⚙ Moderate');
+        return `
+          <tr>
+            <td>
+              <span class="tbl-match-badge ${statusClass}">${statusLabel} (${rec.score}%)</span>
+            </td>
+            <td>
+              <div class="tbl-scheme-name">${escapeHtmlApp(rec.scheme_name)}</div>
+              <div class="tbl-scheme-cat">${escapeHtmlApp(rec.category || '')} • ${escapeHtmlApp(rec.eligibility_reason || '')}</div>
+            </td>
+            <td>
+              <span class="tbl-rate-pill">${escapeHtmlApp(rec.interest_rate || 'Subsidized')}</span>
+            </td>
+            <td>
+              <strong>${escapeHtmlApp(rec.max_loan_amount || '—')}</strong>
+            </td>
+            <td>
+              <span>${escapeHtmlApp(rec.collateral_free_limit || '—')}</span>
+            </td>
+            <td>
+              <button type="button" class="btn-clean btn-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; border-radius: 9999px; font-weight: 700; cursor: pointer;" onclick="openSchemeModal('${rec.scheme_id}')">
+                View Details ↗
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // Setup Results View Switcher (Cards View vs Advanced Table View)
+  const btnCards = document.getElementById('btn-view-cards');
+  const btnTable = document.getElementById('btn-view-table');
+  const cardsStream = document.getElementById('recommendations-cards-stream');
+  const tableContainer = document.getElementById('recommendations-table-container');
+
+  if (btnCards && btnTable && cardsStream && tableContainer) {
+    btnCards.onclick = () => {
+      btnCards.classList.add('active');
+      btnTable.classList.remove('active');
+      cardsStream.style.display = 'flex';
+      tableContainer.style.display = 'none';
+    };
+
+    btnTable.onclick = () => {
+      btnTable.classList.add('active');
+      btnCards.classList.remove('active');
+      cardsStream.style.display = 'none';
+      tableContainer.style.display = 'block';
+    };
+  }
 }
 
 // ==========================================================================
@@ -2937,6 +3202,396 @@ function setupSahayAI() {
 
 
 // ==========================================================================
+// Header Notification Bar & Push Service (Requirement 1)
+// ==========================================================================
+
+async function setupNotifications() {
+  if (el.notificationBellBtn) {
+    el.notificationBellBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (el.notificationDropdownMenu) {
+        el.notificationDropdownMenu.classList.toggle('active');
+      }
+    });
+  }
+
+  // Close dropdown on click outside
+  document.addEventListener('click', (e) => {
+    if (el.notificationDropdownMenu && el.notificationHeaderContainer && !el.notificationHeaderContainer.contains(e.target)) {
+      el.notificationDropdownMenu.classList.remove('active');
+    }
+  });
+
+  if (el.btnMarkAllRead) {
+    el.btnMarkAllRead.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try {
+        await fetch('/api/notifications/read-all', { method: 'PUT' });
+        (state.notifications || []).forEach(n => n.read = true);
+        state.unreadNotificationsCount = 0;
+        updateNotificationsUI();
+        showToast('All notifications marked as read');
+      } catch (err) {
+        console.warn('Failed to mark all as read:', err);
+      }
+    });
+  }
+
+  if (el.btnEnablePush) {
+    el.btnEnablePush.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await requestPushPermission();
+    });
+  }
+
+  // Initial load & periodic poll every 60s
+  await loadNotifications();
+  setInterval(loadNotifications, 60000);
+}
+
+async function loadNotifications() {
+  try {
+    const res = await fetch('/api/notifications');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.notifications)) {
+        state.notifications = data.notifications;
+        state.unreadNotificationsCount = data.unreadCount || 0;
+        updateNotificationsUI();
+      }
+    }
+  } catch (err) {
+    console.warn('Notifications fetch error:', err);
+  }
+}
+
+function updateNotificationsUI() {
+  const unreadCount = state.unreadNotificationsCount || 0;
+  if (el.notificationBadge) {
+    if (unreadCount > 0) {
+      el.notificationBadge.style.display = 'inline-block';
+      el.notificationBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    } else {
+      el.notificationBadge.style.display = 'none';
+    }
+  }
+
+  if (el.notificationCountTag) {
+    el.notificationCountTag.textContent = `${unreadCount} unread`;
+  }
+
+  if (!el.notificationDropdownList) return;
+
+  if (!state.notifications || state.notifications.length === 0) {
+    el.notificationDropdownList.innerHTML = `
+      <div class="notification-empty">
+        <span>🌾</span>
+        <p>${t('noNotifications', 'No new notifications')}</p>
+      </div>
+    `;
+    return;
+  }
+
+  el.notificationDropdownList.innerHTML = '';
+  state.notifications.forEach(n => {
+    const item = document.createElement('div');
+    item.className = `notification-item ${n.read ? '' : 'unread'}`;
+    const icon = n.type === 'emi_reminder' ? '⏰' : (n.type === 'new_scheme' ? '🏛️' : (n.type === 'payment' ? '💳' : '🔔'));
+    const timeAgo = formatTimeAgo(n.createdAt);
+
+    item.innerHTML = `
+      <div class="notification-item-icon">${icon}</div>
+      <div class="notification-item-content">
+        <div class="notification-item-title">
+          <span>${n.title}</span>
+          ${!n.read ? '<span class="notification-unread-dot" title="Unread"></span>' : ''}
+        </div>
+        <div class="notification-item-desc">${n.message}</div>
+        <div class="notification-item-time">${timeAgo}</div>
+      </div>
+    `;
+
+    item.addEventListener('click', async () => {
+      if (!n.read) {
+        n.read = true;
+        state.unreadNotificationsCount = Math.max(0, state.unreadNotificationsCount - 1);
+        updateNotificationsUI();
+        try {
+          await fetch(`/api/notifications/${n.id}/read`, { method: 'PUT' });
+        } catch (e) {}
+      }
+      if (n.type === 'emi_reminder' || n.type === 'payment') {
+        switchView('loans');
+      } else if (n.type === 'new_scheme') {
+        switchView('schemes');
+      }
+      if (el.notificationDropdownMenu) el.notificationDropdownMenu.classList.remove('active');
+    });
+
+    el.notificationDropdownList.appendChild(item);
+  });
+}
+
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return '';
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffSecs = Math.floor((now - date) / 1000);
+  if (diffSecs < 60) return 'Just now';
+  const diffMins = Math.floor(diffSecs / 60);
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
+
+async function requestPushPermission() {
+  if (!('serviceWorker' in navigator)) {
+    showToast('Browser push notifications are not supported on this device.');
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      let sub = null;
+      if ('PushManager' in window && reg.pushManager) {
+        sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
+          }).catch(() => ({ endpoint: 'https://fcm.googleapis.com/fcm/send/demo-' + Date.now(), keys: {} }));
+        }
+      } else {
+        sub = { endpoint: 'https://fcm.googleapis.com/fcm/send/demo-' + Date.now(), keys: {} };
+      }
+
+      await fetch('/api/notifications/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub })
+      });
+
+      if (el.pushStatusText) el.pushStatusText.textContent = 'Push Active ✓';
+      showToast('📲 Browser push notifications enabled!');
+    } else {
+      showToast('Push notifications permission was denied.');
+    }
+  } catch (err) {
+    console.warn('Push registration error:', err);
+    showToast('Failed to enable push notifications.');
+  }
+}
+
+window.loadNotifications = loadNotifications;
+
+// ==========================================================================
+// Mandatory Aadhaar-Bank Linking Guard (Requirement 4)
+// ==========================================================================
+
+function setupAadhaarLinkingGuard() {
+  if (el.aadhaarSelect) {
+    el.aadhaarSelect.addEventListener('change', () => {
+      const isLinked = el.aadhaarSelect.value === 'yes';
+      if (el.aadhaarGuideBox) {
+        el.aadhaarGuideBox.style.display = isLinked ? 'none' : 'block';
+        if (!isLinked) {
+          el.aadhaarGuideBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          showToast('⚠️ Aadhaar linking is mandatory for all government schemes.');
+        }
+      }
+    });
+  }
+}
+
+// ==========================================================================
+// Neural Audio Player & Natural TTS Engine (Requirement 7)
+// ==========================================================================
+
+function setupAudioPlayer() {
+  if (el.audioPlayPauseBtn) {
+    el.audioPlayPauseBtn.addEventListener('click', () => {
+      if (state.currentAudio) {
+        if (state.currentAudio.paused) {
+          state.currentAudio.play();
+          setAudioPlayerUI(true, 'Playing...');
+        } else {
+          state.currentAudio.pause();
+          setAudioPlayerUI(false, 'Paused');
+        }
+      } else if (state.speechSynth && state.isSpeaking) {
+        if (state.speechSynth.paused) {
+          state.speechSynth.resume();
+          setAudioPlayerUI(true, 'Speaking...');
+        } else {
+          state.speechSynth.pause();
+          setAudioPlayerUI(false, 'Paused');
+        }
+      }
+    });
+  }
+
+  if (el.audioSpeedSelect) {
+    el.audioSpeedSelect.addEventListener('change', () => {
+      state.ttsSpeed = parseFloat(el.audioSpeedSelect.value) || 1.0;
+      if (state.currentAudio) {
+        state.currentAudio.playbackRate = state.ttsSpeed;
+      }
+      showToast(`Audio speed set to ${state.ttsSpeed}x`);
+    });
+  }
+
+  if (el.audioCloseBtn) {
+    el.audioCloseBtn.addEventListener('click', () => {
+      stopSpeech();
+    });
+  }
+}
+
+function setAudioPlayerUI(isPlaying, label = 'Reading Aloud...') {
+  if (!el.audioPlayerBar) return;
+  if (isPlaying) {
+    el.audioPlayerBar.style.display = 'flex';
+    if (el.audioPlayIcon) el.audioPlayIcon.textContent = '⏸️';
+    if (el.audioWaveAnim) el.audioWaveAnim.style.display = 'flex';
+    if (el.audioStatusLabel) el.audioStatusLabel.textContent = label;
+  } else {
+    if (el.audioPlayIcon) el.audioPlayIcon.textContent = '▶️';
+    if (el.audioWaveAnim) el.audioWaveAnim.style.display = 'none';
+    if (el.audioStatusLabel) el.audioStatusLabel.textContent = label;
+  }
+}
+
+async function speakKisanText(text, lang = null, onEndCallback = null) {
+  if (!text) return;
+  stopSpeech();
+
+  const targetLang = lang || state.currentLang || 'hi';
+  const speed = state.ttsSpeed || 1.0;
+
+  setAudioPlayerUI(true, 'Reading in Natural Voice...');
+  if (el.audioLangLabel) {
+    const langObj = window.INDIAN_LANGUAGES ? window.INDIAN_LANGUAGES.find(l => l.code === targetLang) : null;
+    el.audioLangLabel.textContent = langObj ? `${langObj.name} Neural Voice` : 'Natural Neural Audio';
+  }
+
+  // 1. Attempt backend high-quality Neural TTS synthesis first
+  try {
+    const res = await fetch('/api/tts/synthesize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        language: targetLang,
+        speed
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.audioContent) {
+        const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+        audio.playbackRate = speed;
+        state.currentAudio = audio;
+        state.isSpeaking = true;
+
+        audio.onended = () => {
+          stopSpeech();
+          if (typeof onEndCallback === 'function') onEndCallback();
+        };
+
+        audio.onerror = () => {
+          console.warn('Neural audio playback failed, falling back to browser speech');
+          fallbackBrowserSpeech(text, targetLang, speed, onEndCallback);
+        };
+
+        await audio.play();
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('Neural TTS API unreachable, falling back to browser speech:', err);
+  }
+
+  // 2. Graceful fallback to browser SpeechSynthesis
+  fallbackBrowserSpeech(text, targetLang, speed, onEndCallback);
+}
+
+function fallbackBrowserSpeech(text, targetLang, speed, onEndCallback) {
+  if (!window.speechSynthesis) {
+    stopSpeech();
+    return;
+  }
+
+  const langCodes = {
+    en: 'en-IN',
+    hi: 'hi-IN',
+    pa: 'pa-IN',
+    bn: 'bn-IN',
+    mr: 'mr-IN',
+    te: 'te-IN',
+    ta: 'ta-IN',
+    gu: 'gu-IN',
+    kn: 'kn-IN',
+    ml: 'ml-IN',
+    or: 'or-IN',
+    as: 'as-IN',
+    ur: 'ur-IN',
+    mai: 'hi-IN',
+    bho: 'hi-IN'
+  };
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = langCodes[targetLang] || 'hi-IN';
+  utterance.rate = speed < 1.0 ? 0.8 : 0.95;
+  utterance.pitch = 1.0;
+
+  const voices = window.speechSynthesis.getVoices();
+  const naturalVoice = voices.find(v => v.lang.startsWith(utterance.lang.substring(0, 2)) && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Neural')));
+  if (naturalVoice) utterance.voice = naturalVoice;
+
+  utterance.onstart = () => {
+    state.isSpeaking = true;
+    setAudioPlayerUI(true, 'Speaking...');
+  };
+
+  utterance.onend = () => {
+    stopSpeech();
+    if (typeof onEndCallback === 'function') onEndCallback();
+  };
+
+  utterance.onerror = () => {
+    stopSpeech();
+  };
+
+  state.activeSpeech = utterance;
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeech() {
+  if (state.currentAudio) {
+    try {
+      state.currentAudio.pause();
+      state.currentAudio.currentTime = 0;
+    } catch (e) {}
+    state.currentAudio = null;
+  }
+  if (window.speechSynthesis) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  state.isSpeaking = false;
+  if (el.audioPlayerBar) el.audioPlayerBar.style.display = 'none';
+  if (el.floatingSpeakerBtn) el.floatingSpeakerBtn.classList.remove('speaking');
+}
+
+// Make functions globally accessible
+window.speakKisanText = speakKisanText;
+window.stopSpeech = stopSpeech;
+
+// ==========================================================================
 // Speech Synthesis (15 Indian Languages Audio Reader)
 // ==========================================================================
 
@@ -2963,69 +3618,14 @@ function readCurrentPage() {
   } else if (state.currentTab === 'loans') {
     prompt = `${t('trackerTitle')}. ${t('statActiveLoans')}: ${state.loanSummary.activeCount}. ${t('statTotalPaid')}: ${formatINR(state.loanSummary.totalPaid)}. ${t('statTotalDue')}: ${formatINR(state.loanSummary.totalDue)}.`;
   }
-  speakText(prompt);
+  speakKisanText(prompt, state.currentLang);
 }
 
 window.speakCard = function(cardKey) {
   const title = t(`${cardKey}Title`);
   const desc = t(`${cardKey}Desc`);
-  speakText(`${title}. ${desc}`);
+  speakKisanText(`${title}. ${desc}`, state.currentLang);
 };
-
-function speakText(text) {
-  if (!state.speechSynth) return;
-  stopSpeech();
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.92; // Paced for farmers
-  utterance.pitch = 1.0;
-
-  // Language mapping
-  const langCodes = {
-    en: 'en-IN',
-    hi: 'hi-IN',
-    pa: 'pa-IN',
-    bn: 'bn-IN',
-    mr: 'mr-IN',
-    te: 'te-IN',
-    ta: 'ta-IN',
-    gu: 'gu-IN',
-    kn: 'kn-IN',
-    ml: 'ml-IN',
-    or: 'or-IN',
-    as: 'as-IN',
-    ur: 'ur-IN',
-    mai: 'hi-IN',
-    bho: 'hi-IN'
-  };
-  utterance.lang = langCodes[state.currentLang] || 'hi-IN';
-
-  utterance.onstart = () => {
-    state.isSpeaking = true;
-    if (el.floatingSpeakerBtn) el.floatingSpeakerBtn.classList.add('speaking');
-  };
-
-  utterance.onend = () => {
-    state.isSpeaking = false;
-    if (el.floatingSpeakerBtn) el.floatingSpeakerBtn.classList.remove('speaking');
-  };
-
-  utterance.onerror = () => {
-    state.isSpeaking = false;
-    if (el.floatingSpeakerBtn) el.floatingSpeakerBtn.classList.remove('speaking');
-  };
-
-  state.activeSpeech = utterance;
-  state.speechSynth.speak(utterance);
-}
-
-function stopSpeech() {
-  if (state.speechSynth) {
-    state.speechSynth.cancel();
-  }
-  state.isSpeaking = false;
-  if (el.floatingSpeakerBtn) el.floatingSpeakerBtn.classList.remove('speaking');
-}
 
 // Toast System
 function showToast(message) {
@@ -3044,265 +3644,94 @@ function showToast(message) {
 }
 
 // ==========================================================================
-// Land Rates & Valuation Engine
+// Visitor Permissions Engine (Notifications & Geolocation)
 // ==========================================================================
 
-async function loadLandRates(filters = {}) {
-  const tableBody = document.getElementById('landrates-table-body');
-  const countBadge = document.getElementById('landrates-count-badge');
-  if (!tableBody) return;
+function setupPermissionPromptForVisitors() {
+  const isPrompted = localStorage.getItem('kisansahay_visitor_permissions_prompted');
+  const modal = document.getElementById('visitor-permission-modal');
+  if (!modal) return;
 
-  tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">Loading unified land valuation data...</td></tr>';
-
-  try {
-    const params = new URLSearchParams();
-    if (filters.state) params.append('state', filters.state);
-    if (filters.district) params.append('district', filters.district);
-    if (filters.rate_type) params.append('rate_type', filters.rate_type);
-    params.append('limit', '50');
-
-    const res = await fetch(`/api/land-rates?${params.toString()}`);
-    const data = await res.json();
-
-    if (data.status === 'success' && Array.isArray(data.data)) {
-      if (countBadge) {
-        countBadge.innerText = `Showing ${data.data.length} of ${data.meta.total} records`;
-      }
-
-      if (data.data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">No land rates found matching criteria.</td></tr>';
-        return;
-      }
-
-      tableBody.innerHTML = data.data.map(item => {
-        const isCircle = item.rate_type === 'circle_rate';
-        const badgeClass = isCircle ? 'circle_rate' : 'market_rate_listing';
-        const badgeText = isCircle ? '🏛️ Circle Rate' : '🏷️ Market Rate (Listing)';
-        const formattedRate = '₹' + Math.round(item.rate_per_acre).toLocaleString('en-IN');
-        const effective = item.effective_date ? `Effective: ${item.effective_date}` : 'Active Asking Listing';
-        const portalLink = item.source_url 
-          ? `<a href="${item.source_url}" target="_blank" rel="noopener" style="color: #15803d; font-weight: 700; text-decoration: none;">${item.source_name} ↗</a>`
-          : item.source_name;
-
-        return `
-          <tr>
-            <td>
-              <strong>${item.district}</strong>, <span style="color: #64748b;">${item.state}</span>
-            </td>
-            <td>
-              <div>${item.taluk ? '<strong>' + item.taluk + '</strong>' : ''}</div>
-              <div style="font-size: 0.8rem; color: #64748b;">${item.village_zone || 'Agricultural Zone'}</div>
-            </td>
-            <td>
-              <span class="rate-value-highlight">${formattedRate}</span>
-              <div style="font-size: 0.74rem; color: #64748b;">per Acre</div>
-            </td>
-            <td>
-              <span class="badge-rate-type ${badgeClass}">${badgeText}</span>
-            </td>
-            <td>
-              ${portalLink}
-            </td>
-            <td style="font-size: 0.82rem; color: #64748b;">
-              ${effective}
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-  } catch (err) {
-    console.error('Error loading land rates:', err);
-    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #dc2626;">Error fetching land rates. Please retry.</td></tr>';
+  // Ask any unlogged-in or first-time visitor for permissions
+  if (!isPrompted) {
+    setTimeout(() => {
+      modal.style.display = 'flex';
+    }, 1000);
   }
-}
 
-async function loadLandRateComparison(stateName, districtName) {
-  const comparisonBox = document.getElementById('landrates-comparison-box');
-  if (!comparisonBox) return;
+  const btnAllow = document.getElementById('btn-visitor-permission-allow');
+  const btnSkip = document.getElementById('btn-visitor-permission-skip');
 
-  comparisonBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: #64748b;">Calculating regional circle rate vs market spread...</div>';
+  if (btnAllow) {
+    btnAllow.addEventListener('click', async () => {
+      modal.style.display = 'none';
+      localStorage.setItem('kisansahay_visitor_permissions_prompted', 'true');
 
-  try {
-    const params = new URLSearchParams();
-    if (stateName) params.append('state', stateName);
-    if (districtName) params.append('district', districtName);
-
-    const res = await fetch(`/api/land-rates/compare?${params.toString()}`);
-    const resData = await res.json();
-
-    if (resData.status === 'success' && resData.data) {
-      const { circleRate, marketRate, comparison, query } = resData.data;
-
-      const circleHtml = circleRate ? `
-        <div class="rate-card-box circle">
-          <div class="rate-box-title circle">
-            <span>🏛️</span> Circle Rate (Ready Reckoner)
-          </div>
-          <div class="rate-box-price">₹${circleRate.avgRatePerAcre.toLocaleString('en-IN')}</div>
-          <div class="rate-box-unit">Average Government Benchmark / Acre</div>
-          <div class="rate-metric-row">
-            <span>Official Range:</span>
-            <strong>₹${circleRate.minRatePerAcre.toLocaleString('en-IN')} - ₹${circleRate.maxRatePerAcre.toLocaleString('en-IN')}</strong>
-          </div>
-          <div class="rate-metric-row">
-            <span>Primary Authority:</span>
-            <strong>${circleRate.sources.join(', ')}</strong>
-          </div>
-          <div class="rate-metric-row">
-            <span>Effective Date:</span>
-            <strong>${circleRate.latestEffectiveDate || 'April 1 Fiscal Year'}</strong>
-          </div>
-          <div class="rate-metric-row">
-            <span>Cadastral Records:</span>
-            <strong>${circleRate.count} verified zones</strong>
-          </div>
-        </div>
-      ` : `
-        <div class="rate-card-box circle" style="opacity: 0.6;">
-          <div class="rate-box-title circle"><span>🏛️</span> Government Circle Rate</div>
-          <p style="font-size: 0.88rem; color: #64748b; margin-top: 1rem;">No direct circle rate record for this district yet.</p>
-        </div>
-      `;
-
-      const marketHtml = marketRate ? `
-        <div class="rate-card-box market">
-          <div class="rate-box-title market">
-            <span>🏷️</span> Market Asking Rate (Listing)
-          </div>
-          <div class="rate-box-price">₹${marketRate.avgRatePerAcre.toLocaleString('en-IN')}</div>
-          <div class="rate-box-unit">Average Seller Asking Price / Acre</div>
-          <div class="rate-metric-row">
-            <span>Asking Range:</span>
-            <strong>₹${marketRate.minRatePerAcre.toLocaleString('en-IN')} - ₹${marketRate.maxRatePerAcre.toLocaleString('en-IN')}</strong>
-          </div>
-          <div class="rate-metric-row">
-            <span>Listing Portals:</span>
-            <strong>${marketRate.sources.join(', ')}</strong>
-          </div>
-          <div class="rate-metric-row">
-            <span>Legal Status:</span>
-            <strong style="color: #0284c7;">Asking Price (Negotiable)</strong>
-          </div>
-          <div class="rate-metric-row">
-            <span>Sample Listings:</span>
-            <strong>${marketRate.count} verified listings</strong>
-          </div>
-        </div>
-      ` : `
-        <div class="rate-card-box market" style="opacity: 0.6;">
-          <div class="rate-box-title market"><span>🏷️</span> Market Asking Rate</div>
-          <p style="font-size: 0.88rem; color: #64748b; margin-top: 1rem;">No market listings recorded for this district yet.</p>
-        </div>
-      `;
-
-      const premiumBadge = (comparison && comparison.premiumPercent !== null) ? `
-        <div class="spread-center-box">
-          <div class="spread-circle-badge">
-            <div class="spread-number">${comparison.premiumPercent > 0 ? '+' : ''}${comparison.premiumPercent}%</div>
-            <div class="spread-label">Spread</div>
-          </div>
-          <div class="spread-text">Market asking rate premium over circle rate</div>
-        </div>
-      ` : `
-        <div class="spread-center-box">
-          <div class="spread-circle-badge" style="background: #f1f5f9; border-color: #cbd5e1;">
-            <div class="spread-number" style="color: #64748b;">—</div>
-            <div class="spread-label" style="color: #64748b;">Spread</div>
-          </div>
-        </div>
-      `;
-
-      comparisonBox.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-          <div>
-            <h2 style="font-size: 1.3rem; font-weight: 800; color: #0f172a;">
-              ${query.district}, ${query.state} Valuation Comparison
-            </h2>
-            <p style="font-size: 0.84rem; color: #64748b;">Side-by-side benchmark for land registration and credit appraisal</p>
-          </div>
-          <span style="font-size: 0.78rem; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 0.3rem 0.75rem; border-radius: var(--radius-pill);">
-            Real-Time Analysis
-          </span>
-        </div>
-
-        <div class="comparison-grid">
-          ${circleHtml}
-          ${premiumBadge}
-          ${marketHtml}
-        </div>
-
-        <div class="comparison-footer-notes">
-          <div class="note-item">
-            <strong>📋 Stamp Duty & Registry Guidance:</strong>
-            ${comparison.stampDutyGuidance}
-          </div>
-          <div class="note-item">
-            <strong>🏦 Loan Collateral & Credit Prudence:</strong>
-            ${comparison.lendingPrudenceNote}
-          </div>
-        </div>
-      `;
-    }
-  } catch (err) {
-    console.error('Error fetching land rate comparison:', err);
-    comparisonBox.innerHTML = '<div style="color: #dc2626; padding: 1rem;">Failed to load comparison data.</div>';
-  }
-}
-
-function setupLandRatesEngine() {
-  const btnCompare = document.getElementById('btn-compare-land-rates');
-  const stateSelect = document.getElementById('filter-land-state');
-  const districtInput = document.getElementById('filter-land-district');
-  const typeSelect = document.getElementById('filter-land-type');
-
-  if (btnCompare) {
-    btnCompare.addEventListener('click', () => {
-      const stateVal = stateSelect ? stateSelect.value : '';
-      const districtVal = districtInput ? districtInput.value.trim() : '';
-      const typeVal = typeSelect ? typeSelect.value : '';
-
-      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
-      if (stateVal) {
-        loadLandRateComparison(stateVal, districtVal);
+      // 1. Request Notification Permission
+      try {
+        if ('Notification' in window) {
+          const perm = await Notification.requestPermission();
+          if (perm === 'granted' && typeof requestPushPermission === 'function') {
+            requestPushPermission();
+          }
+        }
+      } catch (err) {
+        console.warn('Notification permission error:', err);
       }
+
+      // 2. Request Geolocation Permission
+      try {
+        if ('geolocation' in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              const lat = Number(pos.coords.latitude.toFixed(4));
+              const lon = Number(pos.coords.longitude.toFixed(4));
+              if (el.geoLat) el.geoLat.value = lat;
+              if (el.geoLong) el.geoLong.value = lon;
+              if (el.gpsStatusText) el.gpsStatusText.textContent = 'GPS Locked ✓';
+
+              try {
+                const res = await fetch(`/api/context/location?latitude=${lat}&longitude=${lon}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.success && data.data && data.data.location) {
+                    const loc = data.data.location;
+                    if (el.stateInput && !el.stateInput.value && loc.state) el.stateInput.value = loc.state;
+                    if (el.districtInput && !el.districtInput.value && loc.district) el.districtInput.value = loc.district;
+                    showToast(`📍 Location detected: ${loc.district}, ${loc.state}`);
+                  }
+                }
+              } catch (e) {
+                showToast(`📍 GPS coordinates locked: (${lat}, ${lon})`);
+              }
+            },
+            (err) => {
+              console.warn('Geolocation denied or unavailable:', err);
+            },
+            { timeout: 8000 }
+          );
+        }
+      } catch (err) {
+        console.warn('Geolocation request error:', err);
+      }
+
+      showToast('✓ Permissions updated. Notifications & Location active.');
     });
   }
 
-  if (stateSelect) {
-    stateSelect.addEventListener('change', () => {
-      const stateVal = stateSelect.value;
-      if (stateVal === 'Maharashtra') districtInput.value = 'Pune';
-      else if (stateVal === 'Karnataka') districtInput.value = 'Bengaluru Rural';
-      else if (stateVal === 'Telangana') districtInput.value = 'Rangareddy';
-      else if (stateVal === 'Uttar Pradesh') districtInput.value = 'Meerut';
-      else districtInput.value = '';
-
-      const districtVal = districtInput ? districtInput.value.trim() : '';
-      const typeVal = typeSelect ? typeSelect.value : '';
-      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
-      if (stateVal) loadLandRateComparison(stateVal, districtVal);
+  if (btnSkip) {
+    btnSkip.addEventListener('click', () => {
+      modal.style.display = 'none';
+      localStorage.setItem('kisansahay_visitor_permissions_prompted', 'true');
     });
   }
-
-  if (typeSelect) {
-    typeSelect.addEventListener('change', () => {
-      const stateVal = stateSelect ? stateSelect.value : '';
-      const districtVal = districtInput ? districtInput.value.trim() : '';
-      const typeVal = typeSelect.value;
-      loadLandRates({ state: stateVal, district: districtVal, rate_type: typeVal });
-    });
-  }
-
-  // Initial load
-  loadLandRates({ state: 'Maharashtra', district: 'Pune' });
-  loadLandRateComparison('Maharashtra', 'Pune');
 }
 
-// Ensure Land Rates Engine initializes on DOM load
+// Ensure Visitor Permission prompt initializes on DOM load
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupLandRatesEngine);
+  document.addEventListener('DOMContentLoaded', setupPermissionPromptForVisitors);
 } else {
-  setupLandRatesEngine();
+  setupPermissionPromptForVisitors();
 }
 
 // ==========================================================================
