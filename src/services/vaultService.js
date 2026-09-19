@@ -205,9 +205,54 @@ function getVaultStatus(userId = 'default-farmer') {
   };
 }
 
+/**
+ * Resets or updates the vault password for a user.
+ * If currentPassword is provided, verifies it before updating.
+ * If new documents are passed, stores them; otherwise preserves previous documents if unlock succeeded.
+ * @param {string} userId
+ * @param {string} newPassword
+ * @param {string} newPasswordType - 'word' | 'number' | 'pattern'
+ * @param {Object} options - { currentPassword, documents }
+ */
+function resetUserVaultPassword(userId = 'default-farmer', newPassword, newPasswordType = 'word', options = {}) {
+  const store = readVaultStore();
+  const userVault = store[userId];
+
+  if (!newPassword || String(newPassword).trim().length === 0) {
+    throw new Error('A valid new password, PIN, or pattern is required.');
+  }
+
+  let docsToKeep = options.documents || {};
+
+  // If user has existing vault and supplied currentPassword, verify it and retain existing documents if none passed
+  if (userVault && options.currentPassword) {
+    const unlockRes = unlockUserVault(userId, options.currentPassword);
+    if (!unlockRes.success) {
+      return {
+        success: false,
+        message: 'Current password verification failed. Cannot reset password.'
+      };
+    }
+    if (!options.documents || Object.keys(options.documents).length === 0) {
+      docsToKeep = unlockRes.documents || {};
+    }
+  }
+
+  // Encrypt and save vault with new credentials
+  const result = saveUserVault(userId, docsToKeep, newPassword, newPasswordType);
+  return {
+    success: true,
+    message: `Vault password successfully reset to ${newPasswordType.toUpperCase()}.`,
+    passwordType: newPasswordType,
+    documentCount: result.documentCount,
+    updatedAt: result.updatedAt
+  };
+}
+
 module.exports = {
   saveUserVault,
   unlockUserVault,
+  resetUserVaultPassword,
   getVaultStatus,
   deriveKey
 };

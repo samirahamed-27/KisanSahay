@@ -2,7 +2,7 @@
  * Controller for Farmer Document Vault (Word, PIN, Pattern Lock)
  */
 
-const { saveUserVault, unlockUserVault, getVaultStatus } = require('../services/vaultService');
+const { saveUserVault, unlockUserVault, resetUserVaultPassword, getVaultStatus } = require('../services/vaultService');
 
 function saveVault(req, res, next) {
   try {
@@ -44,6 +44,28 @@ function unlockVault(req, res, next) {
   }
 }
 
+function resetVault(req, res, next) {
+  try {
+    const { userId = 'default-farmer', newPassword, newPasswordType = 'word', currentPassword, documents } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password, PIN, or Pattern is required to reset your vault.'
+      });
+    }
+
+    const result = resetUserVaultPassword(userId, newPassword, newPasswordType, { currentPassword, documents });
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 function getVaultInfo(req, res, next) {
   try {
     const userId = req.query.userId || 'default-farmer';
@@ -57,5 +79,6 @@ function getVaultInfo(req, res, next) {
 module.exports = {
   saveVault,
   unlockVault,
+  resetVault,
   getVaultInfo
 };

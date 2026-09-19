@@ -8,7 +8,7 @@ const router = express.Router();
 const { getRecommendations } = require('../controllers/recommendController');
 const { getAllSchemes, getSchemeById } = require('../controllers/schemesController');
 const { getLocationIntelligence, getSoilFertility, getCrops } = require('../controllers/contextController');
-const { saveVault, unlockVault, getVaultInfo } = require('../controllers/vaultController');
+const { saveVault, unlockVault, resetVault, getVaultInfo } = require('../controllers/vaultController');
 const { triggerIngestion } = require('../controllers/ingestController');
 
 const { handleAssistantChat } = require('../controllers/assistantController');
@@ -44,6 +44,7 @@ router.get('/soil-fertility', apiLimiter, getSoilFertility);
 // 6. Farmer Document Vault (Password protected: Word, PIN, Pattern)
 router.post('/vault/save', apiLimiter, saveVault);
 router.post('/vault/unlock', apiLimiter, unlockVault);
+router.post('/vault/reset', apiLimiter, resetVault);
 router.get('/vault/status', apiLimiter, getVaultInfo);
 
 // 7. Sahay AI Assistant (RAG Chatbot grounded in verified government data)
