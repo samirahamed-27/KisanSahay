@@ -627,6 +627,28 @@
       "isDefault": false,
       "verified": true,
       "createdAt": "2026-09-19T17:30:30.723Z"
+    },
+    {
+      "id": "profile_1789839365400_516",
+      "name": "Suresh Patel",
+      "type": "phone",
+      "identifier": "+91 98765 11223",
+      "avatar": "S",
+      "color": "#0284c7",
+      "isDefault": false,
+      "verified": true,
+      "createdAt": "2026-09-19T17:36:05.400Z"
+    },
+    {
+      "id": "profile_1789839365408_40",
+      "name": "Anjali Verma",
+      "type": "gmail",
+      "identifier": "anjali.farmer@gmail.com",
+      "avatar": "A",
+      "color": "#7c3aed",
+      "isDefault": false,
+      "verified": true,
+      "createdAt": "2026-09-19T17:36:05.408Z"
     }
   ]
 }
