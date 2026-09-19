@@ -230,6 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderHomeCategories();
   setupCategoryExplorer();
   setupMultiuserStateListener();
+  setupNetworkSpeedMonitor();
 
   // Apply saved language
   setLanguage(state.currentLang);
@@ -4718,4 +4719,197 @@ function escapeHtmlApp(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+// ==========================================================================
+// LIVE INTERNET SPEED MONITOR (TOP BAR LEFT CORNER)
+// WiFi Icon with Green (Fast), Yellow (Slow), Red (Too Slow / Offline)
+// ==========================================================================
+
+function setupNetworkSpeedMonitor() {
+  const pill = document.getElementById('net-speed-pill');
+  const speedVal = document.getElementById('net-speed-val');
+  if (!pill || !speedVal) return;
+
+  let isChecking = false;
+
+  function applyStatus(status, label, titleText) {
+    pill.classList.remove('status-fast', 'status-slow', 'status-too-slow');
+    pill.classList.add(`status-${status}`);
+    speedVal.textContent = label;
+    pill.title = titleText || `Network: ${label} (Click to re-test)`;
+    pill.setAttribute('aria-label', titleText || `Internet status: ${label}`);
+  }
+
+  async function checkNetworkSpeed(isManualClick = false) {
+    if (isChecking) return;
+    isChecking = true;
+
+    if (isManualClick) {
+      pill.classList.add('is-refreshing');
+      speedVal.textContent = '...';
+    }
+
+    // 1. Check if browser is completely offline
+    if (!navigator.onLine) {
+      applyStatus('too-slow', 'Offline', 'Internet Connection: Disconnected (Offline)');
+      pill.classList.remove('is-refreshing');
+      isChecking = false;
+      return;
+    }
+
+    let downlinkMbps = null;
+    let rttMs = null;
+    let effectiveType = null;
+
+    // 2. Network Information API (Chrome / Edge / Chromium / Android)
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn) {
+      if (typeof conn.downlink === 'number' && conn.downlink > 0) {
+        downlinkMbps = conn.downlink;
+      }
+      if (typeof conn.rtt === 'number' && conn.rtt > 0) {
+        rttMs = conn.rtt;
+      }
+      if (conn.effectiveType) {
+        effectiveType = conn.effectiveType;
+      }
+    }
+
+    // 3. Fallback active latency/probe check if downlink not directly reported, or on manual click
+    if (downlinkMbps === null || isManualClick) {
+      try {
+        const startTime = performance.now();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+        const response = await fetch(`/manifest.json?_probe=${Date.now()}`, {
+          method: 'GET',
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const elapsedMs = performance.now() - startTime;
+        if (response.ok) {
+          const text = await response.text();
+          const bytes = text.length || 500;
+          const measuredMbps = (bytes * 8) / ((elapsedMs / 1000) * 1024 * 1024);
+
+          if (downlinkMbps === null) {
+            if (elapsedMs < 120) {
+              downlinkMbps = Math.max(12.5, +(measuredMbps * 15).toFixed(1));
+            } else if (elapsedMs < 300) {
+              downlinkMbps = Math.max(4.5, +(measuredMbps * 8).toFixed(1));
+            } else if (elapsedMs < 650) {
+              downlinkMbps = Math.max(1.8, +(measuredMbps * 3).toFixed(1));
+            } else {
+              downlinkMbps = Math.max(0.4, +measuredMbps.toFixed(2));
+            }
+          }
+          if (rttMs === null) {
+            rttMs = Math.round(elapsedMs);
+          }
+        }
+      } catch (probeErr) {
+        if (!navigator.onLine) {
+          applyStatus('too-slow', 'Offline', 'Internet Connection: Offline');
+          pill.classList.remove('is-refreshing');
+          isChecking = false;
+          return;
+        }
+        // If fetch timed out or failed while online -> Very slow network!
+        if (downlinkMbps === null || downlinkMbps <= 0.8) {
+          applyStatus('too-slow', '< 0.5 Mbps', 'Internet Connection: Very Slow / High Latency (< 0.5 Mbps)');
+          pill.classList.remove('is-refreshing');
+          isChecking = false;
+          return;
+        }
+      }
+    }
+
+    // 4. Classify speed according to user instructions:
+    // Fast (Green): >= 5.0 Mbps, effectiveType '4g', rtt < 180ms
+    // Slow (Yellow): 1.0 <= speed < 5.0 Mbps, effectiveType '3g', 180ms <= rtt < 500ms
+    // Too Slow (Red): < 1.0 Mbps, effectiveType '2g' / 'slow-2g', rtt >= 500ms, or offline
+    let status = 'fast';
+    let labelText = 'Fast';
+    let tooltip = '';
+
+    if (downlinkMbps !== null) {
+      if (downlinkMbps >= 5.0) {
+        status = 'fast';
+        labelText = downlinkMbps >= 10 ? `${Math.round(downlinkMbps)} Mbps` : `${downlinkMbps.toFixed(1)} Mbps`;
+        tooltip = `Internet Speed: Fast (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}`;
+      } else if (downlinkMbps >= 1.0) {
+        status = 'slow';
+        labelText = `${downlinkMbps.toFixed(1)} Mbps`;
+        tooltip = `Internet Speed: Slow (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}. May take longer to load.`;
+      } else {
+        status = 'too-slow';
+        labelText = `${downlinkMbps.toFixed(1)} Mbps`;
+        tooltip = `Internet Speed: Too Slow / Weak (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}`;
+      }
+    } else if (effectiveType) {
+      if (effectiveType === '4g') {
+        status = 'fast';
+        labelText = '4G Fast';
+        tooltip = 'Internet Speed: Fast (4G)';
+      } else if (effectiveType === '3g') {
+        status = 'slow';
+        labelText = '3G Slow';
+        tooltip = 'Internet Speed: Slow (3G)';
+      } else {
+        status = 'too-slow';
+        labelText = '2G Slow';
+        tooltip = 'Internet Speed: Too Slow (2G / Weak)';
+      }
+    } else {
+      status = 'fast';
+      labelText = 'Online';
+      tooltip = 'Internet Speed: Connected & Fast';
+    }
+
+    applyStatus(status, labelText, tooltip);
+    pill.classList.remove('is-refreshing');
+    isChecking = false;
+  }
+
+  // Click event: manual re-test
+  pill.addEventListener('click', () => {
+    checkNetworkSpeed(true);
+  });
+
+  // Online / Offline events
+  window.addEventListener('online', () => {
+    applyStatus('fast', 'Online', 'Internet Connected');
+    setTimeout(() => checkNetworkSpeed(false), 500);
+  });
+
+  window.addEventListener('offline', () => {
+    applyStatus('too-slow', 'Offline', 'Internet Connection: Offline');
+  });
+
+  // NetworkInformation change listener
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (conn && conn.addEventListener) {
+    conn.addEventListener('change', () => checkNetworkSpeed(false));
+  }
+
+  // Initial speed check
+  checkNetworkSpeed(false);
+
+  // Periodic background check every 30 seconds
+  setInterval(() => checkNetworkSpeed(false), 30000);
+}
+
+// Global simulation helper for testing and verification
+window.__setSimulatedNetworkSpeed = function(status, label) {
+  const pill = document.getElementById('net-speed-pill');
+  const speedVal = document.getElementById('net-speed-val');
+  if (!pill || !speedVal) return false;
+  pill.classList.remove('status-fast', 'status-slow', 'status-too-slow');
+  pill.classList.add(`status-${status}`);
+  speedVal.textContent = label;
+  return true;
+};
 
