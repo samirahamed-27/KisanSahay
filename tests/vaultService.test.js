@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   saveUserVault,
   unlockUserVault,
+  resetUserVaultPassword,
   getVaultStatus
 } = require('../src/services/vaultService');
 
@@ -109,5 +110,35 @@ test('Document Vault - Strict exclusivity: Vault must open ONLY by saved passwor
     assert.strictEqual(res.success, false, `Unauthorized password "${attempt}" must be rejected`);
     assert.strictEqual(res.documents, undefined, `Documents must NOT be exposed for "${attempt}"`);
   }
+});
+
+test('Document Vault - Reset password resets verifier and unlocks strictly with new password', () => {
+  const userId = 'farmer-reset-test';
+  const initialDocs = {
+    aadhaarNumber: 'XXXX-XXXX-9900',
+    khasra: 'KHASRA-8888'
+  };
+
+  // 1. Initial vault setup with old word password
+  saveUserVault(userId, initialDocs, 'OldSecretPassword@1', 'word');
+
+  const oldUnlock = unlockUserVault(userId, 'OldSecretPassword@1');
+  assert.strictEqual(oldUnlock.success, true);
+
+  // 2. Reset password to numeric PIN (e.g. '889922')
+  const resetRes = resetUserVaultPassword(userId, '889922', 'number', {
+    currentPassword: 'OldSecretPassword@1'
+  });
+  assert.strictEqual(resetRes.success, true);
+  assert.strictEqual(resetRes.passwordType, 'number');
+
+  // 3. Old password must now FAIL
+  const failOld = unlockUserVault(userId, 'OldSecretPassword@1');
+  assert.strictEqual(failOld.success, false);
+
+  // 4. New PIN must SUCCEED and preserve documents
+  const unlockNew = unlockUserVault(userId, '889922');
+  assert.strictEqual(unlockNew.success, true);
+  assert.strictEqual(unlockNew.documents.aadhaarNumber, 'XXXX-XXXX-9900');
 });
 
