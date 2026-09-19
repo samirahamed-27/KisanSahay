@@ -73,3 +73,41 @@ test('Document Vault - 3x3 Pattern Lock encryption and unlock', () => {
   const failRes = unlockUserVault(userId, '0-1-2-3');
   assert.strictEqual(failRes.success, false);
 });
+
+test('Document Vault - Strict exclusivity: Vault must open ONLY by saved password and not by anyone else', () => {
+  const userId = 'farmer-strict-exclusive-test';
+  const secretDocuments = {
+    aadhaarNumber: '7891-2345-6789',
+    khasraNumber: 'Khasra-889',
+    privateToken: 'SECURE_VAULT_TOKEN_9999'
+  };
+
+  const userCustomPassword = 'MySecretFarmerPass@2026';
+  const saveRes = saveUserVault(userId, secretDocuments, userCustomPassword, 'word');
+  assert.strictEqual(saveRes.success, true);
+
+  // 1. Must succeed with exact password
+  const exactUnlock = unlockUserVault(userId, userCustomPassword);
+  assert.strictEqual(exactUnlock.success, true);
+  assert.strictEqual(exactUnlock.documents.privateToken, 'SECURE_VAULT_TOKEN_9999');
+
+  // 2. Must FAIL with any other password, default password, empty, or variation
+  const unauthorizedAttempts = [
+    'Kisan@2025',             // old default
+    'mysecretfarmerpass@2026', // wrong case
+    'MySecretFarmerPass',      // missing symbol
+    '123456',                  // common pin
+    'password',                // generic
+    ' ',                       // whitespace
+    'MySecretFarmerPass@2027', // adjacent year
+    'admin',
+    'root'
+  ];
+
+  for (const attempt of unauthorizedAttempts) {
+    const res = unlockUserVault(userId, attempt);
+    assert.strictEqual(res.success, false, `Unauthorized password "${attempt}" must be rejected`);
+    assert.strictEqual(res.documents, undefined, `Documents must NOT be exposed for "${attempt}"`);
+  }
+});
+
