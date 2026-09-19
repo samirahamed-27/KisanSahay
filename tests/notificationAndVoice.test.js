@@ -238,3 +238,56 @@ test('Feature 8: Top Bar Internet Speed Monitor (WiFi Icon with Green, Yellow, a
   assert.ok(appJs.includes('fast'), 'app.js must handle fast state');
 });
 
+test('Feature 9: All-India State Selector, High-Contrast Cards & Multi-Step Qualification Questionnaire', () => {
+  const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+  const copyHtml = fs.readFileSync(path.join(__dirname, '../public copy/index.html'), 'utf8');
+  const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
+  const copyStylesCss = fs.readFileSync(path.join(__dirname, '../public copy/styles.css'), 'utf8');
+  const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
+  const copyAppJs = fs.readFileSync(path.join(__dirname, '../public copy/app.js'), 'utf8');
+  const schemesData = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/data/schemesDatabase.json'), 'utf8'));
+
+  // 1. Parity checks between public and public copy
+  assert.equal(indexHtml, copyHtml, 'public/index.html and public copy/index.html must match exactly');
+  assert.equal(stylesCss, copyStylesCss, 'public/styles.css and public copy/styles.css must match exactly');
+  assert.equal(appJs, copyAppJs, 'public/app.js and public copy/app.js must match exactly');
+
+  // 2. High-Contrast Scheme Card Descriptions in Light & Dark Mode
+  assert.ok(stylesCss.includes('.scheme-card-desc'), 'styles.css must style scheme-card-desc');
+  assert.ok(stylesCss.includes('body.dark-mode .scheme-card-desc'), 'styles.css must have dedicated dark mode styling for scheme descriptions');
+  assert.ok(stylesCss.includes('#f1f5f9') || stylesCss.includes('#ffffff') || stylesCss.includes('#e2e8f0'), 'Dark mode scheme description must use high-contrast bright text (#f1f5f9 or similar)');
+
+  // 3. All-India State Selector Bar
+  assert.ok(indexHtml.includes('id="schemes-all-india-state-select"'), 'index.html must include all-India state select');
+  assert.ok(indexHtml.includes('class="all-india-state-bar"'), 'index.html must include all-india-state-bar container');
+  assert.ok(indexHtml.includes('Punjab') && indexHtml.includes('Maharashtra') && indexHtml.includes('Tamil Nadu') && indexHtml.includes('Karnataka'), 'State dropdown must include all major Indian states');
+  assert.ok(stylesCss.includes('.all-india-state-bar'), 'styles.css must style all-india-state-bar');
+  assert.ok(stylesCss.includes('body.dark-mode .all-india-state-bar'), 'styles.css must style all-india-state-bar in dark mode');
+
+  // 4. Multi-Step Farmer Qualification Questionnaire Modal
+  assert.ok(indexHtml.includes('id="farmer-qualification-modal"'), 'index.html must contain farmer-qualification-modal');
+  assert.ok(indexHtml.includes('id="fq-gender-grid"'), 'index.html must contain gender cards grid');
+  assert.ok(indexHtml.includes('♂') && indexHtml.includes('♀') && indexHtml.includes('⚧'), 'Gender cards must include Male, Female, and Transgender icons');
+  assert.ok(indexHtml.includes('id="fq-age-select"'), 'index.html must contain age dropdown');
+  assert.ok(indexHtml.includes('id="fq-state-select"'), 'index.html must contain location state dropdown');
+  assert.ok(indexHtml.includes('id="fq-residence-options"'), 'index.html must contain residence options (Urban / Rural)');
+  assert.ok(indexHtml.includes('id="fq-disability-options"'), 'index.html must contain disability options');
+  assert.ok(indexHtml.includes('id="fq-minority-options"'), 'index.html must contain minority options');
+
+  // 5. JavaScript Questionnaire Logic
+  assert.ok(appJs.includes('function setupFarmerQualificationModal()'), 'app.js must define setupFarmerQualificationModal');
+  assert.ok(appJs.includes('setupFarmerQualificationModal();'), 'app.js must invoke setupFarmerQualificationModal');
+  assert.ok(appJs.includes('openFarmerQualificationModal'), 'app.js must define openFarmerQualificationModal');
+  assert.ok(appJs.includes('goToQualificationStep'), 'app.js must handle multi-step stepper navigation');
+
+  // 6. Regional Scheme Database Coverage across Indian States
+  const statesCovered = new Set(schemesData.map(s => s.state).filter(Boolean));
+  assert.ok(statesCovered.has('Punjab'), 'Database must have Punjab state schemes');
+  assert.ok(statesCovered.has('Haryana'), 'Database must have Haryana state schemes');
+  assert.ok(statesCovered.has('Maharashtra'), 'Database must have Maharashtra state schemes');
+  assert.ok(statesCovered.has('Karnataka'), 'Database must have Karnataka state schemes');
+  assert.ok(statesCovered.has('Rajasthan'), 'Database must have Rajasthan state schemes');
+  assert.ok(statesCovered.has('Gujarat'), 'Database must have Gujarat state schemes');
+  assert.ok(schemesData.length >= 650, 'Database must contain comprehensive regional schemes (650+)');
+});
+

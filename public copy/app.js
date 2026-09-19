@@ -41,7 +41,29 @@ const state = {
   unreadNotificationsCount: 0,
   currentAudio: null,
   ttsSpeed: 1.0,
-  checklistConfirmed: false
+  checklistConfirmed: false,
+  farmerQualification: (() => {
+    try {
+      const saved = localStorage.getItem('kisansahay_farmer_qualification');
+      return saved ? JSON.parse(saved) : {
+        gender: 'Male',
+        age: 35,
+        state: 'Uttar Pradesh',
+        residence: 'Rural',
+        disability: 'No',
+        minority: 'No'
+      };
+    } catch (e) {
+      return {
+        gender: 'Male',
+        age: 35,
+        state: 'Uttar Pradesh',
+        residence: 'Rural',
+        disability: 'No',
+        minority: 'No'
+      };
+    }
+  })()
 };
 
 // DOM Elements
@@ -231,6 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupCategoryExplorer();
   setupMultiuserStateListener();
   setupNetworkSpeedMonitor();
+  setupFarmerQualificationModal();
 
   // Apply saved language
   setLanguage(state.currentLang);
@@ -985,8 +1008,12 @@ function getActiveSchemesFiltered() {
   const q = el.schemesSearchInput ? el.schemesSearchInput.value.toLowerCase().trim() : '';
   const activeCategoryBtn = document.querySelector('.filter-chip-btn.active');
   const catFilter = activeCategoryBtn ? activeCategoryBtn.getAttribute('data-filter') : 'all';
+
+  const allIndiaSelect = document.getElementById('schemes-all-india-state-select');
+  const selectedDropdownState = allIndiaSelect ? allIndiaSelect.value : 'all';
   const activeStateBtn = document.querySelector('.state-chip-btn.active');
-  const stateFilter = activeStateBtn ? activeStateBtn.getAttribute('data-state') : 'all';
+  const stateChipVal = activeStateBtn ? activeStateBtn.getAttribute('data-state') : 'all';
+  const stateFilter = (selectedDropdownState && selectedDropdownState !== 'all') ? selectedDropdownState : stateChipVal;
 
   let list = state.schemes || [];
 
@@ -1063,11 +1090,31 @@ function setupSchemesSearch() {
     });
   });
 
+  const allIndiaSelect = document.getElementById('schemes-all-india-state-select');
   const stateBtns = document.querySelectorAll('.state-chip-btn');
+
+  if (allIndiaSelect) {
+    allIndiaSelect.addEventListener('change', () => {
+      const selected = allIndiaSelect.value;
+      stateBtns.forEach(b => {
+        if (b.getAttribute('data-state') === selected) {
+          b.classList.add('active');
+        } else {
+          b.classList.remove('active');
+        }
+      });
+      applySchemesFilters(true);
+    });
+  }
+
   stateBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       stateBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      const st = btn.getAttribute('data-state') || 'all';
+      if (allIndiaSelect) {
+        allIndiaSelect.value = st;
+      }
       applySchemesFilters(true);
     });
   });
@@ -2095,7 +2142,11 @@ async function saveFarmerVault() {
     const scheme = state.schemes.find(s => s.id === state.pendingChosenSchemeId);
     state.pendingChosenSchemeId = null;
     if (scheme) {
-      setTimeout(() => openLoanTrackerModalForScheme(scheme), 350);
+      if (typeof window.openFarmerQualificationModal === 'function') {
+        setTimeout(() => window.openFarmerQualificationModal(scheme), 350);
+      } else {
+        setTimeout(() => openLoanTrackerModalForScheme(scheme), 350);
+      }
     }
   }
 }
@@ -2145,7 +2196,11 @@ async function unlockFarmerVault() {
         const scheme = state.schemes.find(s => s.id === state.pendingChosenSchemeId);
         state.pendingChosenSchemeId = null;
         if (scheme) {
-          setTimeout(() => openLoanTrackerModalForScheme(scheme), 350);
+          if (typeof window.openFarmerQualificationModal === 'function') {
+            setTimeout(() => window.openFarmerQualificationModal(scheme), 350);
+          } else {
+            setTimeout(() => openLoanTrackerModalForScheme(scheme), 350);
+          }
         }
       }
       return;
@@ -2170,7 +2225,11 @@ async function unlockFarmerVault() {
           const scheme = state.schemes.find(s => s.id === state.pendingChosenSchemeId);
           state.pendingChosenSchemeId = null;
           if (scheme) {
-            setTimeout(() => openLoanTrackerModalForScheme(scheme), 350);
+            if (typeof window.openFarmerQualificationModal === 'function') {
+              setTimeout(() => window.openFarmerQualificationModal(scheme), 350);
+            } else {
+              setTimeout(() => openLoanTrackerModalForScheme(scheme), 350);
+            }
           }
         }
         return;
@@ -2496,6 +2555,318 @@ function updateVaultNavIndicator(status) {
   }
 }
 
+// ==========================================================================
+// Multi-Step Farmer Qualification Questionnaire Engine (Screenshots 2, 3, 4)
+// ==========================================================================
+
+let pendingQualificationScheme = null;
+
+function goToQualificationStep(stepNum) {
+  const panes = [
+    document.getElementById('fq-step-pane-1'),
+    document.getElementById('fq-step-pane-2'),
+    document.getElementById('fq-step-pane-3')
+  ];
+  const indicators = [
+    document.getElementById('fq-step-indicator-1'),
+    document.getElementById('fq-step-indicator-2'),
+    document.getElementById('fq-step-indicator-3')
+  ];
+  const connectors = [
+    document.getElementById('fq-connector-1'),
+    document.getElementById('fq-connector-2')
+  ];
+
+  panes.forEach((pane, idx) => {
+    if (!pane) return;
+    if (idx + 1 === stepNum) {
+      pane.style.display = 'block';
+      pane.classList.add('active');
+    } else {
+      pane.style.display = 'none';
+      pane.classList.remove('active');
+    }
+  });
+
+  indicators.forEach((ind, idx) => {
+    if (!ind) return;
+    const step = idx + 1;
+    if (step < stepNum) {
+      ind.classList.add('completed');
+      ind.classList.remove('active');
+    } else if (step === stepNum) {
+      ind.classList.add('active');
+      ind.classList.remove('completed');
+    } else {
+      ind.classList.remove('active', 'completed');
+    }
+  });
+
+  if (connectors[0]) {
+    connectors[0].classList.toggle('active', stepNum >= 2);
+  }
+  if (connectors[1]) {
+    connectors[1].classList.toggle('active', stepNum >= 3);
+  }
+}
+
+function openFarmerQualificationModal(scheme) {
+  pendingQualificationScheme = scheme || null;
+  const modal = document.getElementById('farmer-qualification-modal');
+  if (!modal) {
+    if (scheme) openLoanTrackerModalForScheme(scheme);
+    return;
+  }
+
+  // Ensure qualification object initialized
+  if (!state.farmerQualification) {
+    try {
+      const saved = localStorage.getItem('kisansahay_farmer_qualification');
+      state.farmerQualification = saved ? JSON.parse(saved) : {
+        gender: 'Male',
+        age: 35,
+        state: 'Uttar Pradesh',
+        residence: 'Rural',
+        disability: 'No',
+        minority: 'No'
+      };
+    } catch (e) {
+      state.farmerQualification = {
+        gender: 'Male',
+        age: 35,
+        state: 'Uttar Pradesh',
+        residence: 'Rural',
+        disability: 'No',
+        minority: 'No'
+      };
+    }
+  }
+
+  // Auto-fill state from all-India selector or scheme if available
+  const allIndiaSelect = document.getElementById('schemes-all-india-state-select');
+  if (allIndiaSelect && allIndiaSelect.value && allIndiaSelect.value !== 'all') {
+    state.farmerQualification.state = allIndiaSelect.value;
+  } else if (scheme && scheme.state && scheme.state !== 'All-India' && scheme.state !== 'all') {
+    state.farmerQualification.state = scheme.state;
+  }
+
+  // Sync inputs with state.farmerQualification
+  // 1. Gender cards
+  const genderCards = document.querySelectorAll('#fq-gender-grid .fq-gender-card');
+  genderCards.forEach(card => {
+    card.classList.toggle('active', card.getAttribute('data-gender') === state.farmerQualification.gender);
+  });
+
+  // 2. Age select
+  const ageSelect = document.getElementById('fq-age-select');
+  if (ageSelect && state.farmerQualification.age) {
+    ageSelect.value = String(state.farmerQualification.age);
+  }
+
+  // 3. State select
+  const stateSelect = document.getElementById('fq-state-select');
+  if (stateSelect && state.farmerQualification.state) {
+    stateSelect.value = state.farmerQualification.state;
+  }
+
+  // 4. Residence buttons
+  const resBtns = document.querySelectorAll('#fq-residence-options .fq-choice-btn');
+  resBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-residence') === state.farmerQualification.residence);
+  });
+
+  // 5. Disability buttons
+  const disBtns = document.querySelectorAll('#fq-disability-options .fq-choice-btn');
+  disBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-disability') === state.farmerQualification.disability);
+  });
+
+  // 6. Minority buttons
+  const minBtns = document.querySelectorAll('#fq-minority-options .fq-choice-btn');
+  minBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-minority') === state.farmerQualification.minority);
+  });
+
+  goToQualificationStep(1);
+  modal.classList.add('active');
+}
+
+function closeFarmerQualificationModal() {
+  const modal = document.getElementById('farmer-qualification-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function completeFarmerQualification(isSkipped = false) {
+  closeFarmerQualificationModal();
+  if (!isSkipped) {
+    try {
+      localStorage.setItem('kisansahay_farmer_qualification', JSON.stringify(state.farmerQualification));
+    } catch (e) {}
+    showToast('✅ Preferences confirmed! Personalized subsidies & subventions active.');
+  }
+
+  const schemeToOpen = pendingQualificationScheme;
+  pendingQualificationScheme = null;
+  if (schemeToOpen) {
+    setTimeout(() => openLoanTrackerModalForScheme(schemeToOpen), 200);
+  }
+}
+
+function setupFarmerQualificationModal() {
+  const modal = document.getElementById('farmer-qualification-modal');
+  const closeBtn = document.getElementById('fq-modal-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeFarmerQualificationModal);
+  }
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeFarmerQualificationModal();
+    });
+  }
+
+  // Step 1: Gender cards
+  const genderCards = document.querySelectorAll('#fq-gender-grid .fq-gender-card');
+  genderCards.forEach(card => {
+    card.addEventListener('click', () => {
+      genderCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const g = card.getAttribute('data-gender');
+      if (g) {
+        state.farmerQualification.gender = g;
+      }
+    });
+  });
+
+  // Step 1: Age dropdown
+  const ageSelect = document.getElementById('fq-age-select');
+  if (ageSelect) {
+    ageSelect.addEventListener('change', () => {
+      state.farmerQualification.age = Number(ageSelect.value) || 35;
+    });
+  }
+
+  // Step 1 Next & Reset
+  const step1Next = document.getElementById('fq-step1-next');
+  if (step1Next) {
+    step1Next.addEventListener('click', () => {
+      goToQualificationStep(2);
+    });
+  }
+  const step1Reset = document.getElementById('fq-step1-reset');
+  if (step1Reset) {
+    step1Reset.addEventListener('click', () => {
+      state.farmerQualification.gender = 'Male';
+      state.farmerQualification.age = 35;
+      genderCards.forEach(c => c.classList.toggle('active', c.getAttribute('data-gender') === 'Male'));
+      if (ageSelect) ageSelect.value = '35';
+      showToast('Step 1 preferences reset to default.');
+    });
+  }
+
+  // Step 2: Back button
+  const step2Back = document.getElementById('fq-step2-back');
+  if (step2Back) {
+    step2Back.addEventListener('click', () => {
+      goToQualificationStep(1);
+    });
+  }
+
+  // Step 2: State select
+  const stateSelect = document.getElementById('fq-state-select');
+  if (stateSelect) {
+    stateSelect.addEventListener('change', () => {
+      state.farmerQualification.state = stateSelect.value;
+    });
+  }
+
+  // Step 2: Residence buttons
+  const resBtns = document.querySelectorAll('#fq-residence-options .fq-choice-btn');
+  resBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      resBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const r = btn.getAttribute('data-residence');
+      if (r) state.farmerQualification.residence = r;
+    });
+  });
+
+  // Step 2: Skip & Next & Reset
+  const step2Skip = document.getElementById('fq-step2-skip');
+  if (step2Skip) {
+    step2Skip.addEventListener('click', () => completeFarmerQualification(true));
+  }
+  const step2Next = document.getElementById('fq-step2-next');
+  if (step2Next) {
+    step2Next.addEventListener('click', () => {
+      goToQualificationStep(3);
+    });
+  }
+  const step2Reset = document.getElementById('fq-step2-reset');
+  if (step2Reset) {
+    step2Reset.addEventListener('click', () => {
+      state.farmerQualification.state = '';
+      state.farmerQualification.residence = 'Rural';
+      if (stateSelect) stateSelect.selectedIndex = 0;
+      resBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-residence') === 'Rural'));
+      showToast('Step 2 location reset to default.');
+    });
+  }
+
+  // Step 3: Back button
+  const step3Back = document.getElementById('fq-step3-back');
+  if (step3Back) {
+    step3Back.addEventListener('click', () => {
+      goToQualificationStep(2);
+    });
+  }
+
+  // Step 3: Disability buttons
+  const disBtns = document.querySelectorAll('#fq-disability-options .fq-choice-btn');
+  disBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      disBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const d = btn.getAttribute('data-disability');
+      if (d) state.farmerQualification.disability = d;
+    });
+  });
+
+  // Step 3: Minority buttons
+  const minBtns = document.querySelectorAll('#fq-minority-options .fq-choice-btn');
+  minBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      minBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const m = btn.getAttribute('data-minority');
+      if (m) state.farmerQualification.minority = m;
+    });
+  });
+
+  // Step 3: Skip & Submit & Reset
+  const step3Skip = document.getElementById('fq-step3-skip');
+  if (step3Skip) {
+    step3Skip.addEventListener('click', () => completeFarmerQualification(true));
+  }
+  const step3Submit = document.getElementById('fq-step3-submit');
+  if (step3Submit) {
+    step3Submit.addEventListener('click', () => completeFarmerQualification(false));
+  }
+  const step3Reset = document.getElementById('fq-step3-reset');
+  if (step3Reset) {
+    step3Reset.addEventListener('click', () => {
+      state.farmerQualification.disability = 'No';
+      state.farmerQualification.minority = 'No';
+      disBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-disability') === 'No'));
+      minBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-minority') === 'No'));
+      showToast('Step 3 eligibility reset to default.');
+    });
+  }
+}
+
+window.openFarmerQualificationModal = openFarmerQualificationModal;
+window.closeFarmerQualificationModal = closeFarmerQualificationModal;
+window.setupFarmerQualificationModal = setupFarmerQualificationModal;
+
 // Open Loan Tracker Modal for Scheme (after document verification)
 function openLoanTrackerModalForScheme(scheme) {
   // Make sure farm profile is collected
@@ -2512,8 +2883,16 @@ function openLoanTrackerModalForScheme(scheme) {
     el.modalFarmDetailsBadge.style.display = 'block';
     const activityName = profile.mainActivity === 'crop' ? 'Crop Cultivation' : (profile.mainActivity === 'dairy' ? 'Dairy Farming' : (profile.mainActivity === 'poultry' ? 'Poultry & Allied' : 'Agri Infrastructure'));
     const landType = (profile.landOwnership || 'OWNER').toUpperCase();
-    const loc = profile.district ? ` in ${profile.district}` : '';
-    el.modalFarmDetailsText.innerHTML = `<strong>${activityName}</strong> • ${profile.cropType || 'Crops'} • ${landType} Farmer${loc} • 🔒 Documents Verified`;
+    const loc = profile.district ? ` in ${profile.district}` : (state.farmerQualification?.state ? ` in ${state.farmerQualification.state}` : '');
+    const qual = state.farmerQualification || {};
+    const qualTags = [];
+    if (qual.gender) qualTags.push(qual.gender);
+    if (qual.age) qualTags.push(`Age ${qual.age}`);
+    if (qual.residence) qualTags.push(qual.residence);
+    if (qual.disability === 'Yes') qualTags.push('Divyangjan Concession');
+    if (qual.minority === 'Yes') qualTags.push('Minority Subvention');
+    const qualStr = qualTags.length > 0 ? ` • ${qualTags.join(' • ')}` : '';
+    el.modalFarmDetailsText.innerHTML = `<strong>${activityName}</strong> • ${profile.cropType || 'Crops'} • ${landType} Farmer${loc}${qualStr} • 🔒 Documents & Profile Verified`;
   }
 
   // Pre-fill modal fields
@@ -2535,7 +2914,7 @@ function openLoanTrackerModalForScheme(scheme) {
   const statusSelect = document.getElementById('new-loan-status');
 
   if (nameInput) nameInput.value = scheme.name;
-  if (bankInput) bankInput.value = `${scheme.category.includes('INFRA') ? 'Commercial Bank / NABARD' : 'State Bank of India / Gramin Bank'} ${profile.district ? '(' + profile.district + ')' : ''}`.trim();
+  if (bankInput) bankInput.value = `${scheme.category.includes('INFRA') ? 'Commercial Bank / NABARD' : 'State Bank of India / Gramin Bank'} ${profile.district ? '(' + profile.district + ')' : (state.farmerQualification?.state ? '(' + state.farmerQualification.state + ')' : '')}`.trim();
   
   // Set recommended amount based on scheme
   let recommendedAmount = 300000;
@@ -2548,7 +2927,14 @@ function openLoanTrackerModalForScheme(scheme) {
   else if (scheme.maxLimit) recommendedAmount = Math.min(scheme.maxLimit, 300000);
 
   if (amountInput) amountInput.value = recommendedAmount;
-  if (rateInput) rateInput.value = scheme.effectiveRate || scheme.baseRate || 4.0;
+  
+  // Concessional interest rate for verified women / minority / prompt categories
+  let finalRate = scheme.effectiveRate !== undefined ? scheme.effectiveRate : (scheme.baseRate || 4.0);
+  if (state.farmerQualification?.gender === 'Female' && finalRate > 0) {
+    finalRate = Math.max(0, +(finalRate - 1.0).toFixed(1)); // 1% women concession
+  }
+  if (rateInput) rateInput.value = finalRate;
+
   if (tenureInput) tenureInput.value = (scheme.id === 'aif' || scheme.id === 'ahidf') ? 72 : (scheme.id === 'smam' ? 48 : 60);
   if (paidInput) paidInput.value = 0;
   if (statusSelect) statusSelect.value = 'Active';
@@ -2560,14 +2946,14 @@ function openLoanTrackerModalForScheme(scheme) {
   showToast(`Pre-filled loan details for ${scheme.shortName || scheme.name}. Review & confirm!`);
 }
 
-// Choose Loan Flow (Guaranteed Document Vault Check)
+// Choose Loan Flow (Guaranteed Document Vault Check + Multi-Step Questionnaire)
 window.chooseLoanFromEligibility = function(schemeId) {
   const scheme = state.schemes.find(s => s.id === schemeId);
   if (!scheme) return;
+  state.pendingChosenSchemeId = schemeId;
 
   // 1. Mandatory Document Verification Check
   if (!state.vaultState.isUnlocked) {
-    state.pendingChosenSchemeId = schemeId;
     const meta = localStorage.getItem('kisansahay_vault_meta');
     if (meta) {
       try {
@@ -2582,8 +2968,12 @@ window.chooseLoanFromEligibility = function(schemeId) {
     return;
   }
 
-  // Vault is ready and unlocked!
-  openLoanTrackerModalForScheme(scheme);
+  // 2. Multi-Step Farmer Qualification Questionnaire (Screenshots 2, 3, 4)
+  if (typeof window.openFarmerQualificationModal === 'function') {
+    window.openFarmerQualificationModal(scheme);
+  } else {
+    openLoanTrackerModalForScheme(scheme);
+  }
 };
 
 // Backward-compatible alias
