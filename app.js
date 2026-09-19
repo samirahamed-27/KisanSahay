@@ -1470,7 +1470,7 @@ function setupDocumentVault() {
     el.btnVaultSaveSubmit.addEventListener('click', saveFarmerVault);
   }
 
-  // 7. Unlock Modal Close Buttons
+  // 7. Unlock Modal Close Buttons & Forgot Password
   if (el.vaultUnlockClose) {
     el.vaultUnlockClose.addEventListener('click', closeVaultUnlockModal);
   }
@@ -1481,7 +1481,69 @@ function setupDocumentVault() {
     el.btnUnlockSubmit.addEventListener('click', unlockFarmerVault);
   }
 
-  // 8. Check initial vault status from server & cache
+  const btnForgotPass = document.getElementById('btn-vault-forgot-pass');
+  if (btnForgotPass) {
+    btnForgotPass.addEventListener('click', () => {
+      closeVaultUnlockModal();
+      openVaultResetModal();
+    });
+  }
+
+  const btnResetTrigger = document.getElementById('btn-vault-reset-trigger');
+  if (btnResetTrigger) {
+    btnResetTrigger.addEventListener('click', () => {
+      closeVaultModal();
+      openVaultResetModal();
+    });
+  }
+
+  // 8. Vault Reset Modal Listeners
+  const resetClose = document.getElementById('vault-reset-close');
+  if (resetClose) resetClose.addEventListener('click', closeVaultResetModal);
+
+  const resetCancel = document.getElementById('btn-reset-modal-cancel');
+  if (resetCancel) resetCancel.addEventListener('click', closeVaultResetModal);
+
+  const btnSubmitReset = document.getElementById('btn-submit-vault-reset');
+  if (btnSubmitReset) btnSubmitReset.addEventListener('click', submitVaultReset);
+
+  ['word', 'number', 'pattern'].forEach(tab => {
+    const btn = document.getElementById(`reset-tab-${tab}`);
+    if (btn) btn.addEventListener('click', () => switchResetSecTab(tab));
+  });
+
+  // 9. Quick Select Crop Chips
+  document.querySelectorAll('.crop-chip-pill').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const crop = chip.getAttribute('data-crop');
+      if (crop && el.cropInput) {
+        el.cropInput.value = crop;
+        el.cropInput.dispatchEvent(new Event('input', { bubbles: true }));
+        el.cropInput.focus();
+      }
+    });
+  });
+
+  // 10. Practical Matrix Form Reset
+  const btnResetForm = document.getElementById('btn-reset-elig-form');
+  if (btnResetForm) {
+    btnResetForm.addEventListener('click', () => {
+      if (el.eligibilityForm) el.eligibilityForm.reset();
+      const geoLat = document.getElementById('geo-lat');
+      const geoLong = document.getElementById('geo-long');
+      if (geoLat) geoLat.value = '';
+      if (geoLong) geoLong.value = '';
+      const guideBox = document.getElementById('aadhaar-unlinked-guide-box');
+      if (guideBox) guideBox.style.display = 'none';
+      const resultsContainer = document.getElementById('elig-results-container');
+      const emptyState = document.getElementById('elig-empty-state');
+      if (resultsContainer) resultsContainer.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'flex';
+      showToast('Assessment form reset.');
+    });
+  }
+
+  // 11. Check initial vault status from server & cache
   checkVaultStatus();
 }
 
@@ -1718,11 +1780,13 @@ function openVaultModal(scheme = null, isOverview = false) {
   }
 
   const btnLockNow = document.getElementById('btn-vault-lock-now');
+  const btnResetTrigger = document.getElementById('btn-vault-reset-trigger');
   const btnSaveText = document.getElementById('btn-vault-save-text');
   const headerStatus = document.getElementById('vault-header-status');
 
   if (state.vaultState.isUnlocked) {
     if (btnLockNow) btnLockNow.style.display = 'inline-block';
+    if (btnResetTrigger) btnResetTrigger.style.display = 'inline-flex';
     if (btnSaveText) btnSaveText.textContent = 'Update & Secure Documents';
     if (headerStatus) headerStatus.textContent = '✓ Unlocked & Verified';
 
@@ -1735,6 +1799,7 @@ function openVaultModal(scheme = null, isOverview = false) {
     if (el.vaultCategory && docs.categoryCert) el.vaultCategory.value = docs.categoryCert;
   } else {
     if (btnLockNow) btnLockNow.style.display = 'none';
+    if (btnResetTrigger) btnResetTrigger.style.display = 'none';
     if (btnSaveText) btnSaveText.textContent = 'Encrypt & Secure Documents';
     if (headerStatus) headerStatus.textContent = 'Encrypted Farmer Vault';
   }
@@ -2116,6 +2181,254 @@ async function unlockFarmerVault() {
     return;
   }
 }
+
+// ==========================================================================
+// Document Vault Password Reset Engine
+// ==========================================================================
+
+let activeResetSecTab = 'word';
+let resetPatternSequence = [];
+
+function openVaultResetModal() {
+  const modal = document.getElementById('vault-reset-modal');
+  if (!modal) return;
+  modal.classList.add('active');
+
+  const err = document.getElementById('reset-error-notice');
+  if (err) { err.style.display = 'none'; err.textContent = ''; }
+
+  const wordPass = document.getElementById('vault-reset-word-pass');
+  const wordConf = document.getElementById('vault-reset-word-confirm');
+  const pinPass = document.getElementById('vault-reset-pin-pass');
+  const pinConf = document.getElementById('vault-reset-pin-confirm');
+  if (wordPass) wordPass.value = '';
+  if (wordConf) wordConf.value = '';
+  if (pinPass) pinPass.value = '';
+  if (pinConf) pinConf.value = '';
+  resetPatternSequence = [];
+
+  setupResetPatternCanvas();
+  switchResetSecTab('word');
+}
+
+function closeVaultResetModal() {
+  const modal = document.getElementById('vault-reset-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function switchResetSecTab(tab) {
+  activeResetSecTab = tab;
+  ['word', 'number', 'pattern'].forEach(t => {
+    const btn = document.getElementById(`reset-tab-${t}`);
+    const pane = document.getElementById(`reset-pane-${t}`);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (pane) pane.style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+function setupResetPatternCanvas() {
+  const container = document.getElementById('reset-pattern-container');
+  const canvas = document.getElementById('reset-pattern-canvas');
+  if (!container || !canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  const dots = container.querySelectorAll('.pattern-dot');
+
+  function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    dots.forEach(d => d.classList.remove('dot-selected', 'dot-origin'));
+  }
+
+  clearCanvas();
+  resetPatternSequence = [];
+
+  const btnClear = document.getElementById('btn-clear-reset-pattern');
+  if (btnClear) {
+    btnClear.onclick = () => {
+      clearCanvas();
+      resetPatternSequence = [];
+      const fb = document.getElementById('reset-pattern-feedback');
+      if (fb) fb.textContent = 'Draw new pattern in sequence';
+    };
+  }
+
+  let isDrawing = false;
+
+  function getPointerPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  function drawLines(currentPos) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (resetPatternSequence.length === 0) return;
+
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    const first = PATTERN_DOT_COORDS[resetPatternSequence[0]];
+    ctx.moveTo(first.x, first.y);
+
+    for (let i = 1; i < resetPatternSequence.length; i++) {
+      const pt = PATTERN_DOT_COORDS[resetPatternSequence[i]];
+      ctx.lineTo(pt.x, pt.y);
+    }
+    if (currentPos) {
+      ctx.lineTo(currentPos.x, currentPos.y);
+    }
+    ctx.stroke();
+  }
+
+  function checkCollision(pos) {
+    PATTERN_DOT_COORDS.forEach(dot => {
+      const dist = Math.hypot(dot.x - pos.x, dot.y - pos.y);
+      if (dist < 26) {
+        if (!resetPatternSequence.includes(dot.index)) {
+          if (resetPatternSequence.length === 0) {
+            dots[dot.index]?.classList.add('dot-origin');
+          }
+          resetPatternSequence.push(dot.index);
+          dots[dot.index]?.classList.add('dot-selected');
+        }
+      }
+    });
+  }
+
+  container.onmousedown = (e) => {
+    isDrawing = true;
+    clearCanvas();
+    resetPatternSequence = [];
+    const pos = getPointerPos(e);
+    checkCollision(pos);
+    drawLines(pos);
+  };
+
+  window.onmousemove = (e) => {
+    if (!isDrawing) return;
+    const pos = getPointerPos(e);
+    checkCollision(pos);
+    drawLines(pos);
+  };
+
+  window.onmouseup = () => {
+    if (!isDrawing) return;
+    isDrawing = false;
+    drawLines(null);
+    const fb = document.getElementById('reset-pattern-feedback');
+    if (fb) fb.textContent = `Pattern: ${resetPatternSequence.length} dots connected`;
+  };
+}
+
+async function submitVaultReset() {
+  const userId = getActiveVaultUserId();
+  let newPassword = '';
+  const pwType = activeResetSecTab || 'word';
+
+  if (pwType === 'word') {
+    const pass = document.getElementById('vault-reset-word-pass')?.value || '';
+    const confirm = document.getElementById('vault-reset-word-confirm')?.value || '';
+    if (!pass || pass.length < 4) {
+      showResetError('Password must be at least 4 characters long.');
+      return;
+    }
+    if (pass !== confirm) {
+      showResetError('Passwords do not match. Please re-enter.');
+      return;
+    }
+    newPassword = pass;
+  } else if (pwType === 'number') {
+    const pass = document.getElementById('vault-reset-pin-pass')?.value.trim() || '';
+    const confirm = document.getElementById('vault-reset-pin-confirm')?.value.trim() || '';
+    if (!pass || !/^\d{4,6}$/.test(pass)) {
+      showResetError('PIN must be 4 to 6 numeric digits.');
+      return;
+    }
+    if (pass !== confirm) {
+      showResetError('PINs do not match. Please re-enter.');
+      return;
+    }
+    newPassword = pass;
+  } else if (pwType === 'pattern') {
+    if (resetPatternSequence.length < 4) {
+      showResetError('Pattern must connect at least 4 dots in sequence.');
+      return;
+    }
+    newPassword = resetPatternSequence.join('-');
+  }
+
+  const clientSalt = Math.random().toString(36).substring(2, 15);
+  const clientVerifierHash = await hashVaultPasswordClient(newPassword, clientSalt);
+
+  // Retrieve existing documents
+  const metaStr = localStorage.getItem(`kisansahay_vault_meta_${userId}`) || localStorage.getItem('kisansahay_vault_meta') || '{}';
+  let existingMeta = {};
+  try { existingMeta = JSON.parse(metaStr); } catch (e) {}
+  const documents = state.vaultState.documents || existingMeta.documents || {};
+
+  try {
+    const res = await fetch('/api/vault/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        newPassword,
+        newPasswordType: pwType,
+        documents
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      showResetError(json.message || 'Failed to reset vault password on server.');
+      return;
+    }
+  } catch (err) {
+    console.warn('Backend reset offline, saving locally:', err);
+  }
+
+  // Update local vault metadata
+  const updatedMeta = {
+    ...existingMeta,
+    userId,
+    passwordType: pwType,
+    salt: clientSalt,
+    verifierHash: clientVerifierHash,
+    documents,
+    updatedAt: new Date().toISOString()
+  };
+  localStorage.setItem(`kisansahay_vault_meta_${userId}`, JSON.stringify(updatedMeta));
+  localStorage.setItem('kisansahay_vault_meta', JSON.stringify(updatedMeta));
+
+  state.vaultState.passwordType = pwType;
+  state.vaultState.isInitialized = true;
+  state.vaultState.isUnlocked = false; // Kept locked so user unlocks with new password
+  updateVaultNavIndicator('locked');
+
+  closeVaultResetModal();
+  showToast(`✅ Vault password reset to ${pwType.toUpperCase()} successfully! Please unlock with your new password.`);
+}
+
+function showResetError(msg) {
+  const err = document.getElementById('reset-error-notice');
+  if (err) {
+    err.textContent = msg;
+    err.style.display = 'block';
+    err.classList.remove('input-error-shake');
+    void err.offsetWidth;
+    err.classList.add('input-error-shake');
+  }
+}
+
+window.openVaultResetModal = openVaultResetModal;
+window.closeVaultResetModal = closeVaultResetModal;
+window.submitVaultReset = submitVaultReset;
 
 async function checkVaultStatus() {
   const userId = getActiveVaultUserId();
@@ -2968,28 +3281,35 @@ function renderAdvancedRecommendations(data) {
     } else {
       tableBody.innerHTML = recommendations.map(rec => {
         const statusClass = rec.status === 'best' ? 'best' : (rec.status === 'good' ? 'good' : 'moderate');
-        const statusLabel = rec.status === 'best' ? '★ Top Match' : (rec.status === 'good' ? '✓ Good Fit' : '⚙ Moderate');
+        const statusLabel = rec.status === 'best' ? '★ Top Priority Match' : (rec.status === 'good' ? '✓ Eligible Fit' : '⚙ Alternate Support');
+        const isSubsidized = String(rec.interest_rate || '').includes('4%') || String(rec.interest_rate || '').toLowerCase().includes('subsid');
         return `
           <tr>
             <td>
               <span class="tbl-match-badge ${statusClass}">${statusLabel} (${rec.score}%)</span>
             </td>
             <td>
-              <div class="tbl-scheme-name">${escapeHtmlApp(rec.scheme_name)}</div>
-              <div class="tbl-scheme-cat">${escapeHtmlApp(rec.category || '')} • ${escapeHtmlApp(rec.eligibility_reason || '')}</div>
+              <div class="tbl-scheme-name" style="font-weight: 800; font-size: 0.95rem;">${escapeHtmlApp(rec.scheme_name)}</div>
+              <div class="tbl-scheme-cat" style="font-size: 0.8rem; color: #64748b; margin-top: 0.2rem;">
+                <span style="font-weight: 700; color: #15803d;">${escapeHtmlApp(rec.category || 'Agricultural Loan')}</span>
+                ${rec.eligibility_reason ? ` • ${escapeHtmlApp(rec.eligibility_reason)}` : ''}
+              </div>
             </td>
             <td>
               <span class="tbl-rate-pill">${escapeHtmlApp(rec.interest_rate || 'Subsidized')}</span>
+              ${isSubsidized ? '<div style="font-size: 0.72rem; color: #15803d; font-weight: 700; margin-top: 0.2rem;">✓ 3% Subvention Applied</div>' : ''}
             </td>
             <td>
-              <strong>${escapeHtmlApp(rec.max_loan_amount || '—')}</strong>
+              <strong style="color: var(--text-primary); font-size: 0.92rem;">${escapeHtmlApp(rec.max_loan_amount || 'Custom Ceiling')}</strong>
             </td>
             <td>
-              <span>${escapeHtmlApp(rec.collateral_free_limit || '—')}</span>
+              <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.85rem; color: #475569;">
+                <span>🛡️</span> <span>${escapeHtmlApp(rec.collateral_free_limit || 'Under Norms')}</span>
+              </span>
             </td>
             <td>
-              <button type="button" class="btn-clean btn-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; border-radius: 9999px; font-weight: 700; cursor: pointer;" onclick="openSchemeModal('${rec.scheme_id}')">
-                View Details ↗
+              <button type="button" class="btn-clean btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 9999px; font-weight: 800; cursor: pointer; white-space: nowrap; background: #15803d; color: #ffffff; border: none; box-shadow: 0 2px 8px rgba(21, 128, 61, 0.25);" onclick="openSchemeModal('${rec.scheme_id}')">
+                Apply / Details ↗
               </button>
             </td>
           </tr>
