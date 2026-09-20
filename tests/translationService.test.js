@@ -64,10 +64,13 @@ test('Translation Suite — 2. Minimal-Storage Hash Cache with TTL and Key Hashi
 });
 
 test('Translation Suite — 3. Cache LRU Eviction Cap Enforcement', () => {
+  const testCachePath = path.join(__dirname, '../scratch/test_eviction_cache.json');
+  try { if (fs.existsSync(testCachePath)) fs.unlinkSync(testCachePath); } catch (e) {}
+
   const smallCache = new TranslationCache({
     ttlMs: 60000,
     maxSize: 3,
-    filePath: path.join(__dirname, '../scratch/test_eviction_cache.json')
+    filePath: testCachePath
   });
 
   smallCache.set('Text 1', 'hi', 'अनुवाद 1');

@@ -2042,7 +2042,7 @@
       <span class="sahay-pulse-beacon"></span>
     </button>
 
-    <!-- Floating Chat Window (380-420px wide) -->
+    <!-- Floating Chat Window (380-450px wide) -->
     <div id="sahay-chat-window" class="sahay-chat-window" style="display: none;">
       <!-- Chat Header -->
       <div class="sahay-header">
@@ -2050,10 +2050,14 @@
           <div class="sahay-avatar">🤖</div>
           <div>
             <div class="sahay-header-title">Sahay AI <span class="sahay-badge-official">Govt Verified</span></div>
-            <div class="sahay-header-sub">Farm Loans & Schemes Assistant</div>
+            <div class="sahay-header-sub">Farm Loans &amp; Schemes Assistant</div>
           </div>
         </div>
         <div class="sahay-header-actions">
+          <!-- 50 FAQs Browser Trigger -->
+          <button type="button" id="sahay-faq-drawer-toggle" class="btn-sahay-header-action" title="Browse 50 Farmer FAQs">
+            📚
+          </button>
           <!-- Audio Read Aloud Toggle -->
           <button type="button" id="sahay-tts-toggle" class="btn-sahay-header-action" title="Toggle Voice Read Aloud">
             <span id="sahay-tts-icon">🔊</span>
@@ -2073,6 +2077,52 @@
         </div>
       </div>
 
+      <!-- Farmer Profile & Vault Status Bar -->
+      <div class="sahay-profile-status-bar" id="sahay-profile-status-bar">
+        <div class="sahay-profile-pill-left">
+          <span class="sahay-live-dot"></span>
+          <span id="sahay-profile-summary-text">🌾 Farm: Ready • All-India | 🔒 Vault: Active</span>
+        </div>
+        <button type="button" id="sahay-profile-sync-btn" class="sahay-profile-pill-btn" title="Refresh My Data &amp; Documents">
+          Sync 🔄
+        </button>
+      </div>
+
+      <!-- Searchable 50-FAQ Drawer (Collapsible overlay) -->
+      <div id="sahay-faq-drawer" class="sahay-faq-drawer" style="display: none;">
+        <div class="sahay-faq-drawer-header">
+          <span>📚 50 Official Farmer FAQs</span>
+          <button type="button" id="sahay-faq-drawer-close" class="btn-sahay-close-sub">✕</button>
+        </div>
+        <div class="sahay-faq-search-wrap">
+          <input type="text" id="sahay-faq-search-input" placeholder="Search 50 farmer questions (KCC, Subsidy, PMFBY)..." autocomplete="off">
+        </div>
+        <div class="sahay-faq-cat-filter" id="sahay-faq-cat-filter">
+          <button type="button" class="sahay-faq-tab active" data-cat="all">All (50)</button>
+          <button type="button" class="sahay-faq-tab" data-cat="kcc">💳 KCC</button>
+          <button type="button" class="sahay-faq-tab" data-cat="pm_kisan">🌾 PM-KISAN</button>
+          <button type="button" class="sahay-faq-tab" data-cat="crop_insurance">🛡️ Insurance</button>
+          <button type="button" class="sahay-faq-tab" data-cat="land_soil_irrigation">🧪 Soil &amp; Land</button>
+          <button type="button" class="sahay-faq-tab" data-cat="equipment_mechanization">🚜 Equipment</button>
+          <button type="button" class="sahay-faq-tab" data-cat="warehousing_marketing">🏪 Storage</button>
+          <button type="button" class="sahay-faq-tab" data-cat="loan_application">📝 Loans</button>
+          <button type="button" class="sahay-faq-tab" data-cat="debt_risk_safety">⚠️ Debt Safety</button>
+        </div>
+        <div class="sahay-faq-list" id="sahay-faq-list">
+          <!-- Dynamically populated from window.SAHAY_KNOWLEDGE_BASE -->
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs Bar for Chat Stream -->
+      <div class="sahay-category-bar" id="sahay-category-bar">
+        <button type="button" class="sahay-cat-btn active" data-cat="all">⭐ Popular</button>
+        <button type="button" class="sahay-cat-btn" data-cat="kcc">💳 KCC</button>
+        <button type="button" class="sahay-cat-btn" data-cat="pm_kisan">🌾 PM-KISAN</button>
+        <button type="button" class="sahay-cat-btn" data-cat="crop_insurance">🛡️ Insurance</button>
+        <button type="button" class="sahay-cat-btn" data-cat="equipment_mechanization">🚜 Equipment</button>
+        <button type="button" class="sahay-cat-btn" data-cat="debt_risk_safety">⚠️ Debt Safety</button>
+      </div>
+
       <!-- Chat Message Stream -->
       <div id="sahay-message-stream" class="sahay-message-stream">
         <!-- Intro Card (Farmer-friendly original copy) -->
@@ -2080,8 +2130,7 @@
           <div class="sahay-intro-icon">🌾</div>
           <div class="sahay-intro-title">Namaste! I'm Sahay AI</div>
           <p class="sahay-intro-text">
-            Your direct guide to agricultural credit, government subsidies, and scheme documentation. Ask me any
-            question in English or Hindi!
+            Your official agricultural guide with 50 verified government scheme answers, prompt repayment interest calculation, and encrypted document vault memory!
           </p>
         </div>
 
@@ -2091,14 +2140,14 @@
           <button type="button" class="sahay-chip" data-query="Am I eligible for KCC?">
             🌱 Am I eligible for KCC?
           </button>
-          <button type="button" class="sahay-chip" data-query="What documents do I need for a crop loan?">
-            📋 What documents do I need for a crop loan?
+          <button type="button" class="sahay-chip" data-query="What is the interest rate on a KCC loan?">
+            💳 KCC 4% Subsidized Interest Rate
           </button>
-          <button type="button" class="sahay-chip" data-query="Compare interest rates for my state">
-            📈 Compare interest rates for my state
+          <button type="button" class="sahay-chip" data-query="What documents do I have?">
+            🔒 Check My Saved Vault Documents
           </button>
-          <button type="button" class="sahay-chip" data-query="How to get 50% equipment subsidy?">
-            🚜 How to get 50% equipment subsidy?
+          <button type="button" class="sahay-chip" data-query="How do I know if a loan offer is a scam?">
+            ⚠️ How to identify loan scams?
           </button>
         </div>
       </div>
@@ -2115,7 +2164,7 @@
             🎙️
           </button>
           <input type="text" id="sahay-user-input" class="sahay-text-input"
-            placeholder="Ask about loans, KCC, subsidies..." autocomplete="off">
+            placeholder="Ask about loans, KCC, subsidies, vault docs..." autocomplete="off">
           <button type="submit" id="sahay-send-btn" class="btn-sahay-send" title="Send Query">
             ➤
           </button>
@@ -2591,6 +2640,7 @@
     <script src="categories_data.js"></script>
     <script src="multiuser.js"></script>
     <script src="voice_input.js"></script>
+    <script src="sahay_knowledge.js"></script>
     <script src="app.js"></script>
 
     <!-- Progressive Web App (PWA) Service Worker Registration -->
