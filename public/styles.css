@@ -318,6 +318,29 @@ h4,
   background: var(--primary-surface);
 }
 
+.lang-loading-shimmer {
+  position: relative;
+  overflow: hidden;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.lang-loading-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), transparent);
+  animation: langShimmer 1s infinite linear;
+}
+
+@keyframes langShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 .user-profile {
   display: flex;
   align-items: center;

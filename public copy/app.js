@@ -324,26 +324,7 @@ function t(key, fallback = '') {
   return dict[key] || fallback || key;
 }
 
-function setLanguage(langCode) {
-  state.currentLang = langCode;
-  localStorage.setItem('kisansahay_lang', langCode);
-
-  const langObj = window.INDIAN_LANGUAGES ? window.INDIAN_LANGUAGES.find(l => l.code === langCode) : null;
-  if (el.langText && langObj) {
-    el.langText.textContent = langObj.native || langObj.name;
-  }
-
-  // Highlight active in selector grid
-  if (el.languagesGrid) {
-    el.languagesGrid.querySelectorAll('.lang-grid-item').forEach(item => {
-      if (item.dataset.code === langCode) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
-    });
-  }
-
+function applyTranslationsToDOM() {
   // Translate all DOM elements with data-i18n safely
   document.querySelectorAll('[data-i18n]').forEach(elem => {
     const key = elem.getAttribute('data-i18n');
@@ -365,8 +346,8 @@ function setLanguage(langCode) {
 
   // Re-render home categories, loans & schemes to reflect language
   if (typeof renderHomeCategories === 'function') renderHomeCategories();
-  renderLoansList();
-  renderSchemesGrid(state.schemes);
+  if (typeof renderLoansList === 'function') renderLoansList();
+  if (typeof renderSchemesGrid === 'function') renderSchemesGrid(state.schemes);
 
   // If currently in category explorer view, re-render explorer with new language
   if (state.currentTab === 'category-schemes' && typeof filterAndRenderCategorySchemes === 'function') {
@@ -380,6 +361,109 @@ function setLanguage(langCode) {
     filterAndRenderCategorySchemes();
   }
 }
+
+async function setLanguage(langCode) {
+  state.currentLang = langCode;
+  localStorage.setItem('kisansahay_lang', langCode);
+
+  const langObj = window.INDIAN_LANGUAGES ? window.INDIAN_LANGUAGES.find(l => l.code === langCode) : null;
+  if (el.langText && langObj) {
+    el.langText.textContent = langObj.native || langObj.name;
+  }
+
+  // Highlight active in selector grid
+  if (el.languagesGrid) {
+    el.languagesGrid.querySelectorAll('.lang-grid-item').forEach(item => {
+      if (item.dataset.code === langCode) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  // Ensure window.TRANSLATIONS structure exists
+  if (!window.TRANSLATIONS) window.TRANSLATIONS = {};
+  if (!window.TRANSLATIONS['en'] && window.BASE_STRINGS) {
+    window.TRANSLATIONS['en'] = window.BASE_STRINGS;
+  }
+
+  // 1. If base language English, apply immediately
+  if (langCode === 'en') {
+    applyTranslationsToDOM();
+    return;
+  }
+
+  // 2. If already in client-side cache, apply instantly (0ms round-trip)
+  if (window.TRANSLATIONS[langCode] && Object.keys(window.TRANSLATIONS[langCode]).length > 0) {
+    applyTranslationsToDOM();
+    return;
+  }
+
+  // 3. Cache Miss: Fetch batch translation from backend API with subtle loading feedback
+  const baseStrings = window.TRANSLATIONS['en'] || window.BASE_STRINGS || {};
+  const langBtn = el.langToggleBtn || document.getElementById('lang-toggle-btn');
+
+  try {
+    if (langBtn) langBtn.classList.add('lang-loading-shimmer');
+
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        strings: baseStrings,
+        from: 'en',
+        to: langCode,
+        isDynamic: false
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Translation API HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data && data.success && data.translations) {
+      window.TRANSLATIONS[langCode] = data.translations;
+      applyTranslationsToDOM();
+    } else {
+      throw new Error('Invalid translation response');
+    }
+  } catch (err) {
+    console.warn(`[KisanSahay] Translation notice (${err.message}). Falling back gracefully to base language.`);
+    applyTranslationsToDOM();
+  } finally {
+    if (langBtn) langBtn.classList.remove('lang-loading-shimmer');
+  }
+}
+
+/**
+ * On-the-fly Dynamic Translation helper (for scheme details / chat responses)
+ * Bypasses static cache so dynamic information is never stale
+ */
+async function translateDynamic(texts, targetLang) {
+  if (!targetLang || targetLang === 'en' || !texts) return texts;
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        texts,
+        from: 'en',
+        to: targetLang,
+        isDynamic: true
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success) return data.translations;
+    }
+  } catch (err) {
+    console.warn('[KisanSahay] Dynamic translation warning:', err.message);
+  }
+  return texts;
+}
+
 
 // ==========================================================================
 // Navigation & Views

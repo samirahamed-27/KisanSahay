@@ -78,6 +78,19 @@ router.post('/notifications/push-subscription', apiLimiter, saveSubscription);
 const { handleSynthesize } = require('../controllers/ttsController');
 router.post('/tts/synthesize', apiLimiter, handleSynthesize);
 
+// 12. Runtime Translation API (Batching, Caching & Dynamic Scheme Translation)
+const {
+  handleTranslate,
+  handleGetLanguages,
+  handleGetCacheStats,
+  handleClearCache
+} = require('../controllers/translationController');
+
+router.post('/translate', apiLimiter, handleTranslate);
+router.get('/translate/languages', apiLimiter, handleGetLanguages);
+router.get('/translate/cache-stats', apiLimiter, handleGetCacheStats);
+router.post('/translate/cache-clear', apiLimiter, handleClearCache);
+
 module.exports = router;
 
 
