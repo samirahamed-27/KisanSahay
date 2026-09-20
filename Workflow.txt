@@ -1,0 +1,945 @@
+================================================================================
+          KISANSAHAY — COMPLETE SYSTEM WORKFLOW & API DOCUMENTATION
+================================================================================
+
+Application Name  : KisanSahay
+Version           : 1.0.0
+Purpose           : Accessible Agricultural Finance & Government Scheme Portal
+Target Users      : Indian Farmers (Small, Marginal, Tenant, SHG Members)
+Languages         : 25 Indian Languages with Runtime Translation
+Accessibility     : PWA (Progressive Web App) — Offline-capable, Installable
+Server            : Node.js + Express.js on http://localhost:3000
+API Docs          : http://localhost:3000/api/docs (Interactive Swagger UI)
+GitHub Branch     : veersingh/feature → main
+GitHub Repo       : https://github.com/samirahamed-27/KisanSahay
+
+
+================================================================================
+1. PROJECT FOLDER STRUCTURE
+================================================================================
+
+KisanSahay/
+│
+├── server.js                          ← Main Express server entry point
+├── package.json                       ← Dependencies & npm scripts
+├── vercel.json                        ← Vercel deployment configuration
+├── capacitor.config.json              ← iOS/Android packaging config
+│
+├── public/                            ← Frontend (served to browser)
+│   ├── index.html                     ← Main HTML page (Single Page App)
+│   ├── app.js                         ← Core frontend application logic (~5700 lines)
+│   ├── styles.css                     ← All CSS styling (~9100 lines)
+│   ├── different_languages.js         ← 25 Language metadata + English base strings
+│   ├── categories_data.js             ← 15 National scheme categories data
+│   ├── schemes_data.js                ← 679 Government schemes (offline access)
+│   ├── multiuser.js                   ← Multi-profile UI logic
+│   ├── voice_input.js                 ← Voice recognition input handler
+│   ├── sw.js                          ← Service Worker (PWA offline support)
+│   ├── manifest.json                  ← PWA manifest (name, icons, shortcuts)
+│   └── icons/                         ← App icons (192x192, 512x512)
+│
+├── public copy/                       ← Exact mirror of public/ (test parity)
+│   └── [identical files as public/]
+│
+├── src/                               ← Backend source code
+│   ├── routes/
+│   │   ├── apiRoutes.js               ← All /api/* route definitions
+│   │   └── docsRoutes.js              ← Swagger UI at /api/docs
+│   │
+│   ├── controllers/
+│   │   ├── assistantController.js     ← Sahay AI chatbot handler
+│   │   ├── contextController.js       ← Location + Soil API handlers
+│   │   ├── ingestController.js        ← Data refresh trigger handler
+│   │   ├── multiuserController.js     ← Multi-user OTP auth handlers
+│   │   ├── notificationController.js  ← Notification CRUD handlers
+│   │   ├── recommendController.js     ← Eligibility scoring handlers
+│   │   ├── reviewController.js        ← Staged scheme review handlers
+│   │   ├── schemesController.js       ← Schemes catalog handlers
+│   │   ├── translationController.js   ← Runtime translation handlers
+│   │   ├── ttsController.js           ← Text-to-Speech handler
+│   │   └── vaultController.js         ← Document Vault handlers
+│   │
+│   ├── services/
+│   │   ├── assistantService.js        ← Sahay AI (RAG-based scheme Q&A)
+│   │   ├── debtSafetyEngine.js        ← Debt-to-Income (DTI) safety analysis
+│   │   ├── ingestionService.js        ← Government data auto-ingestion
+│   │   ├── locationContext.js         ← GPS + district context resolution
+│   │   ├── multiuserService.js        ← OTP generation, profiles, sandboxing
+│   │   ├── notificationService.js     ← EMI reminders, push subscriptions
+│   │   ├── scoringEngine.js           ← Multi-factor scheme ranking (0–100)
+│   │   ├── soilFertilityEngine.js     ← Haversine soil fertility grid lookup
+│   │   ├── translationCache.js        ← LRU hash-based translation cache
+│   │   ├── translationService.js      ← Google/Bhashini/Offline translation
+│   │   ├── ttsService.js              ← Google Neural TTS / Azure TTS
+│   │   ├── unitConverter.js           ← Agricultural unit conversions
+│   │   └── vaultService.js            ← AES-256-GCM document encryption
+│   │
+│   ├── middleware/
+│   │   ├── errorHandler.js            ← RFC 7807 global error handler
+│   │   ├── rateLimiter.js             ← Express-rate-limit protection
+│   │   └── validator.js               ← Input validation middleware
+│   │
+│   ├── data/                          ← JSON data stores
+│   │   ├── schemesDatabase.json       ← 679 schemes from 21 states
+│   │   ├── cropsData.json             ← 63 crop types with soil/season data
+│   │   ├── strings.json               ← 189 English UI base strings (i18n source)
+│   │   ├── dynamicSoilFertility.json  ← ~300km resolution soil grid
+│   │   ├── soilAgriData.json          ← State/district soil profiles
+│   │   ├── landPricesData.json        ← UP, MP, Bihar land circle rates
+│   │   ├── cropTrendsData.json        ← Crop market trend data
+│   │   ├── translationCache.json      ← Persisted LRU translation cache
+│   │   ├── multiuserProfiles.json     ← User profiles (mirror)
+│   │   ├── notifications.json         ← Notifications (mirror)
+│   │   ├── stagedSchemes.json         ← Pending human review queue
+│   │   └── userDocumentsVault.json    ← Encrypted vault verifiers (mirror)
+│   │
+│   └── config/
+│       └── swagger.js                 ← OpenAPI 3.0 specification
+│
+├── Data/Data/                         ← Primary live data directory
+│   ├── loans.json                     ← Active + ended loan records
+│   ├── notifications.json             ← Live notification store
+│   ├── multiuser_profiles.json        ← Live user profile store
+│   ├── user_documents_vault.json      ← Live vault encryption data
+│   ├── push_subscriptions.json        ← Browser push notification subscriptions
+│   └── tts_cache/                     ← Cached TTS audio MP3 files
+│
+├── tests/                             ← Automated test suites (48 tests)
+│   ├── assistantAndEligibility.test.js
+│   ├── debtSafetyEngine.test.js
+│   ├── locationContext.test.js
+│   ├── multiuserAndCategories.test.js
+│   ├── notificationAndVoice.test.js
+│   ├── regionalSchemesAndCrops.test.js
+│   ├── scoringEngine.test.js
+│   ├── soilFertilityEngine.test.js
+│   ├── translationService.test.js    ← 6 new translation API tests
+│   └── vaultService.test.js
+│
+└── vercel.json                        ← Routing config for cloud deployment
+
+
+================================================================================
+2. HOW THE WEBSITE WORKS — COMPLETE WORKFLOW
+================================================================================
+
+STEP 1: SERVER STARTUP
+───────────────────────
+  - Running: `node server.js` or `npm start`
+  - Express.js server starts on Port 3000
+  - Static files from /public/ are served to browser
+  - Two route groups are mounted: /api (apiRoutes) and /api/docs (Swagger)
+  - Two background jobs start automatically:
+    a) Scheduled Scheme Ingestion (weekly refresh from government portals)
+    b) Scheduled EMI Reminders (daily check of loans, creates notifications)
+
+STEP 2: BROWSER LOADS THE APP
+───────────────────────────────
+  When a farmer opens http://localhost:3000 or the deployed URL:
+  1. index.html is served
+  2. Browser loads CSS (styles.css), core JS (app.js), data files
+  3. Service Worker (sw.js) installs and pre-caches the application shell
+     → After first load, the app works OFFLINE with no internet required
+  4. different_languages.js loads (25 language metadata + English base strings)
+  5. schemes_data.js loads (679 schemes for offline scheme browsing)
+  6. categories_data.js loads (15 national categories)
+  7. manifest.json makes the app installable as a PWA on Android, iOS, Windows
+
+STEP 3: FARMER USES THE APP
+─────────────────────────────
+  The app has 4 main sections accessible via the navigation bar:
+
+  A) HOME PAGE
+     - Hero banner with statistics (schemes, languages, farmers helped)
+     - 15 scheme category cards (translated dynamically based on language)
+     - "How It Works" section explaining 4 steps
+
+  B) ELIGIBILITY CHECKER
+     - Farmer enters: Crop Type, Annual Income, Locality, Land Size,
+       Land Ownership, Social Category, and Optional: Aadhaar, KCC status
+     - The "Check Eligibility" button calls POST /api/recommend
+     - Backend runs the Multi-Factor Scoring Engine
+     - Results return ranked, scored schemes with eligibility explanations
+
+  C) GOVERNMENT SCHEMES BROWSER
+     - All 679 schemes rendered from local schemes_data.js (instant, no API call)
+     - State filter dropdown (All India + 21 states)
+     - Category explorer (15 categories with hero images, scheme counts)
+     - Document checklist modal for any scheme
+     - "Apply" button adds scheme to loan tracker
+
+  D) MY LOANS & EMIS TRACKER
+     - Shows active and ended loan records (from GET /api/loans)
+     - EMI payment progress bars with amount paid vs. due
+     - "Pay EMI" button to record partial or full payments
+     - Notifications for upcoming EMI due dates (7 days and 1 day warning)
+
+STEP 4: OFFLINE & PWA BEHAVIOR
+────────────────────────────────
+  - Service Worker caches all static assets on first install
+  - Scheme browsing, eligibility checking (with cached data), and EMI tracking
+    work fully offline
+  - When reconnected, API calls sync to backend for fresh data
+  - App can be installed via "Install App" button → appears as native app on phone
+
+STEP 5: LANGUAGE SWITCHING
+────────────────────────────
+  - Top navigation has "English" language selector button
+  - Click → Language modal opens showing 25 Indian language cards
+  - Farmer selects language (e.g. Hindi / Punjabi / Tamil)
+  - If English: applies base strings instantly
+  - If already fetched before: applies from memory instantly (0ms)
+  - If new language: subtle shimmer animates on button, calls POST /api/translate
+    with all 189 UI strings in one batch request, caches the response,
+    then swaps all UI text in-place without reloading the page
+  - Category cards, loan labels, scheme badges all change to selected language
+  - Language choice is saved in localStorage (remembered on next visit)
+
+
+================================================================================
+3. ALL API ENDPOINTS — DETAILED DOCUMENTATION
+================================================================================
+
+BASE URL: http://localhost:3000/api
+SWAGGER DOCS: http://localhost:3000/api/docs
+RATE LIMITS: 200 requests per IP per 15 minutes (general)
+             60 requests per IP per 5 minutes (eligibility endpoint)
+
+────────────────────────────────────────────────────────────────────────────────
+API 1: SCHEME RECOMMENDATION & ELIGIBILITY
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint : POST /api/recommend
+Purpose  : Evaluates farmer's profile against all 679 government schemes,
+           scores them on 5 weighted factors (0–100 scale), and returns them
+           ranked from Best Match to Good Alternatives to Ineligible.
+
+Rate Limit: 60 requests per 5 minutes per IP
+
+Request Body (JSON):
+{
+  "cropType"      : "rice",          ← Required. Crop being grown
+  "annualIncome"  : 120000,          ← Required. Annual income in INR
+  "landSizeAcres" : 2.5,             ← Optional. Defaults to 2.0 acres
+  "district"      : "Ludhiana",      ← Optional. For state-based matching
+  "state"         : "Punjab",        ← Optional. Scheme state filter
+  "landOwnership" : "owner",         ← owner / tenant / sharecropper / leaseholder
+  "category"      : "general",       ← general / sc / st / obc / women
+  "hasAadhaar"    : true,            ← Aadhaar linking status
+  "hasKcc"        : false,           ← Existing Kisan Credit Card
+  "existingLoans" : 50000            ← Outstanding debt for DTI calculation
+}
+
+Response:
+{
+  "success"      : true,
+  "count"        : 15,
+  "tierSummary"  : { "topRecommended": 1, "goodAlternatives": 10, "moderateFits": 4 },
+  "debtCapacity" : { "maxSafeBorrowingLimit": 75000, "baselineDTI": 22.5, ... },
+  "schemes"      : [
+    {
+      "id"           : "kcc",
+      "name"         : "Kisan Credit Card (KCC) Crop Loan",
+      "score"        : 94,
+      "tier"         : "TOP_RECOMMENDED",
+      "badgeText"    : "★ Top Recommended",
+      "eligible"     : true,
+      "matchReasons" : ["Eligible for your OWNER landholding status", ...],
+      "debtSafety"   : { "status": "SAFE", "newEMI": 2340, "newDTI": 28.1 },
+      "baseInterestRate"      : 9.0,
+      "subsidizedInterestRate": 4.0,
+      "maxLoanAmount"         : 300000,
+      "highlights"   : ["Zero collateral up to ₹1.6 lakh", ...],
+      "documents"    : ["Aadhaar Card", "Khasra-Khatauni", ...],
+      ...
+    },
+    ...
+  ]
+}
+
+SCORING ENGINE — 5 WEIGHTED FACTORS:
+  Factor 1: Eligibility Match         (35% weight) — Land, income, ownership, category
+  Factor 2: Loan Amount Fit           (25% weight) — Whether scheme limit meets need
+  Factor 3: Interest Rate             (20% weight) — Lower rate = higher score
+  Factor 4: Crop & State Alignment    (10% weight) — Crop suitability, state priority
+  Factor 5: Strategic Fit             (10% weight) — Additional subsidies, special benefits
+
+SEQUENCE GUARANTEE: Results always return in this strict order:
+  Position 1    : Single BEST MATCH (highest overall score)
+  Positions 2-11: UP TO 10 Good Alternatives (eligible, score ≥ 40)
+  Positions 12+ : Moderate Fits (partial eligibility, score 20–39)
+  End of list   : Ineligible schemes (shown for awareness, clearly labelled)
+
+────────────────────────────────────────────────────────────────────────────────
+API 2: SCHEMES CATALOG
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint : GET /api/schemes
+Purpose  : Returns all published government schemes from database
+Query    : ?category=CROP+LOAN&state=Punjab&search=kcc
+
+Endpoint : GET /api/schemes/:id
+Purpose  : Returns full details of a single scheme by its ID
+
+Endpoint : GET /api/schemes/review-queue
+Purpose  : Returns schemes pending human review before publishing
+
+Endpoint : POST /api/schemes/review-action
+Purpose  : Approve or reject a scheme from the human review queue
+Body     : { "schemeId": "xyz", "action": "approve" | "reject", "notes": "..." }
+
+Database : 679 total schemes across:
+  - 24 categories (Crop Loans, Solar, Livestock, Horticulture, etc.)
+  - 21 Indian states + All-India (Pan-India) schemes
+  - Includes: KCC, PM-KISAN, AIF, PMMY, PM-KUSUM, SMAM, NABARD DEDS,
+    Stand-Up India, SHG-Bank Linkage, PMFME, FIDF, and 670+ more
+
+────────────────────────────────────────────────────────────────────────────────
+API 3: LOANS TRACKER
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : GET /api/loans?status=all|active|ended
+Purpose   : Returns all loan records with enriched financial calculations
+Response includes: totalBorrowed, totalPaid, totalDue, totalMonthlyEmi,
+                   activeCount, endedCount, enriched per-loan data
+
+Endpoint  : POST /api/loans
+Purpose   : Add a new loan/scheme to the tracker
+Body      : { schemeName, principalAmount, interestRate, tenureMonths,
+              bankName, paidAmount, dueDate, cropOrPurpose, ... }
+
+Endpoint  : PUT /api/loans/:id/payment
+Purpose   : Record a payment made towards a loan
+Body      : { amount: 5000, note: "Monthly EMI" }
+Behavior  : Auto-marks loan as "Ended" when fully paid
+
+Endpoint  : PUT /api/loans/:id/status
+Purpose   : Toggle loan status between Active and Ended
+
+Endpoint  : DELETE /api/loans/:id
+Purpose   : Remove a closed/ended loan from tracker
+PROTECTION: Active loans with remaining due amount CANNOT be deleted
+            Returns HTTP 403 Forbidden to prevent accidental data loss
+
+FINANCIAL CALCULATIONS (all done on backend):
+  EMI Formula    : [P × r × (1+r)^n] / [(1+r)^n – 1]
+  where P = principal, r = monthly interest rate, n = tenure months
+  DueAmount      : Total with interest – Amount paid
+  PercentPaid    : (paidAmount / totalWithInterest) × 100
+
+────────────────────────────────────────────────────────────────────────────────
+API 4: RUNTIME TRANSLATION API
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : POST /api/translate
+Purpose   : Translate a batch of UI strings or dynamic content to any of
+            25 supported Indian languages in a single HTTP call
+
+Request Body:
+{
+  "strings"   : { "navHome": "Home", "checkElig": "Check Eligibility", ... },
+                  OR use "texts" for array input: ["Home", "Check Eligibility"]
+  "from"      : "en",       ← Source language (default: English)
+  "to"        : "hi",       ← Target language code (hi, pa, mr, ta, te, ...)
+  "isDynamic" : false        ← If true: bypass cache (for live scheme details)
+}
+
+Response:
+{
+  "success"      : true,
+  "translations" : { "navHome": "होम", "checkElig": "पात्रता जांचें" },
+  "from"         : "en",
+  "to"           : "hi",
+  "stats"        : { "total": 2, "cached": 2, "translated": 0, "provider": "offline" }
+}
+
+BATCH STRATEGY: All 189 UI strings are sent in ONE single request, not one per string.
+This minimizes API calls and billing cost.
+
+PROVIDER CHAIN (tries in order):
+  1. Google Cloud Translation API (if GOOGLE_TRANSLATE_API_KEY is set in .env)
+     - REST: POST https://translation.googleapis.com/language/translate/v2
+     - Pricing: First 500,000 characters/month FREE; then $20 per 1M characters
+     - Latency: 80–200ms (Google Edge Network)
+  2. Bhashini API — Government of India (if BHASHINI_API_KEY + BHASHINI_USER_ID set)
+     - REST: POST https://dhruva-api.bhashini.gov.in/services/inference/pipeline
+     - Pricing: FREE for public-interest, government-backed apps
+     - Latency: 300–800ms
+     - Registration: https://bhashini.gov.in
+  3. Built-in Offline Engine (default — no credentials needed)
+     - Uses core agricultural terminology dictionary
+     - Provides graceful fallback so app never shows blank text
+
+CACHE SYSTEM:
+  - Type: Minimal-storage LRU (Least Recently Used) Hash Cache
+  - Key format: First 16 hex chars of SHA-256(sourceText) + ":" + targetLang
+    Example: "5c74c673f28b37b8:hi"
+  - TTL: 30 days (UI strings rarely change)
+  - Max size: 5,000 entries (auto-evicts oldest on overflow)
+  - Dynamic content (isDynamic: true): NEVER cached — always fresh
+  - Persistence: Saved to src/data/translationCache.json (survives server restart)
+  - Cache hit: Returns instantly (0ms API call)
+  - Cache miss: Calls provider once, stores result, serves response
+
+SINGLE SOURCE OF TRUTH:
+  - All 189 base English UI strings are in src/data/strings.json
+  - Frontend loads these via public/different_languages.js
+  - Previous approach: 4,456 lines of hardcoded per-language copies (350 KB)
+  - New approach: 1 source file + on-demand runtime translation (12 KB, 96.5% smaller)
+
+Endpoint  : GET /api/translate/languages
+Purpose   : Returns all 25 supported languages and active translation provider
+
+Response:
+{
+  "success"           : true,
+  "baseLanguage"      : "en",
+  "count"             : 25,
+  "activeProvider"    : "offline",
+  "supportedLanguages": {
+    "en": "English", "hi": "Hindi", "pa": "Punjabi", "bn": "Bengali",
+    "mr": "Marathi", "te": "Telugu", "ta": "Tamil", "gu": "Gujarati",
+    "kn": "Kannada", "ml": "Malayalam", "or": "Odia", "as": "Assamese",
+    "ur": "Urdu", "mai": "Maithili", "bho": "Bhojpuri", "sa": "Sanskrit",
+    "ks": "Kashmiri", "kok": "Konkani", "sd": "Sindhi", "doi": "Dogri",
+    "ne": "Nepali", "mni": "Manipuri", "brx": "Bodo", "sat": "Santali",
+    "raj": "Rajasthani"
+  }
+}
+
+Endpoint  : GET /api/translate/cache-stats
+Purpose   : Returns live cache performance metrics for monitoring
+
+Response:
+{
+  "success": true,
+  "cache": {
+    "size"       : 45,        ← Current number of cached translations
+    "maxSize"    : 5000,      ← Eviction threshold
+    "ttlDays"    : 30,        ← Time-to-live in days
+    "hits"       : 312,       ← Times cache served response (no API call)
+    "misses"     : 48,        ← Times API had to be called
+    "evictions"  : 0,         ← Entries dropped by LRU eviction
+    "hitRatio"   : 0.8667     ← 86.67% cache efficiency
+  }
+}
+
+Endpoint  : POST /api/translate/cache-clear
+Purpose   : Clears all cached translations (admin use, forces fresh translations)
+
+────────────────────────────────────────────────────────────────────────────────
+API 5: SOIL FERTILITY ENGINE
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : GET /api/soil-fertility?district=Ludhiana&state=Punjab
+            OR ?lat=30.9&lon=75.85
+Purpose   : Returns soil fertility profile for a location using a ~300km
+            resolution grid across India. Based on ICAR, Soil Health Card,
+            and NBSS&LUP research data.
+
+Algorithm : Haversine Distance Formula
+  - Finds the closest known soil zone in dynamicSoilFertility.json
+  - Returns soil type, pH, Nitrogen/Phosphorus/Potassium levels,
+    organic matter content, and crop suitability scores
+
+Response:
+{
+  "success"       : true,
+  "resolvedZone"  : "Punjab Doab Zone",
+  "distanceKm"    : 18,
+  "soilProfile"   : {
+    "soilType"       : "Alluvial Clay Loam",
+    "pH"             : 7.4,
+    "organicMatter"  : "Medium (0.5–0.8%)",
+    "nitrogen"       : "High (350–420 kg/ha)",
+    "phosphorus"     : "Medium (22–30 kg/ha)",
+    "potassium"      : "Very High (280–340 kg/ha)"
+  },
+  "cropSuitability": {
+    "wheat"    : { "score": 94, "suitability": "Excellent" },
+    "rice"     : { "score": 82, "suitability": "Good" },
+    "cotton"   : { "score": 61, "suitability": "Moderate" }
+  }
+}
+
+────────────────────────────────────────────────────────────────────────────────
+API 6: LOCATION INTELLIGENCE
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : GET /api/context/location?district=Karnal&state=Haryana
+            OR ?lat=29.68&lon=76.99
+Purpose   : Resolves district and state context, determines crop-soil suitability,
+            and provides agricultural intelligence for a location
+
+Response includes:
+  - Resolved district and state
+  - GPS coordinates
+  - Applicable scheme filter suggestions
+  - Dominant crops for the region
+  - Soil type and fertility summary
+
+────────────────────────────────────────────────────────────────────────────────
+API 7: CROPS CATALOG
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : GET /api/crops
+Purpose   : Returns the complete curated catalog of 63 Indian crop types with:
+  - Crop name and season (Kharif / Rabi / Zaid / Perennial)
+  - Suitable soil types
+  - Water requirement level
+  - Applicable scheme categories
+  - Average market price range
+
+────────────────────────────────────────────────────────────────────────────────
+API 8: SAHAY AI ASSISTANT (RAG CHATBOT)
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : POST /api/assistant/chat
+Purpose   : AI-powered Q&A assistant grounded in verified government scheme data.
+            Uses Retrieval-Augmented Generation (RAG) — answers only from
+            the schemes database, not from general internet knowledge.
+            Supports Hindi and English queries.
+
+Request Body:
+{
+  "message"      : "फसल ऋण के लिए कौन-से दस्तावेज चाहिए?",
+  "language"     : "hi",
+  "farmerProfile": { "state": "Uttar Pradesh", "cropType": "wheat" }
+}
+
+Response:
+{
+  "success" : true,
+  "answer"  : "गेहूं की फसल ऋण के लिए आपको निम्नलिखित दस्तावेज़ चाहिए: ...",
+  "language": "hi",
+  "sources" : [
+    { "schemeId": "kcc", "schemeName": "Kisan Credit Card", "sourceUrl": "https://..." }
+  ],
+  "citations": 3
+}
+
+HOW RAG WORKS:
+  1. Query Analysis: Keyword and attribute scoring against 679 schemes
+  2. Retrieval: Top 3 most relevant schemes selected
+  3. Grounding: Answer constructed ONLY from retrieved scheme data
+  4. Citation: Source links included for verification
+  5. Language: Response in the same language as query (Hindi / English / etc.)
+  6. Strict Policy: If data not found in DB, says "not found" — never guesses
+
+────────────────────────────────────────────────────────────────────────────────
+API 9: MULTI-USER PROFILES & OTP AUTHENTICATION
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : POST /api/auth/send-otp
+Purpose   : Generates and sends a 6-digit OTP for Gmail or Phone login
+Body      : { "identifier": "user@gmail.com", "type": "gmail", "name": "Ramesh" }
+OTP valid : 5 minutes, stored in-memory only (not on disk for security)
+
+Endpoint  : POST /api/auth/verify-otp
+Purpose   : Verifies the 6-digit OTP and activates the profile
+Body      : { "identifier": "user@gmail.com", "otp": "284719" }
+
+Endpoint  : GET /api/users/profiles
+Purpose   : Returns all registered user profiles
+
+Endpoint  : POST /api/users/profiles
+Purpose   : Creates a new user profile (requires verified OTP)
+
+Endpoint  : POST /api/users/switch-profile
+Purpose   : Switches the active profile (sandboxes all data per profile)
+
+Endpoint  : DELETE /api/users/profiles/:id
+Purpose   : Deletes a profile and its associated data
+
+DATA SANDBOXING:
+  Each profile has its own isolated loan history, notifications, vault, and preferences.
+  Profiles are stored in Data/Data/multiuser_profiles.json (primary)
+  and src/data/multiuserProfiles.json (mirror/backup).
+
+────────────────────────────────────────────────────────────────────────────────
+API 10: DOCUMENT VAULT (AES-256-GCM ENCRYPTED)
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : POST /api/vault/save
+Purpose   : Encrypts and stores farmer's sensitive documents with a password
+Body      : {
+  "userId"      : "profile_001",
+  "passwordType": "word" | "number" | "pattern",
+  "password"    : "MyFarmSecret",
+  "documents"   : [{ "name": "Aadhaar", "number": "1234 5678 9012", ... }]
+}
+
+Endpoint  : POST /api/vault/unlock
+Purpose   : Decrypts vault if the correct password is supplied
+Body      : { "userId": "profile_001", "password": "MyFarmSecret" }
+
+Endpoint  : POST /api/vault/reset
+Purpose   : Resets the vault password (existing documents re-encrypted with new key)
+
+Endpoint  : GET /api/vault/status
+Purpose   : Returns vault lock status and document count without decrypting
+
+ENCRYPTION DETAILS:
+  Algorithm : AES-256-GCM (Advanced Encryption Standard, 256-bit, Galois/Counter Mode)
+  Key Derive: PBKDF2 with 100,000 iterations and SHA-256 (industry standard)
+  Salt      : Random 16 bytes per vault (never reused)
+  IV        : Random 12 bytes per encryption (ensures unique ciphertext)
+  Auth Tag  : 16-byte GCM authentication tag (detects any tampering)
+  PASSWORD TYPES:
+    - Word   : Passphrase (e.g. "mysecret")
+    - Number : 4-6 digit PIN (e.g. "4729")
+    - Pattern: 3×3 grid dots (stored as sequence e.g. "0,1,4,7,8")
+
+SECURITY GUARANTEE:
+  - Opening with any wrong password returns HTTP 401
+  - No brute-force pattern — vault locked with a single hash verifier
+  - Documents stored in two mirrored locations for durability
+
+────────────────────────────────────────────────────────────────────────────────
+API 11: NOTIFICATIONS & EMI REMINDERS
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : GET /api/notifications
+Purpose   : Returns all notifications for the current user profile
+Types     : emi_reminder, new_scheme, system, warning
+
+Endpoint  : POST /api/notifications/:id/read
+Purpose   : Marks a specific notification as read
+
+Endpoint  : POST /api/notifications/read-all
+Purpose   : Marks all notifications as read
+
+Endpoint  : POST /api/notifications/push-subscription
+Purpose   : Saves browser push notification subscription (Web Push API)
+Body      : { "subscription": { "endpoint": "...", "keys": {...} } }
+
+AUTOMATED REMINDERS (run daily on server startup):
+  - 7 days before EMI due: Sends "⏰ Upcoming EMI Due in 7 Days" notification
+  - 1 day before EMI due: Sends "🚨 EMI Due Tomorrow" urgent notification
+  - New scheme alerts: Notifies when new schemes are ingested and published
+  - Startup notification: Welcome message with feature summary
+
+────────────────────────────────────────────────────────────────────────────────
+API 12: TEXT-TO-SPEECH (NEURAL VOICE SYNTHESIS)
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : POST /api/tts/synthesize
+Purpose   : Converts scheme descriptions and instructions to natural spoken audio
+            Supporting 9 Indian languages with Google Neural voices
+
+Request Body:
+{
+  "text"    : "किसान क्रेडिट कार्ड योजना के तहत ऋण मिलता है।",
+  "language": "hi",
+  "speed"   : "normal" | "slow"     ← slow = 0.8x for elderly farmers
+}
+
+Response:
+{
+  "success"     : true,
+  "audioDataUri": "data:audio/mp3;base64,SUQzBAAAAAAAI...",
+  "language"    : "hi-IN",
+  "voice"       : "Swara (Hindi Neural)",
+  "speed"       : "normal",
+  "cached"      : false
+}
+
+SUPPORTED VOICES (Google Cloud Neural TTS):
+  Hindi    : Swara — hi-IN-Neural2-A (Female)
+  Kannada  : Sapna — kn-IN-Standard-A (Female)
+  Tamil    : Pallavi — ta-IN-Wavenet-A (Female)
+  Telugu   : Mohana — te-IN-Standard-A (Female)
+  Marathi  : Aarohi — mr-IN-Wavenet-A (Female)
+  Bengali  : Tanishaa — bn-IN-Wavenet-A (Female)
+  Gujarati : Dhwani — gu-IN-Wavenet-A (Female)
+  Punjabi  : Simran — pa-IN-Wavenet-A (Female)
+  English  : Neerja — en-IN-Neural2-D (Female, Indian accent)
+
+DISK CACHE: Audio files cached as MP3 files in Data/Data/tts_cache/
+  Cache Key: MD5(language_code + speed + text)
+  Benefits : Zero latency on repeated reads; no API billing for same text
+
+NOTE: Requires GOOGLE_TTS_API_KEY environment variable.
+      Without it, returns synthesis parameters for client-side Web Speech API.
+
+────────────────────────────────────────────────────────────────────────────────
+API 13: DATA INGESTION & REFRESH
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : POST /api/ingest/refresh
+Purpose   : Manually triggers a refresh of scheme data from government portals
+
+AUTOMATED INGESTION:
+  - Runs on a weekly schedule (background job started at server startup)
+  - Respects robots.txt before crawling any URL
+  - Sources: Ministry of Agriculture portals, NABARD, PM-KISAN, etc.
+  - New schemes go into a staging queue (stagedSchemes.json)
+  - Human review required before publishing to main database
+
+REVIEW QUEUE:
+  - GET /api/schemes/review-queue  → Fetches pending schemes
+  - POST /api/schemes/review-action → Approve/Reject with notes
+
+────────────────────────────────────────────────────────────────────────────────
+API 14: INTERACTIVE API DOCUMENTATION (SWAGGER)
+────────────────────────────────────────────────────────────────────────────────
+
+Endpoint  : GET /api/docs
+Purpose   : Opens interactive Swagger UI for testing all APIs in browser
+            Green-themed UI matching KisanSahay brand colors
+
+Endpoint  : GET /api/docs.json
+Purpose   : Returns raw OpenAPI 3.0 JSON specification for tool integration
+
+
+================================================================================
+4. PROGRESSIVE WEB APP (PWA) — HOW IT WORKS
+================================================================================
+
+KisanSahay is a full PWA, which means:
+
+1. INSTALLABLE (like a native app)
+   - "Install App" button appears in header and in the Switch Profile panel
+   - On Android: Opens "Add to Home Screen" prompt
+   - On iPhone: "Share → Add to Home Screen"
+   - On Windows/Mac: Browser install button in address bar
+   - After install: App icon appears on device, opens in standalone window
+
+2. OFFLINE CAPABLE
+   Service Worker Strategy:
+   - CACHE-FIRST: static files (HTML, CSS, JS, images) — instant loads
+   - NETWORK-FIRST: API calls (/api/*) — fresh data when online
+   - FALLBACK: Cached data served when network fails
+   Pre-cached Assets: index.html, styles.css, app.js, scheme data, icons
+
+3. WEB PUSH NOTIFICATIONS
+   - Browser asks permission on first visit
+   - Service Worker handles push events in background (even when app is closed)
+   - Farmer receives EMI reminders even when phone screen is off
+
+4. QR CODE SHARING
+   - App generates a QR code of its URL
+   - Farmers can share with family members to install on their devices
+
+5. INTERNET SPEED MONITOR
+   - Live WiFi signal indicator in top-left corner of navigation bar
+   - Color coded: Green (>5 Mbps good) / Yellow (1–5 Mbps moderate) / Red (<1 Mbps slow)
+   - Updates every few seconds using browser Performance API
+
+
+================================================================================
+5. SECURITY FEATURES SUMMARY
+================================================================================
+
+1. Rate Limiting
+   - General APIs: 200 requests per IP per 15 minutes
+   - Eligibility API: 60 requests per IP per 5 minutes
+   - Returns HTTP 429 Too Many Requests on violation
+
+2. Active Loan Protection
+   - Active loans with remaining balance CANNOT be deleted (HTTP 403 Forbidden)
+   - Prevents accidental data loss; only fully-paid loans can be archived
+
+3. Document Vault Encryption
+   - AES-256-GCM authenticated encryption
+   - PBKDF2 key derivation (100,000 iterations)
+   - Wrong password: returns authentication failure, no partial data leaked
+
+4. OTP Expiry
+   - All OTPs expire after exactly 5 minutes
+   - Stored only in server memory (not in database)
+   - No reuse allowed after verification
+
+5. Document Checklist Gate
+   - Loans applied through scheme modal require checklist completion
+   - Cannot apply for scheme without ticking required documents
+
+6. Input Validation Middleware
+   - All POST/PUT endpoints validate required fields
+   - Income must be numeric and positive
+   - Land size must be non-negative number
+
+7. RFC 7807 Error Responses
+   - All errors follow standard JSON problem format:
+     { "type": "...", "title": "...", "status": 400, "detail": "..." }
+
+
+================================================================================
+6. DATA FILES — WHAT THEY STORE
+================================================================================
+
+src/data/schemesDatabase.json
+  - 679 government agricultural schemes
+  - Fields: id, name, shortName, category, subCategory, provider,
+    baseInterestRate, subsidizedInterestRate, maxLoanAmount, collateralFreeLimit,
+    eligibilityCriteria, documents, highlights, state, whatItIs, howToApply,
+    sourceUrl, last_fetched_at, provider_name
+
+src/data/cropsData.json
+  - 63 curated Indian crop types
+  - Fields: name, season (Kharif/Rabi/Zaid/Perennial), soilTypes,
+    waterRequirement, schemesApplicable, avgPriceRange
+
+src/data/strings.json
+  - 189 English UI strings (Single Source of Truth for i18n)
+  - Used as base for runtime translations to all 25 languages
+
+src/data/dynamicSoilFertility.json
+  - ~300km resolution soil fertility grid across India
+  - Fields per zone: lat, lon, zoneName, soilType, pH, N, P, K,
+    organicMatter, cropSuitabilityScores
+
+src/data/soilAgriData.json
+  - State and district-level soil profiles and agricultural summaries
+
+src/data/landPricesData.json
+  - Land circle rates for Uttar Pradesh, Madhya Pradesh, Bihar districts
+  - Used for Scoring Engine property value assessment
+
+src/data/translationCache.json
+  - Persisted LRU translation cache (survives server restarts)
+  - Format: [ { key, value, expiresAt, lastAccessed }, ... ]
+
+Data/Data/loans.json
+  - All farmer loan records (active + ended)
+  - Fields: id, schemeName, principalAmount, interestRate, tenureMonths,
+    paidAmount, dueAmount, monthlyEmi, emisLeft, status, payments[]
+
+Data/Data/notifications.json
+  - All notification records with read/unread status
+
+Data/Data/multiuser_profiles.json
+  - All farmer profiles registered via OTP
+  - Default profile "Veer Singh" with +91 98765 43210
+
+Data/Data/user_documents_vault.json
+  - Encrypted vault per user (salt, IV, authTag, encryptedData, verifierHash)
+  - Never stores raw documents — only AES-256-GCM encrypted blobs
+
+
+================================================================================
+7. HOW TO RUN LOCALLY
+================================================================================
+
+Prerequisites:
+  - Node.js v18+ installed
+  - npm installed
+
+Commands:
+  1. Clone the repository
+     git clone https://github.com/samirahamed-27/KisanSahay.git
+
+  2. Navigate into project folder
+     cd KisanSahay
+
+  3. Checkout the feature branch
+     git checkout veersingh/feature
+
+  4. Install dependencies
+     npm install
+
+  5. Start the server
+     npm start        ← Runs: node server.js
+     OR
+     npm run dev      ← Runs: node --watch server.js (auto-restarts on changes)
+
+  6. Open in browser
+     http://localhost:3000
+
+  7. Open API documentation
+     http://localhost:3000/api/docs
+
+  8. Run automated tests
+     npm test          ← Runs all 48 test suites
+
+OPTIONAL ENVIRONMENT VARIABLES (for cloud features):
+  Create a .env file in the project root:
+
+  GOOGLE_TRANSLATE_API_KEY=your_gcp_translation_api_key
+  GOOGLE_TTS_API_KEY=your_gcp_tts_api_key
+  TRANSLATION_PROVIDER=google         ← or "bhashini" or "offline"
+  BHASHINI_API_KEY=your_bhashini_key
+  BHASHINI_USER_ID=your_bhashini_user_id
+  PORT=3000
+
+  Without these keys, the app runs perfectly using built-in offline fallback.
+
+
+================================================================================
+8. TEST SUITE SUMMARY (48 AUTOMATED TESTS — ALL PASSING)
+================================================================================
+
+Test File                          Tests  What It Validates
+─────────────────────────────────────────────────────────────────────────────
+assistantAndEligibility.test.js      4   Sahay AI grounding, Hindi queries,
+                                         Dynamic filter facets, 95% hard cap rule
+debtSafetyEngine.test.js             4   Safe DTI, Moderate DTI, Debt trap,
+                                         Zero income edge case
+locationContext.test.js              3   District lookup, GPS fallback, Soil suitability
+multiuserAndCategories.test.js       4   Profile engine, OTP generation, 15 categories
+notificationAndVoice.test.js        10   EMI reminders, Voice input, Loan validation,
+                                         Aadhaar linking, Document checklist,
+                                         Active loan protection, TTS, State selector,
+                                         PWA parity, public/ & public copy/ identity
+regionalSchemesAndCrops.test.js      4   Crops catalog, Schemes DB (679+),
+                                         Data sync mirror, Territorial coverage
+scoringEngine.test.js                4   Multi-factor scoring, Strict sequence,
+                                         Women/SC/ST subsidies, Score bounds
+soilFertilityEngine.test.js          3   Haversine accuracy, 300km resolution,
+                                         District/state fallback
+translationService.test.js           6   Base strings source of truth (189 keys),
+                                         Hash cache TTL & LRU eviction,
+                                         Batch API caching, Dynamic bypass,
+                                         Languages endpoint, Cache stats
+vaultService.test.js                 5   Word encryption, PIN encryption, Pattern lock,
+                                         Strict exclusivity, Password reset
+─────────────────────────────────────────────────────────────────────────────
+TOTAL                               48   All Passing ✔
+
+
+================================================================================
+9. TECH STACK SUMMARY
+================================================================================
+
+Frontend:
+  - HTML5 (Single Page Application — no framework)
+  - Vanilla JavaScript (ES2022, async/await, Fetch API, Web Speech API)
+  - Vanilla CSS (dark mode, glassmorphism, CSS grid, animations)
+  - PWA: Service Worker (sw.js) + Web App Manifest (manifest.json)
+  - Service Worker Strategy: Cache-First for shell, Network-First for APIs
+
+Backend:
+  - Runtime: Node.js v18+
+  - Server: Express.js 4.x
+  - Rate Limiting: express-rate-limit
+  - API Docs: swagger-ui-express (OpenAPI 3.0)
+  - Encryption: Node.js built-in `crypto` (AES-256-GCM, PBKDF2)
+  - HTTP Client: Node.js built-in `https` module (no axios needed)
+  - Packaging: @capacitor/core + @capacitor/ios (for native app builds)
+
+External APIs (Optional — app works offline without them):
+  - Google Cloud Translation API v2 (runtime translation)
+  - Google Cloud Text-to-Speech API (Neural2/WaveNet Indian voices)
+  - Bhashini Government API (free alternative for Indian languages)
+
+Data Storage:
+  - JSON files on disk (no external database required)
+  - Primary: Data/Data/*.json | Mirror: src/data/*.json
+
+Languages Supported:
+  25 Indian Languages — English, Hindi, Punjabi, Bengali, Marathi, Telugu,
+  Tamil, Gujarati, Kannada, Malayalam, Odia, Assamese, Urdu, Maithili,
+  Bhojpuri, Sanskrit, Kashmiri, Konkani, Sindhi, Dogri, Nepali, Manipuri,
+  Bodo, Santali, Rajasthani
+
+Deployment:
+  - Vercel (vercel.json configuration included)
+  - Can also deploy to: Railway, Render, Heroku, or any VPS with Node.js
+
+
+================================================================================
+END OF DOCUMENT
+Last Updated: September 2026
+KisanSahay Version: 1.0.0
+GitHub: https://github.com/samirahamed-27/KisanSahay (branch: veersingh/feature)
+================================================================================
