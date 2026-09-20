@@ -2,6 +2,7 @@ node_modules/
 .DS_Store
 *.log
 *.keystore
+scratch/
 
 # iOS / Capacitor
 ios/App/Pods/

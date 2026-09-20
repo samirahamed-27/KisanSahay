@@ -1,7 +1,7 @@
 /**
  * KisanSahay Frontend Application Logic
  * Accessible Agricultural Finance & Multi-Loan Management Portal
- * Supports 15 Indian Languages, Active & Ended Loan Tracking, and Screenshot-Exact UI
+ * Supports 25 Indian Languages, Active & Ended Loan Tracking, and Screenshot-Exact UI
  */
 
 // Application State
@@ -273,7 +273,7 @@ function formatINR(amount) {
 }
 
 // ==========================================================================
-// 15 Indian Languages Engine
+// 25 Indian Languages Engine
 // ==========================================================================
 
 function setupLanguages() {
@@ -1417,10 +1417,10 @@ function renderSchemesGrid(schemes) {
         <!-- Actions: Choose Loan & View Checklist -->
         <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem;">
           <button class="btn-view-details ${tierInfo.themeColor}" style="flex: 1;" onclick="chooseLoanFromEligibility('${scheme.id}')">
-            <span>🌾 Choose Loan</span>
+            <span>${t('btnChooseLoan', '🌾 Choose Loan')}</span>
             <span>+</span>
           </button>
-          <button class="btn-icon-secondary" style="width: 42px; height: 38px; border-radius: var(--radius-sm); font-size: 0.95rem;" title="Document Checklist" onclick="openChecklist('${scheme.id}')">
+          <button class="btn-icon-secondary" style="width: 42px; height: 38px; border-radius: var(--radius-sm); font-size: 0.95rem;" title="${t('btnDocChecklist', '📋 Checklist')}" onclick="openChecklist('${scheme.id}')">
             📋
           </button>
         </div>
@@ -4967,10 +4967,10 @@ function filterAndRenderCategorySchemes() {
       </div>
       <div style="display: flex; gap: 0.8rem; align-items: center; margin-top: 0.4rem; flex-wrap: wrap;">
         <a href="${item.applyUrl || '#'}" target="_blank" rel="noopener noreferrer" class="cat-card-action-btn">
-          <span>Apply on Official Portal</span> <span>↗</span>
+          <span>${t('btnApplyPortal', 'Apply on Official Portal')}</span> <span>↗</span>
         </a>
         <button type="button" class="btn-rec-docs" onclick="openChecklist('${item.id}')">
-          📋 Check Required Documents
+          📋 ${t('btnCheckDocs', 'Check Required Documents')}
         </button>
       </div>
     </div>

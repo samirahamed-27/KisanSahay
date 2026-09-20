@@ -402,11 +402,11 @@
       <!-- Breadcrumb & Back Navigation -->
       <div class="category-explorer-top-bar">
         <button type="button" class="btn-back-to-categories" id="btn-back-categories" onclick="switchView('home')">
-          <span>←</span> <span>Back</span>
+          <span>←</span> <span data-i18n="btnBack">Back</span>
         </button>
         <div style="font-size: 0.85rem; color: var(--text-muted);">
           <a href="javascript:void(0)" onclick="switchView('home')"
-            style="color: inherit; text-decoration: none; font-weight: 500;">Home</a> &gt; Categories &gt; <span
+            style="color: inherit; text-decoration: none; font-weight: 500;" data-i18n="navHome">Home</a> &gt; <span data-i18n="tabCategories">Categories</span> &gt; <span
             id="cat-breadcrumb-title" style="color: var(--accent-emerald, #10b981); font-weight: 700;">Agriculture,
             Rural &amp; Environment</span>
         </div>
@@ -420,7 +420,7 @@
       <!-- Search Input with Exact Match Hint -->
       <div class="cat-search-wrap">
         <div class="cat-search-input-box">
-          <input type="text" id="cat-search-input" class="cat-search-input" placeholder="Search" autocomplete="off">
+          <input type="text" id="cat-search-input" class="cat-search-input" placeholder="Search schemes by name or keyword..." data-i18n-placeholder="searchPlaceholder" autocomplete="off">
           <button type="button" id="cat-search-btn" class="cat-search-btn" title="Search Schemes">
             🔍
           </button>
@@ -432,9 +432,9 @@
 
       <!-- Segmented Scope Tabs (All Schemes | Central | State) -->
       <div class="cat-scope-tabs-bar" id="cat-scope-tabs-bar">
-        <button type="button" class="cat-scope-tab active" data-cat-scope="all">All Schemes</button>
-        <button type="button" class="cat-scope-tab" data-cat-scope="central">Central</button>
-        <button type="button" class="cat-scope-tab" data-cat-scope="state">State</button>
+        <button type="button" class="cat-scope-tab active" data-cat-scope="all" data-i18n="scopeAll">All Schemes</button>
+        <button type="button" class="cat-scope-tab" data-cat-scope="central" data-i18n="scopeCentral">Central</button>
+        <button type="button" class="cat-scope-tab" data-cat-scope="state" data-i18n="scopeState">State</button>
       </div>
 
       <!-- Two-Column Explorer Layout -->
@@ -442,8 +442,8 @@
         <!-- Left Filter Sidebar -->
         <aside class="cat-filter-sidebar">
           <div class="cat-sidebar-header">
-            <span class="cat-sidebar-title">Filter By</span>
-            <button type="button" class="cat-btn-reset-filters" id="cat-btn-reset-filters">Reset Filters</button>
+            <span class="cat-sidebar-title" data-i18n="filterBy">Filter By</span>
+            <button type="button" class="cat-btn-reset-filters" id="cat-btn-reset-filters" data-i18n="resetFilters">Reset Filters</button>
           </div>
 
           <div class="cat-filter-group">
@@ -2470,7 +2470,7 @@
           <div class="pwa-perk-item">
             <span class="pwa-perk-icon">🗣️</span>
             <div>
-              <strong>15 Indian Languages</strong>
+              <strong>25 Indian Languages</strong>
               <small>Voice-assisted for rural accessibility</small>
             </div>
           </div>
