@@ -257,6 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupPWAInstallPrompt();
   setupUniversalPWADownloadModal();
   setupMobileAppDownloadBar();
+  setupDynamicProcessSection();
 
   // Apply saved language
   setLanguage(state.currentLang);
@@ -329,7 +330,10 @@ function applyTranslationsToDOM() {
   document.querySelectorAll('[data-i18n]').forEach(elem => {
     const key = elem.getAttribute('data-i18n');
     const existing = elem.textContent ? elem.textContent.trim() : '';
-    const translated = t(key, existing);
+    let translated = t(key, existing);
+    if (key === 'btnBack' && translated) {
+      translated = translated.replace(/^[←\s]+/, '').trim();
+    }
     if (translated && translated !== key) {
       elem.textContent = translated;
     }
@@ -1110,10 +1114,7 @@ function getActiveSchemesFiltered() {
   const catFilter = activeCategoryBtn ? activeCategoryBtn.getAttribute('data-filter') : 'all';
 
   const allIndiaSelect = document.getElementById('schemes-all-india-state-select');
-  const selectedDropdownState = allIndiaSelect ? allIndiaSelect.value : 'all';
-  const activeStateBtn = document.querySelector('.state-chip-btn.active');
-  const stateChipVal = activeStateBtn ? activeStateBtn.getAttribute('data-state') : 'all';
-  const stateFilter = (selectedDropdownState && selectedDropdownState !== 'all') ? selectedDropdownState : stateChipVal;
+  const stateFilter = (allIndiaSelect && allIndiaSelect.value !== 'all') ? allIndiaSelect.value : '';
 
   let list = state.schemes || [];
 
@@ -1173,6 +1174,18 @@ function applySchemesFilters(resetBatch = true) {
   }
   activeSchemesFilteredList = getActiveSchemesFiltered();
   renderSchemesGrid(activeSchemesFilteredList);
+
+  // Dynamic Live State Schemes Count Beacon
+  const stateCountText = document.getElementById('state-count-text');
+  const allIndiaSelect = document.getElementById('schemes-all-india-state-select');
+  if (stateCountText) {
+    const selState = allIndiaSelect ? allIndiaSelect.value : 'all';
+    if (selState && selState !== 'all') {
+      stateCountText.textContent = `${activeSchemesFilteredList.length} Schemes in ${selState}`;
+    } else {
+      stateCountText.textContent = `${activeSchemesFilteredList.length} Verified Schemes Nationwide`;
+    }
+  }
 }
 
 function setupSchemesSearch() {
@@ -1191,33 +1204,11 @@ function setupSchemesSearch() {
   });
 
   const allIndiaSelect = document.getElementById('schemes-all-india-state-select');
-  const stateBtns = document.querySelectorAll('.state-chip-btn');
-
   if (allIndiaSelect) {
     allIndiaSelect.addEventListener('change', () => {
-      const selected = allIndiaSelect.value;
-      stateBtns.forEach(b => {
-        if (b.getAttribute('data-state') === selected) {
-          b.classList.add('active');
-        } else {
-          b.classList.remove('active');
-        }
-      });
       applySchemesFilters(true);
     });
   }
-
-  stateBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      stateBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const st = btn.getAttribute('data-state') || 'all';
-      if (allIndiaSelect) {
-        allIndiaSelect.value = st;
-      }
-      applySchemesFilters(true);
-    });
-  });
 
   // Schemes Sorting Dropdown Listener
   if (el.schemesSortSelect) {
@@ -1677,10 +1668,22 @@ function setupDocumentVault() {
   if (btnResetForm) {
     btnResetForm.addEventListener('click', () => {
       if (el.eligibilityForm) el.eligibilityForm.reset();
+      if (el.cropInput) el.cropInput.value = '';
+      if (el.landSizeInput) el.landSizeInput.value = '';
+      if (el.stateInput) el.stateInput.value = '';
+      if (el.districtInput) el.districtInput.value = '';
+      if (el.incomeInput) el.incomeInput.value = '';
+      if (el.existingLoansInput) el.existingLoansInput.value = '';
       const geoLat = document.getElementById('geo-lat');
       const geoLong = document.getElementById('geo-long');
       if (geoLat) geoLat.value = '';
       if (geoLong) geoLong.value = '';
+      state.userFarmProfile = null;
+      try {
+        const activeProfile = window.multiUserManager ? window.multiUserManager.getActiveProfile() : null;
+        const activeProfileId = activeProfile ? activeProfile.id : 'profile_default';
+        localStorage.removeItem(`kisansahay_farm_${activeProfileId}`);
+      } catch (e) {}
       const guideBox = document.getElementById('aadhaar-unlinked-guide-box');
       if (guideBox) guideBox.style.display = 'none';
       const resultsContainer = document.getElementById('elig-results-container');
@@ -3485,7 +3488,7 @@ function renderAdvancedRecommendations(data) {
           <span style="font-size: 1.4rem;">🌾</span>
           <div>
             <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Dynamic Regional Soil & Crop Intelligence</h3>
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin: 0;">Dynamic Regional Soil & Crop Intelligence</h3>
               <span class="station-distance-badge">📍 ${stationStr} (${distStr})</span>
             </div>
             <span style="font-size: 0.82rem; color: #64748b;">${farmer_location || 'Local Profile'} • ${zoneBadge}</span>
@@ -3537,7 +3540,7 @@ function renderAdvancedRecommendations(data) {
     el.debtSafetyCard.innerHTML = `
       <div class="safety-header">
         <div>
-          <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Responsible Lending & Repayment Safety</h3>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin: 0;">Responsible Lending & Repayment Safety</h3>
           <span style="font-size: 0.82rem; color: #64748b;">RBI & NABARD Fair Lending Guidelines</span>
         </div>
         <span class="safety-status-pill ${statusClass}">
@@ -4922,8 +4925,6 @@ function setupPermissionPromptForVisitors() {
                   const data = await res.json();
                   if (data.success && data.data && data.data.location) {
                     const loc = data.data.location;
-                    if (el.stateInput && !el.stateInput.value && loc.state) el.stateInput.value = loc.state;
-                    if (el.districtInput && !el.districtInput.value && loc.district) el.districtInput.value = loc.district;
                     showToast(`📍 Location detected: ${loc.district}, ${loc.state}`);
                   }
                 }
@@ -5429,53 +5430,36 @@ function setupCategoryExplorer() {
 // ==========================================================================
 
 function setupMultiuserStateListener() {
-  // Restore active profile sandboxed state on page load
-  const activeProfile = window.multiUserManager ? window.multiUserManager.getActiveProfile() : null;
-  const initialProfileId = activeProfile ? activeProfile.id : 'profile_default';
-  const initialSavedFarm = localStorage.getItem(`kisansahay_farm_${initialProfileId}`);
-  if (initialSavedFarm) {
-    try {
-      state.userFarmProfile = JSON.parse(initialSavedFarm);
-      if (el.cropInput && state.userFarmProfile.cropType) el.cropInput.value = state.userFarmProfile.cropType;
-      if (el.landSizeInput && state.userFarmProfile.landSizeAcres) el.landSizeInput.value = state.userFarmProfile.landSizeAcres;
-      if (el.stateInput && state.userFarmProfile.state) el.stateInput.value = state.userFarmProfile.state;
-      if (el.districtInput && state.userFarmProfile.district) el.districtInput.value = state.userFarmProfile.district;
-      if (el.incomeInput && state.userFarmProfile.annualIncome) el.incomeInput.value = state.userFarmProfile.annualIncome;
-      if (el.existingLoansInput && state.userFarmProfile.existingLoans !== undefined) el.existingLoansInput.value = state.userFarmProfile.existingLoans;
-    } catch (err) {
-      console.warn('Error parsing initial farm profile:', err);
-    }
-  }
+  // Ensure the eligibility form always starts clean and empty for the user to give input
+  if (el.cropInput) el.cropInput.value = '';
+  if (el.landSizeInput) el.landSizeInput.value = '';
+  if (el.stateInput) el.stateInput.value = '';
+  if (el.districtInput) el.districtInput.value = '';
+  if (el.incomeInput) el.incomeInput.value = '';
+  if (el.existingLoansInput) el.existingLoansInput.value = '';
+  state.userFarmProfile = null;
+
+  // Clear any old/stale dummy farm profile data saved in localStorage
+  try {
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('kisansahay_farm_')) localStorage.removeItem(k);
+    });
+  } catch (e) {}
 
   window.addEventListener('kisansahay:profileChanged', (e) => {
     const { profile, profileId } = e.detail || {};
     if (!profileId) return;
 
-    // Isolate farm profile state in localStorage
-    const savedFarm = localStorage.getItem(`kisansahay_farm_${profileId}`);
-    if (savedFarm) {
-      try {
-        state.userFarmProfile = JSON.parse(savedFarm);
-        if (el.cropInput && state.userFarmProfile.cropType) el.cropInput.value = state.userFarmProfile.cropType;
-        if (el.landSizeInput && state.userFarmProfile.landSizeAcres) el.landSizeInput.value = state.userFarmProfile.landSizeAcres;
-        if (el.stateInput && state.userFarmProfile.state) el.stateInput.value = state.userFarmProfile.state;
-        if (el.districtInput && state.userFarmProfile.district) el.districtInput.value = state.userFarmProfile.district;
-        if (el.incomeInput && state.userFarmProfile.annualIncome) el.incomeInput.value = state.userFarmProfile.annualIncome;
-        if (el.existingLoansInput && state.userFarmProfile.existingLoans !== undefined) el.existingLoansInput.value = state.userFarmProfile.existingLoans;
-      } catch (err) {
-        console.warn('Error parsing saved farm profile for user:', err);
-      }
-    } else {
-      // Clean Fresh Slate for New Profile!
-      if (el.cropInput) el.cropInput.value = '';
-      if (el.landSizeInput) el.landSizeInput.value = '';
-      if (el.districtInput) el.districtInput.value = '';
-      if (el.incomeInput) el.incomeInput.value = '';
-      if (el.existingLoansInput) el.existingLoansInput.value = '0';
-      state.userFarmProfile = null;
-      if (el.eligResultsContainer) el.eligResultsContainer.style.display = 'none';
-      if (el.eligEmptyState) el.eligEmptyState.style.display = 'block';
-    }
+    // Clean Fresh Slate for New Profile / Account Switch!
+    if (el.cropInput) el.cropInput.value = '';
+    if (el.landSizeInput) el.landSizeInput.value = '';
+    if (el.stateInput) el.stateInput.value = '';
+    if (el.districtInput) el.districtInput.value = '';
+    if (el.incomeInput) el.incomeInput.value = '';
+    if (el.existingLoansInput) el.existingLoansInput.value = '';
+    state.userFarmProfile = null;
+    if (el.eligResultsContainer) el.eligResultsContainer.style.display = 'none';
+    if (el.eligEmptyState) el.eligEmptyState.style.display = 'block';
 
     // Refresh loans list isolated to profile
     loadLoans();
@@ -5991,6 +5975,181 @@ function setupMobileAppDownloadBar() {
     });
   }
 }
+
+// ==========================================================================
+// DYNAMIC PROCESS JOURNEY ENGINE (MATCHING JANSAMARTH IMAGE 1 DESIGN)
+// ==========================================================================
+
+let processTourInterval = null;
+let currentProcessStep = 1;
+
+function setupDynamicProcessSection() {
+  // Initialize 3D perspective tilt on process cards
+  const cards = document.querySelectorAll('.process-step-card');
+  cards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      const rotX = -(y / rect.height) * 8;
+      const rotY = (x / rect.width) * 8;
+      card.style.transform = `perspective(900px) rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg) translateY(-8px)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+
+  // Partner Lenders Modal close on overlay click
+  const lendersModal = document.getElementById('partner-lenders-modal');
+  if (lendersModal) {
+    lendersModal.addEventListener('click', (e) => {
+      if (e.target === lendersModal) {
+        closePartnerLendersModal();
+      }
+    });
+  }
+
+  // Keyboard accessibility (Escape key closes lenders modal)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lendersModal && lendersModal.classList.contains('active')) {
+      closePartnerLendersModal();
+    }
+  });
+}
+
+function setActiveProcessStep(stepNum) {
+  currentProcessStep = Number(stepNum);
+
+  // Update tabs
+  document.querySelectorAll('.process-tab-btn').forEach(btn => {
+    const s = Number(btn.getAttribute('data-step'));
+    if (s === currentProcessStep) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Update cards
+  document.querySelectorAll('.process-step-card').forEach(card => {
+    const s = Number(card.getAttribute('data-step'));
+    if (s === currentProcessStep) {
+      card.classList.add('active');
+    } else {
+      card.classList.remove('active');
+    }
+  });
+}
+
+function toggleProcessAutoTour() {
+  const btn = document.getElementById('btn-process-autotour');
+  const label = document.getElementById('tour-btn-label');
+  const symbol = btn ? btn.querySelector('.tour-icon-symbol') : null;
+
+  if (processTourInterval) {
+    // Stop tour
+    clearInterval(processTourInterval);
+    processTourInterval = null;
+    if (btn) btn.classList.remove('touring');
+    if (symbol) symbol.textContent = '▶';
+    if (label) label.textContent = (state.currentLang === 'hi') ? 'ऑटो टूर' : 'Auto Play Tour';
+    showToast(state.currentLang === 'hi' ? 'यात्रा टूर रोक दिया गया' : 'Journey tour paused');
+  } else {
+    // Start tour
+    if (btn) btn.classList.add('touring');
+    if (symbol) symbol.textContent = '⏸';
+    if (label) label.textContent = (state.currentLang === 'hi') ? 'रोकें' : 'Pause Tour';
+    showToast(state.currentLang === 'hi' ? '4-चरणीय यात्रा ऑटो-टूर शुरू' : 'Started 4-step interactive journey tour');
+
+    processTourInterval = setInterval(() => {
+      let nextStep = currentProcessStep + 1;
+      if (nextStep > 4) nextStep = 1;
+      setActiveProcessStep(nextStep);
+    }, 3200);
+  }
+}
+
+function handleProcessCardClick(stepNum) {
+  stepNum = Number(stepNum);
+  setActiveProcessStep(stepNum);
+
+  // Navigate to corresponding app view
+  if (stepNum === 1) {
+    switchView('eligibility');
+  } else if (stepNum === 2) {
+    switchView('schemes');
+  } else if (stepNum === 3) {
+    openPartnerLendersModal();
+  } else if (stepNum === 4) {
+    switchView('loans');
+  }
+}
+
+function openPartnerLendersModal() {
+  const modal = document.getElementById('partner-lenders-modal');
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
+}
+
+function closePartnerLendersModal() {
+  const modal = document.getElementById('partner-lenders-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+
+// Speak aloud helper
+function speakText(text) {
+  if ('speechSynthesis' in window && text) {
+    window.speechSynthesis.cancel();
+    const cleanText = text.replace(/[*#_`•]/g, '').replace(/\n+/g, '. ');
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = state.ttsRate || 1.0;
+    utterance.lang = (state.currentLang === 'hi') ? 'hi-IN' : 'en-IN';
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+function playStepAudio(stepNum) {
+  stepNum = Number(stepNum);
+  const isHindi = state.currentLang === 'hi';
+
+  const speeches = {
+    1: isHindi 
+      ? 'चरण 1: पात्रता जांचें। अपने खेत और आय के कुछ सरल प्रश्नों के उत्तर दें और अपने लिए उपयुक्त सरकारी योजनाओं से तुरंत जुड़ें।'
+      : 'Step 1: Check Eligibility. Answer few questions about your farm and income to get matched with the best suitable government schemes.',
+    2: isHindi
+      ? 'चरण 2: ऑनलाइन आवेदन करें। स्मार्ट एनालिटिक्स के साथ अपने आवश्यक दस्तावेज और विवरण आसानी से भरें।'
+      : 'Step 2: Apply Online. Provide basic details and documents, and smart analytics will auto-fill required information.',
+    3: isHindi
+      ? 'चरण 3: डिजिटल स्वीकृति प्राप्त करें। 300 से अधिक बैंकों और ऋणदाताओं से डिजिटल स्वीकृति पाएं।'
+      : 'Step 3: Get Digital Approval. View offers from over 300 lenders and receive in-principle digital approval.',
+    4: isHindi
+      ? 'चरण 4: अपने आवेदन को ट्रैक करें। वास्तविक समय में अपने आवेदन और किस्तों की स्थिति जानें।'
+      : 'Step 4: Track your application. Check real time status of your loans, EMIs, and applications at your convenience.'
+  };
+
+  const text = speeches[stepNum];
+  if (text) {
+    speakText(text);
+    showToast(isHindi ? `चरण ${stepNum} ऑडियो मार्गदर्शन` : `Playing Step ${stepNum} audio guidance`);
+  }
+}
+
+// Expose globally for HTML onclick handlers
+window.setActiveProcessStep = setActiveProcessStep;
+window.toggleProcessAutoTour = toggleProcessAutoTour;
+window.handleProcessCardClick = handleProcessCardClick;
+window.openPartnerLendersModal = openPartnerLendersModal;
+window.closePartnerLendersModal = closePartnerLendersModal;
+window.playStepAudio = playStepAudio;
+window.speakText = speakText;
+
 
 
 

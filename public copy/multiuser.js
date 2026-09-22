@@ -133,8 +133,8 @@
             <span class="dropdown-badge">${this.state.profiles.length} Profiles</span>
           </div>
 
-          <!-- Download KisanSahay App Bar inside Switch Profile Column -->
-          <div class="dropdown-pwa-download-bar" id="dropdown-btn-download-app" role="button" tabindex="0" title="Download & Install KisanSahay App on your phone or PC">
+          <!-- Download KisanSahay App Bar inside Switch Profile Column (Removed from UI per user request) -->
+          <div class="dropdown-pwa-download-bar" id="dropdown-btn-download-app" role="button" tabindex="0" title="Download & Install KisanSahay App on your phone or PC" style="display: none !important;">
             <div class="pwa-download-icon-wrap">
               <img src="/icons/icon-192.png" alt="KisanSahay" class="pwa-bar-mini-icon">
               <span class="pwa-pulse-dot"></span>

@@ -198,38 +198,38 @@
     <section class="action-cards-section">
       <div class="cards-grid">
 
-        <!-- Card 1: Check My Eligibility -->
-        <div class="action-card" onclick="switchView('eligibility')">
+        <!-- Card 1: Loan & PMFBY (Pradhan Mantri Fasal Bima Yojana) -->
+        <div class="action-card" onclick="window.open('https://pmfby.gov.in/', '_blank', 'noopener,noreferrer')" role="button" tabindex="0" title="Open PMFBY Official Government Portal (pmfby.gov.in)">
           <div class="card-media-wrap">
-            <img src="assets/check_eligibility.jpg" alt="Farmer checking eligibility in agricultural field"
+            <img src="assets/pmfby_crop_insurance.jpg" alt="Indian farmer holding PMFBY crop insurance certificate in agricultural field"
               class="card-img">
-            <div class="card-floating-icon" style="color: #15803d; font-weight: 900;">✓</div>
-            <button class="card-floating-speaker" title="Listen"
+            <div class="card-floating-icon" style="color: #15803d; font-weight: 900;">🛡️</div>
+            <button class="card-floating-speaker" title="Listen / बोलकर सुनें"
               onclick="event.stopPropagation(); speakCard('card1')">🔊</button>
           </div>
           <div class="card-body">
-            <h2 class="card-title" data-i18n="card1Title">Check My Eligibility</h2>
+            <h2 class="card-title" data-i18n="card1Title">Loan &amp; PMFBY (Pradhan Mantri Fasal Bima Yojana)</h2>
             <p class="card-desc" data-i18n="card1Desc">
-              Answer a few simple questions about your farm and income to find out which government schemes you qualify
-              for.
+              Secure comprehensive crop insurance and subsidized credit under Pradhan Mantri Fasal Bima Yojana. Shield your farm against natural calamities, pest attacks, and yield losses with minimal premium rates and quick claim settlement.
             </p>
             <span class="card-action-link">
-              <span data-i18n="card1Link">Get Started</span>
+              <span data-i18n="card1Link">Open PMFBY Govt Portal</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
               </svg>
             </span>
           </div>
         </div>
 
         <!-- Card 2: Government Schemes -->
-        <div class="action-card" onclick="switchView('schemes')">
+        <div class="action-card" onclick="switchView('schemes')" role="button" tabindex="0">
           <div class="card-media-wrap">
-            <img src="assets/government_schemes.jpg" alt="Agriculture officers assisting farmers with scheme documents"
+            <img src="assets/government_schemes.jpg" alt="Agriculture officers assisting farmers with scheme documents at Gram Panchayat"
               class="card-img">
             <div class="card-floating-icon">🏛️</div>
-            <button class="card-floating-speaker" title="Listen"
+            <button class="card-floating-speaker" title="Listen / बोलकर सुनें"
               onclick="event.stopPropagation(); speakCard('card2')">🔊</button>
           </div>
           <div class="card-body">
@@ -238,7 +238,7 @@
               Browse all available loan and support schemes with full details on interest rates, limits, and benefits.
             </p>
             <span class="card-action-link">
-              <span data-i18n="card2Link">Get Started</span>
+              <span data-i18n="card2Link">Explore Schemes</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -248,22 +248,22 @@
         </div>
 
         <!-- Card 3: My Loans & EMIs -->
-        <div class="action-card" onclick="switchView('loans')">
+        <div class="action-card" onclick="switchView('loans')" role="button" tabindex="0">
           <div class="card-media-wrap">
-            <img src="assets/loan_tracker.jpg" alt="Financial ledger, coins with seedling, and calculator"
+            <img src="assets/loan_tracker.jpg" alt="Farmer reviewing Kisan Credit Card passbook and mobile banking app at bank counter"
               class="card-img">
             <div class="card-floating-icon">💳</div>
-            <button class="card-floating-speaker" title="Listen"
+            <button class="card-floating-speaker" title="Listen / बोलकर सुनें"
               onclick="event.stopPropagation(); speakCard('card3')">🔊</button>
           </div>
           <div class="card-body">
-            <h2 class="card-title" data-i18n="card3Title">My Loans & EMIs</h2>
+            <h2 class="card-title" data-i18n="card3Title">My Loans &amp; EMIs</h2>
             <p class="card-desc" data-i18n="card3Desc">
               Track multiple loans and schemes in one place — see your EMIs, due amounts, and how much you have already
               paid.
             </p>
             <span class="card-action-link">
-              <span data-i18n="card3Link">Get Started</span>
+              <span data-i18n="card3Link">Track My Loans</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -276,100 +276,197 @@
     </section>
 
     <!-- ====================================================================
-         IMAGE 1: HERO STATS & NATIONAL SCHEMES COUNTER BANNER
+         THE PROCESS — DYNAMIC ARCHED CAPSULE FLOW (MATCHING IMAGE 1 DESIGN)
          ==================================================================== -->
-    <section class="hero-stats-banner">
-      <div class="hero-stats-badge">
-        #GOVERNMENTSCHEMES &nbsp;/&nbsp; #SCHEMESFORYOU
-      </div>
-      <div>
-        <button type="button" class="btn-find-schemes-hero" onclick="switchView('eligibility')">
-          <span data-i18n="findSchemesForYou">Find Schemes For You</span>
-          <span>➔</span>
-        </button>
-      </div>
-
-      <div class="hero-counters-grid">
-        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture')">
-          <div class="hero-counter-number">5020+</div>
-          <div class="hero-counter-label"><span data-i18n="totalSchemesLabel">Total Schemes</span> ➔</div>
+    <section class="process-section" id="process-section">
+      <div class="process-header">
+        <div class="process-pill-badge">
+          <span class="process-beacon-dot"></span>
+          <span data-i18n="processBadgeText">Instant 4-Step Scheme Sanction Journey</span>
         </div>
-        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'central')">
-          <div class="hero-counter-number">740+</div>
-          <div class="hero-counter-label"><span data-i18n="centralSchemesLabel">Central Schemes</span> ➔</div>
-        </div>
-        <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'state')">
-          <div class="hero-counter-number">4280+</div>
-          <div class="hero-counter-label"><span data-i18n="statesSchemesLabel">States/UTs Schemes</span> ➔</div>
-        </div>
-      </div>
+        <h2 class="process-main-title" data-i18n="processTitle">The Process</h2>
+        <p class="process-subtitle" data-i18n="processSubtitle">Simple, transparent, and digital steps from eligibility check to loan sanction and live tracking.</p>
 
-      <div class="hero-scope-tabs">
-        <button type="button" class="hero-scope-tab-btn active"
-          onclick="document.getElementById('home-categories-section')?.scrollIntoView({ behavior: 'smooth' })">
-          <span data-i18n="tabCategories">Categories</span>
-        </button>
-        <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'state')">
-          <span data-i18n="tabStates">States/UTs</span>
-        </button>
-        <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'central')">
-          <span data-i18n="tabCentralMinistries">Central Ministries</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         IMAGE 2: "HOW IT WORKS" 3-STEP FLOW PIPELINE
-         ==================================================================== -->
-    <section class="how-it-works-section">
-      <div class="how-it-works-sub" data-i18n="howItWorksTitle">How it works</div>
-      <h2 class="how-it-works-title" data-i18n="howItWorksSubtitle">Easy steps to apply for Government Schemes</h2>
-
-      <div class="how-it-works-grid">
-        <!-- Step 1: Enter Details -->
-        <div class="step-card">
-          <div class="step-icon-wrap">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
-              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-              <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-              <path d="m9 14 2 2 4-4" />
-            </svg>
+        <!-- Dynamic Interactive Journey Bar & Auto-Tour -->
+        <div class="process-journey-bar">
+          <div class="process-tabs-row" role="tablist">
+            <button class="process-tab-btn active" data-step="1" onclick="setActiveProcessStep(1)">
+              <span class="step-num-badge">01</span> <span data-i18n="processStep1Title">Check Eligibility</span>
+            </button>
+            <button class="process-tab-btn" data-step="2" onclick="setActiveProcessStep(2)">
+              <span class="step-num-badge">02</span> <span data-i18n="processStep2Title">Apply Online</span>
+            </button>
+            <button class="process-tab-btn" data-step="3" onclick="setActiveProcessStep(3)">
+              <span class="step-num-badge">03</span> <span data-i18n="processStep3Title">Digital Approval</span>
+            </button>
+            <button class="process-tab-btn" data-step="4" onclick="setActiveProcessStep(4)">
+              <span class="step-num-badge">04</span> <span data-i18n="processStep4Title">Track Application</span>
+            </button>
           </div>
-          <h3 class="step-title"><span class="step-num">1: </span><span data-i18n="step1Title">Enter Details</span></h3>
-          <p class="step-desc" data-i18n="step1Desc">Start by entering your basic farm and location details!</p>
+          <button class="btn-process-autotour" id="btn-process-autotour" onclick="toggleProcessAutoTour()" title="Auto Play Journey">
+            <span class="tour-icon-symbol">▶</span>
+            <span class="tour-label-text" id="tour-btn-label" data-i18n="tourPlay">Auto Play Tour</span>
+          </button>
         </div>
+      </div>
 
-        <div class="how-it-works-arrow">➔</div>
+      <div class="process-timeline-wrap">
+        <!-- Connecting Sinusoidal Wave Path matching Image 1 with Animated Traveling Glow Beam -->
+        <svg class="process-flow-line" viewBox="0 0 1200 240" preserveAspectRatio="none" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="processWaveGradLight" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
+              <stop offset="25%" stop-color="#2563eb" stop-opacity="0.95"/>
+              <stop offset="50%" stop-color="#10b981" stop-opacity="0.95"/>
+              <stop offset="75%" stop-color="#0284c7" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.25"/>
+            </linearGradient>
+            <linearGradient id="processWaveGradDark" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#475569" stop-opacity="0.2"/>
+              <stop offset="25%" stop-color="#94a3b8" stop-opacity="0.9"/>
+              <stop offset="50%" stop-color="#f8fafc" stop-opacity="1"/>
+              <stop offset="75%" stop-color="#38bdf8" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#64748b" stop-opacity="0.2"/>
+            </linearGradient>
+            <filter id="waveGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <!-- Base Background Wave Line -->
+          <path class="process-wave-base" d="M 30,140 C 70,140 100,20 180,20 C 260,20 280,170 320,170 C 360,170 380,20 460,20 C 540,20 560,170 600,170 C 640,170 660,20 740,20 C 820,20 840,170 880,170 C 920,170 940,20 1020,20 C 1100,20 1130,140 1170,140" stroke="currentColor" stroke-width="2.2" stroke-dasharray="7 7"/>
+          <!-- Animated Traveling Energy Beam -->
+          <path class="process-wave-energy" d="M 30,140 C 70,140 100,20 180,20 C 260,20 280,170 320,170 C 360,170 380,20 460,20 C 540,20 560,170 600,170 C 640,170 660,20 740,20 C 820,20 840,170 880,170 C 920,170 940,20 1020,20 C 1100,20 1130,140 1170,140" stroke-width="3.5" stroke-linecap="round" filter="url(#waveGlow)"/>
+          <!-- Start and End Nodes -->
+          <circle cx="30" cy="140" r="5" class="process-node-circle" />
+          <circle cx="1170" cy="140" r="5" class="process-node-circle" />
+        </svg>
 
-        <!-- Step 2: Search -->
-        <div class="step-card">
-          <div class="step-icon-wrap">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
-              <path
-                d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-              <circle cx="12" cy="13" r="3" />
-              <path d="m14.5 15.5 2.5 2.5" />
-            </svg>
+        <div class="process-steps-grid">
+          <!-- Step 1: Check Eligibility -->
+          <div class="process-step-card active" data-step="1" onclick="handleProcessCardClick(1)" role="button" tabindex="0">
+            <div class="process-card-top-bar">
+              <span class="step-tag-pill">STEP 01</span>
+              <button class="btn-step-speaker" type="button" title="Listen step instructions / बोलकर सुनें" onclick="event.stopPropagation(); playStepAudio(1);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="process-icon-circle">
+              <!-- Hand holding rupee coin -->
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L4 16"></path>
+                <path d="m2 15 6.4-3.2a3 3 0 0 1 2.7.2L15 14"></path>
+                <circle cx="17" cy="7" r="3.5"></circle>
+                <path d="M15.5 7h3"></path>
+                <path d="M17 5.5v3"></path>
+                <path d="M14 18.5V20a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-1.5"></path>
+              </svg>
+            </div>
+            <h3 class="process-step-title" data-i18n="processStep1Title">Check Eligibility</h3>
+            <p class="process-step-desc" data-i18n="processStep1Desc">Answer few questions and get matched with best suitable scheme(s).</p>
+            <div class="process-action-pill">
+              <span data-i18n="processStep1Action">Check Now</span>
+              <span class="action-arrow">→</span>
+            </div>
           </div>
-          <h3 class="step-title"><span class="step-num">2: </span><span data-i18n="step2Title">Search</span></h3>
-          <p class="step-desc" data-i18n="step2Desc">Our intelligent engine will find the most relevant schemes!</p>
-        </div>
 
-        <div class="how-it-works-arrow">➔</div>
-
-        <!-- Step 3: Select & Apply -->
-        <div class="step-card">
-          <div class="step-icon-wrap">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
-              <path d="m14 15 2.5 2.5" />
-              <path d="M11 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-              <path d="m14 13-1.5-1.5" />
-              <path d="M12 21a9 9 0 0 0 9-9c0-.7-.08-1.38-.23-2.03" />
-            </svg>
+          <!-- Step 2: Apply Online -->
+          <div class="process-step-card" data-step="2" onclick="handleProcessCardClick(2)" role="button" tabindex="0">
+            <div class="process-card-top-bar">
+              <span class="step-tag-pill">STEP 02</span>
+              <button class="btn-step-speaker" type="button" title="Listen step instructions / बोलकर सुनें" onclick="event.stopPropagation(); playStepAudio(2);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="process-icon-circle">
+              <!-- Document with Rupee symbol and verified check badge -->
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M9 11h4"></path>
+                <path d="M9 14h3"></path>
+                <circle cx="17.5" cy="16.5" r="3.5" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5"></circle>
+                <path d="m16.2 16.5 1 1 1.8-1.8" stroke="#ffffff" stroke-width="1.2"></path>
+              </svg>
+            </div>
+            <h3 class="process-step-title" data-i18n="processStep2Title">Apply Online</h3>
+            <p class="process-step-desc" data-i18n="processStep2Desc">Provide basic details &amp; documents and the advanced technologies would capture/auto-fill required details through smart analytics.</p>
+            <div class="process-action-pill">
+              <span data-i18n="processStep2Action">Browse Schemes</span>
+              <span class="action-arrow">→</span>
+            </div>
           </div>
-          <h3 class="step-title"><span class="step-num">3: </span><span data-i18n="step3Title">Select &amp; Apply</span></h3>
-          <p class="step-desc" data-i18n="step3Desc">Select and apply for the best suited scheme with full document checklist.</p>
+
+          <!-- Step 3: Get Digital Approval -->
+          <div class="process-step-card" data-step="3" onclick="handleProcessCardClick(3)" role="button" tabindex="0">
+            <div class="process-card-top-bar">
+              <span class="step-tag-pill">STEP 03</span>
+              <button class="btn-step-speaker" type="button" title="Listen step instructions / बोलकर सुनें" onclick="event.stopPropagation(); playStepAudio(3);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="process-icon-circle">
+              <!-- Digital Approval Rosette Seal -->
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="10" r="6"></circle>
+                <path d="m9 10 2 2 4-4"></path>
+                <path d="m8.2 15.5-2.2 4.5 4-1.5 2 3.5 2-3.5 4 1.5-2.2-4.5"></path>
+              </svg>
+            </div>
+            <h3 class="process-step-title" data-i18n="processStep3Title">Get Digital Approval</h3>
+            <p class="process-step-desc" data-i18n="processStep3Desc">View offers from 300+ Lenders and get Digital Approval from selected bank.</p>
+            <div class="process-action-pill">
+              <span data-i18n="processStep3Action">300+ Lenders</span>
+              <span class="action-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Step 4: Track your application -->
+          <div class="process-step-card" data-step="4" onclick="handleProcessCardClick(4)" role="button" tabindex="0">
+            <div class="process-card-top-bar">
+              <span class="step-tag-pill">STEP 04</span>
+              <button class="btn-step-speaker" type="button" title="Listen step instructions / बोलकर सुनें" onclick="event.stopPropagation(); playStepAudio(4);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="process-icon-circle">
+              <!-- Smartphone with touch interaction -->
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="3"></rect>
+                <circle cx="12" cy="18" r="1"></circle>
+                <rect x="8" y="6" width="3" height="3" rx="0.5"></rect>
+                <rect x="13" y="6" width="3" height="3" rx="0.5"></rect>
+                <rect x="8" y="11" width="3" height="3" rx="0.5"></rect>
+                <circle cx="16" cy="13" r="2.5" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5"></circle>
+                <path d="M16 13.5v2.5" stroke="#ffffff" stroke-width="1.2"></path>
+              </svg>
+            </div>
+            <h3 class="process-step-title" data-i18n="processStep4Title">Track your application</h3>
+            <p class="process-step-desc" data-i18n="processStep4Desc">Check the real time status of your application at your convenience.</p>
+            <div class="process-action-pill">
+              <span data-i18n="processStep4Action">Track Live</span>
+              <span class="action-arrow">→</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -401,8 +498,12 @@
 
       <!-- Breadcrumb & Back Navigation -->
       <div class="category-explorer-top-bar">
-        <button type="button" class="btn-back-to-categories" id="btn-back-categories" onclick="switchView('home')">
-          <span>←</span> <span data-i18n="btnBack">Back</span>
+        <button type="button" class="btn-back-to-categories" id="btn-back-categories" onclick="switchView('home')" aria-label="Go back to categories" title="Back">
+          <svg class="back-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span data-i18n="btnBack">Back</span>
         </button>
         <div style="font-size: 0.85rem; color: var(--text-muted);">
           <a href="javascript:void(0)" onclick="switchView('home')"
@@ -1010,17 +1111,19 @@
         <button class="filter-chip-btn" data-filter="more" data-i18n="filterMore">More Support</button>
       </div>
 
-      <!-- All-India State Loan Facilities Selector Bar (Matching Screenshot 5 Request) -->
+      <!-- All-India State Loan Facilities Selector Bar -->
       <div class="all-india-state-bar" id="all-india-state-bar">
-        <div class="state-bar-left">
-          <span class="state-bar-pin">📍</span>
-          <label for="schemes-all-india-state-select" class="state-bar-label">
-            State Filter (All India):
-          </label>
+        <div class="state-bar-main">
+          <div class="state-bar-label-group">
+            <span class="state-bar-pin">📍</span>
+            <label for="schemes-all-india-state-select" class="state-bar-label">
+              Select State / Region:
+            </label>
+          </div>
           <div class="state-select-wrapper">
             <select id="schemes-all-india-state-select" class="select-clean state-dropdown-clean"
               aria-label="Select State from All Over India">
-              <option value="all" selected>🌍 All India (All 650+ National & State Loans)</option>
+              <option value="all" selected>🌍 All India (All 650+ National &amp; State Loans)</option>
               <optgroup label="── Northern India ──">
                 <option value="Chandigarh">Chandigarh</option>
                 <option value="Delhi">Delhi (NCT)</option>
@@ -1033,15 +1136,15 @@
                 <option value="Uttar Pradesh">Uttar Pradesh</option>
                 <option value="Uttarakhand">Uttarakhand</option>
               </optgroup>
-              <optgroup label="── Central & Western India ──">
+              <optgroup label="── Central &amp; Western India ──">
                 <option value="Chhattisgarh">Chhattisgarh</option>
-                <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra & Nagar Haveli and Daman & Diu</option>
+                <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra &amp; Nagar Haveli and Daman &amp; Diu</option>
                 <option value="Goa">Goa</option>
                 <option value="Gujarat">Gujarat</option>
                 <option value="Madhya Pradesh">Madhya Pradesh</option>
                 <option value="Maharashtra">Maharashtra</option>
               </optgroup>
-              <optgroup label="── Eastern & North-Eastern India ──">
+              <optgroup label="── Eastern &amp; North-Eastern India ──">
                 <option value="Arunachal Pradesh">Arunachal Pradesh</option>
                 <option value="Assam">Assam</option>
                 <option value="Bihar">Bihar</option>
@@ -1055,7 +1158,7 @@
                 <option value="Tripura">Tripura</option>
                 <option value="West Bengal">West Bengal</option>
               </optgroup>
-              <optgroup label="── Southern India & Islands ──">
+              <optgroup label="── Southern India &amp; Islands ──">
                 <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
                 <option value="Andhra Pradesh">Andhra Pradesh</option>
                 <option value="Karnataka">Karnataka</option>
@@ -1067,18 +1170,11 @@
               </optgroup>
             </select>
           </div>
-        </div>
-
-        <!-- State Quick Chips -->
-        <div class="schemes-state-chips" id="schemes-state-chips">
-          <button class="state-chip-btn active" data-state="all">🌍 All India</button>
-          <button class="state-chip-btn" data-state="Uttar Pradesh">🌾 Uttar Pradesh</button>
-          <button class="state-chip-btn" data-state="Madhya Pradesh">🌱 Madhya Pradesh</button>
-          <button class="state-chip-btn" data-state="Bihar">🚜 Bihar</button>
-          <button class="state-chip-btn" data-state="Punjab">🌾 Punjab</button>
-          <button class="state-chip-btn" data-state="Maharashtra">🌱 Maharashtra</button>
-          <button class="state-chip-btn" data-state="Rajasthan">🌾 Rajasthan</button>
-          <button class="state-chip-btn" data-state="Gujarat">🌾 Gujarat</button>
+          <!-- Dynamic Live State Schemes Count Beacon -->
+          <div class="state-schemes-count-badge" id="state-schemes-count-badge">
+            <span class="live-pulse-dot"></span>
+            <span id="state-count-text">All India Coverage Active</span>
+          </div>
         </div>
       </div>
 
@@ -1203,6 +1299,77 @@
 
   </main>
 
+
+  <!-- ==========================================================================
+       MODAL: 300+ Digital Lending Partners (The Process - Step 3)
+       ========================================================================== -->
+  <div class="modal-overlay" id="partner-lenders-modal" style="z-index: 175;">
+    <div class="modal-dialog lenders-modal-dialog">
+      <button class="modal-close-x" id="btn-close-lenders-modal" onclick="closePartnerLendersModal()" aria-label="Close">✕</button>
+      <div class="lenders-modal-header">
+        <div class="lenders-modal-badge">
+          <span>🏦</span> <span data-i18n="processStep3Action">300+ Digital Lenders</span>
+        </div>
+        <h3 class="lenders-modal-title" data-i18n="lendersModalTitle">National &amp; Regional Digital Lending Partners</h3>
+        <p class="lenders-modal-desc" data-i18n="lendersModalSubtitle">Compare interest subventions, prompt repayment benefits, and get instant in-principle digital sanction.</p>
+      </div>
+      <div class="lenders-grid">
+        <div class="lender-card">
+          <div class="lender-avatar sbi">SBI</div>
+          <div class="lender-info">
+            <strong>State Bank of India</strong>
+            <span>Kisan Credit Card • 4.0% Net Subsidized</span>
+          </div>
+          <span class="lender-tag tag-instant">Instant Sanction</span>
+        </div>
+        <div class="lender-card">
+          <div class="lender-avatar pnb">PNB</div>
+          <div class="lender-info">
+            <strong>Punjab National Bank</strong>
+            <span>Farm Mechanization • ₹3 Lakh Collateral Free</span>
+          </div>
+          <span class="lender-tag tag-kyc">Digital KYC</span>
+        </div>
+        <div class="lender-card">
+          <div class="lender-avatar nabard">NABARD</div>
+          <div class="lender-info">
+            <strong>NABARD Refinance Portal</strong>
+            <span>Agri Infra Fund • 3% Interest Subvention</span>
+          </div>
+          <span class="lender-tag tag-govt">Govt Backed</span>
+        </div>
+        <div class="lender-card">
+          <div class="lender-avatar bob">BOB</div>
+          <div class="lender-info">
+            <strong>Bank of Baroda</strong>
+            <span>Baroda Kisan Tatkal Loan • 48-Hour Disbursal</span>
+          </div>
+          <span class="lender-tag tag-fast">48h Approval</span>
+        </div>
+        <div class="lender-card">
+          <div class="lender-avatar canara">CANARA</div>
+          <div class="lender-info">
+            <strong>Canara Bank</strong>
+            <span>Kisan Suvidha Credit • Zero Processing Fee</span>
+          </div>
+          <span class="lender-tag tag-zero">Zero Fee</span>
+        </div>
+        <div class="lender-card">
+          <div class="lender-avatar hdfc">HDFC</div>
+          <div class="lender-info">
+            <strong>HDFC Rural Banking</strong>
+            <span>Smart Harvest Credit • In-Principle Approval</span>
+          </div>
+          <span class="lender-tag tag-digital">Digital Sanction</span>
+        </div>
+      </div>
+      <div class="lenders-modal-footer">
+        <button type="button" class="btn-primary" onclick="closePartnerLendersModal(); switchView('schemes');" style="width: 100%; justify-content: center; padding: 0.9rem;">
+          Browse All 500+ Qualified Schemes &amp; Apply Now →
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ==========================================================================
        MODAL 1: 25 Indian Languages Selector
