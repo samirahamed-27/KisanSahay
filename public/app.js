@@ -791,7 +791,9 @@ function setupModals() {
       el.paymentModal.classList.remove('active');
       el.recordPaymentForm.reset();
       showToast(`Payment of ${formatINR(amount)} successfully recorded!`);
-      speakText(`Payment of ${formatINR(amount)} recorded. Remaining balance is ${formatINR(loan.dueAmount)}.`);
+      if (typeof window.speakText === 'function') {
+        window.speakText(`Payment of ${formatINR(amount)} recorded. Remaining balance is ${formatINR(loan.dueAmount)}.`);
+      }
     });
   }
 
@@ -3023,7 +3025,9 @@ function evaluateEligibilityClient(userInput, schemesList) {
     const warnings = [];
 
     // Ownership check
-    const allowed = (scheme.eligibility && scheme.eligibility.farmerTypes) || ['owner', 'tenant', 'sharecropper', 'leaseholder'];
+    const allowed = (scheme.eligibility && scheme.eligibility.farmerTypes) ||
+      (scheme.eligibilityCriteria && scheme.eligibilityCriteria.farmerTypes) ||
+      ['owner', 'tenant', 'sharecropper', 'leaseholder'];
     if (!allowed.includes(landOwnership) && !allowed.includes('all')) {
       if (scheme.id === 'pm-kisan' && landOwnership !== 'owner') {
         eligible = false;
@@ -3084,8 +3088,11 @@ function evaluateEligibilityClient(userInput, schemesList) {
           total_credit_cost: `Estimated ~${(netRate + 0.3).toFixed(1)}% p.a.`
         }
       },
-      documents_required: (scheme.documents || []).map(d => ({ name: typeof d === 'string' ? d : d.name, required: true })),
-      apply_link: scheme.application ? scheme.application.applyUrl : 'https://www.myscheme.gov.in',
+      documents_required: (scheme.documents || scheme.documentsRequired || []).map(d => ({
+        name: typeof d === 'string' ? d : (d && d.name ? d.name : 'Required Document'),
+        required: true
+      })),
+      apply_link: (scheme.application && scheme.application.applyUrl) || scheme.apply_link || scheme.source_url || 'https://www.myscheme.gov.in',
       offline_application_center: 'Nearest Bank Branch / CSC'
     };
   });
@@ -3334,7 +3341,17 @@ async function checkEligibility() {
     const bestCount = (responseData.recommendations || []).filter(r => r.status === 'best').length;
     const goodCount = (responseData.recommendations || []).filter(r => r.status === 'good').length;
     showToast(`Matched with 1 Best Match and ${goodCount} Good Alternatives!`);
-    speakText(`Evaluation complete. Found 1 top recommended loan plan and ${goodCount} good alternatives for your farm.`);
+
+    // Isolated TTS announcement to prevent audio/voice issues from throwing into evaluation catch block
+    try {
+      if (typeof speakKisanText === 'function') {
+        speakKisanText(`Evaluation complete. Found 1 top recommended loan plan and ${goodCount} good alternatives for your farm.`, state.currentLang);
+      } else if (typeof window.speakText === 'function') {
+        window.speakText(`Evaluation complete. Found 1 top recommended loan plan and ${goodCount} good alternatives for your farm.`);
+      }
+    } catch (audioErr) {
+      console.warn('Speech announcement skipped:', audioErr);
+    }
 
   } catch (err) {
     console.error('Eligibility evaluation error:', err);
@@ -3579,7 +3596,7 @@ function renderAdvancedRecommendations(data) {
                 </div>
               </div>
 
-              <button class="btn-icon-secondary" style="width: 34px; height: 34px; border-radius: 50%;" title="Listen Aloud" onclick="speakText('${rec.scheme_name}. Net interest rate ${rec.interest_rate}. Match score ${rec.score} percent. ${rec.eligibility_reason}')">
+              <button class="btn-icon-secondary" style="width: 34px; height: 34px; border-radius: 50%;" title="Listen Aloud" onclick="window.speakText('${escapeHtmlApp(rec.scheme_name)}. Net interest rate ${rec.interest_rate}. Match score ${rec.score} percent. ${escapeHtmlApp(rec.eligibility_reason || '')}')">
                 🔊
               </button>
             </div>
@@ -4326,6 +4343,23 @@ function setAudioPlayerUI(isPlaying, label = 'Reading Aloud...') {
     if (el.audioStatusLabel) el.audioStatusLabel.textContent = label;
   }
 }
+
+// Global speakText wrapper to ensure safe execution everywhere
+window.speakText = function(text, lang = null) {
+  if (!text) return;
+  try {
+    if (typeof speakKisanText === 'function') {
+      speakKisanText(text, lang || (typeof state !== 'undefined' && state.currentLang) || 'hi');
+    } else if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = (lang || (typeof state !== 'undefined' && state.currentLang) || 'hi') === 'hi' ? 'hi-IN' : 'en-IN';
+      window.speechSynthesis.speak(utter);
+    }
+  } catch (err) {
+    console.warn('speakText error:', err);
+  }
+};
 
 async function speakKisanText(text, lang = null, onEndCallback = null) {
   if (!text) return;

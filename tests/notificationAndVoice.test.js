@@ -52,14 +52,76 @@ test('Feature 1: Notification Engine — Due EMI Reminders & Mark Read', async (
   fs.writeFileSync(notifsPath, JSON.stringify(cleanNotifs, null, 2), 'utf8');
 });
 
-test('Feature 2: Voice Input — Spoken Number to Digits Conversion & Yes/No', () => {
-  // Load voice_input.js helper in sandbox or test logic
+test('Feature 2: Voice Input — Semantic Validation & Spoken Number Conversion', () => {
   const voiceScript = fs.readFileSync(path.join(__dirname, '../public/voice_input.js'), 'utf8');
   assert.ok(voiceScript.includes('convertSpokenNumberToDigits'));
   assert.ok(voiceScript.includes('parseYesNo'));
   assert.ok(voiceScript.includes('VoiceGuidedAssistant'));
+  assert.ok(voiceScript.includes('validateVoiceInput'));
+  assert.ok(voiceScript.includes('matchIndianState'));
+  assert.ok(voiceScript.includes('matchAgriculturalCrop'));
 
-  // Test regex & dictionary matching logic directly
+  // Test inside VM sandbox to execute functions directly
+  const vm = require('vm');
+  const sandbox = {
+    window: {},
+    document: {
+      addEventListener: () => {},
+      querySelectorAll: () => [],
+      getElementById: () => null,
+      readyState: 'complete'
+    },
+    localStorage: { getItem: () => 'en' },
+    Event: class {}
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(voiceScript, sandbox);
+
+  const { validateVoiceInput, matchIndianState, matchAgriculturalCrop } = sandbox.window;
+
+  // 1. Rejection of invalid inputs like "pencil" for States
+  const pencilState = validateVoiceInput('state-input', 'pencil', 'en');
+  assert.equal(pencilState.valid, false);
+  assert.ok(pencilState.errorMsg.includes('Incorrect input'));
+  assert.ok(pencilState.errorMsg.includes('pencil'));
+  assert.equal(matchIndianState('pencil'), null);
+
+  // 2. Acceptance of valid Indian States
+  const punjabState = validateVoiceInput('state-input', 'Punjab', 'en');
+  assert.equal(punjabState.valid, true);
+  assert.equal(punjabState.sanitizedValue, 'Punjab');
+
+  const upState = validateVoiceInput('state-input', 'UP', 'en');
+  assert.equal(upState.valid, true);
+  assert.equal(upState.sanitizedValue, 'Uttar Pradesh');
+
+  const mahaState = validateVoiceInput('state-input', 'महाराष्ट्र', 'hi');
+  assert.equal(mahaState.valid, true);
+  assert.equal(mahaState.sanitizedValue, 'Maharashtra');
+
+  // 3. Rejection of invalid inputs like "pencil" for Crops
+  const pencilCrop = validateVoiceInput('crop-input', 'pencil', 'en');
+  assert.equal(pencilCrop.valid, false);
+  assert.ok(pencilCrop.errorMsg.includes('Incorrect input'));
+  assert.equal(matchAgriculturalCrop('pencil'), null);
+
+  // 4. Acceptance of valid crops
+  const wheatCrop = validateVoiceInput('crop-input', 'Wheat', 'en');
+  assert.equal(wheatCrop.valid, true);
+  assert.equal(wheatCrop.sanitizedValue, 'Wheat');
+
+  const cottonCrop = validateVoiceInput('crop-input', 'कपास', 'hi');
+  assert.equal(cottonCrop.valid, true);
+
+  // 5. Land size validation
+  const invalidLand = validateVoiceInput('land-size-input', 'pencil', 'en');
+  assert.equal(invalidLand.valid, false);
+
+  const validLand = validateVoiceInput('land-size-input', 'two point five acres', 'en');
+  assert.equal(validLand.valid, true);
+  assert.equal(validLand.sanitizedValue, 2.5);
+
+  // 6. Existing number words mapping check
   const NUM_WORDS_EN = {
     one: 1, two: 2, three: 3, four: 4, five: 5, hundred: 100, thousand: 1000, lakh: 100000
   };

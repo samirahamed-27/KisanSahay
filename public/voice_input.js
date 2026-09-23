@@ -1,7 +1,8 @@
 /**
  * KisanSahay — Voice Input & Advance Ask Me Engine
  * Supports 15 Indian Languages, Spoken Numbers to Digits Parsing,
- * and Voice-Guided Step-by-Step Form Entry for Indian Farmers.
+ * Strict Semantic Input Validation (Indian States, Agricultural Crops,
+ * Positive Acres, Currency Incomes, Yes/No), and Voice-Guided Form Entry.
  */
 
 (function () {
@@ -50,7 +51,7 @@
    */
   function convertSpokenNumberToDigits(text, lang = 'hi') {
     if (!text) return '';
-    let cleaned = text.trim().toLowerCase();
+    let cleaned = String(text).trim().toLowerCase();
 
     // Remove filler terms like "acres", "acre", "एकड़", "रुपये", "rupees", "rs"
     cleaned = cleaned.replace(/\b(acres|acre|hectares|hectare|rupees|rupee|rs|inr)\b/gi, '').trim();
@@ -145,7 +146,7 @@
    */
   function parseYesNo(text) {
     if (!text) return null;
-    const lower = text.toLowerCase().trim();
+    const lower = String(text).toLowerCase().trim();
 
     const yesList = [
       'yes', 'yeah', 'yep', 'correct', 'true', 'done',
@@ -165,6 +166,436 @@
       if (lower.includes(n)) return 'no';
     }
     return null;
+  }
+
+  // ==========================================================================
+  // SEMANTIC VALIDATION ENGINE: STATES, CROPS & INPUT SANITY CHECKS
+  // ==========================================================================
+
+  // Comprehensive Catalog of all 28 Indian States & 8 Union Territories
+  const INDIAN_STATES_AND_UTS = [
+    {
+      name: 'Andhra Pradesh',
+      aliases: ['andhra pradesh', 'andhra', 'ap', 'a.p', 'a p', 'आंध्र प्रदेश', 'आंध्र']
+    },
+    {
+      name: 'Arunachal Pradesh',
+      aliases: ['arunachal pradesh', 'arunachal', 'अरुणाचल प्रदेश', 'अरुणाचल']
+    },
+    {
+      name: 'Assam',
+      aliases: ['assam', 'asom', 'असम', 'आसाम']
+    },
+    {
+      name: 'Bihar',
+      aliases: ['bihar', 'बिहार']
+    },
+    {
+      name: 'Chhattisgarh',
+      aliases: ['chhattisgarh', 'chattisgarh', 'chhatisgarh', 'छत्तीसगढ़', 'छत्तीसगढ']
+    },
+    {
+      name: 'Goa',
+      aliases: ['goa', 'गोवा']
+    },
+    {
+      name: 'Gujarat',
+      aliases: ['gujarat', 'gujrat', 'गुजरात']
+    },
+    {
+      name: 'Haryana',
+      aliases: ['haryana', 'hariyana', 'हरियाणा']
+    },
+    {
+      name: 'Himachal Pradesh',
+      aliases: ['himachal pradesh', 'himachal', 'hp', 'h.p', 'h p', 'हिमाचल प्रदेश', 'हिमाचल']
+    },
+    {
+      name: 'Jharkhand',
+      aliases: ['jharkhand', 'jharkand', 'झारखंड', 'झारखण्ड']
+    },
+    {
+      name: 'Karnataka',
+      aliases: ['karnataka', 'karnatak', 'कर्नाटक']
+    },
+    {
+      name: 'Kerala',
+      aliases: ['kerala', 'keral', 'केरल', 'केरला']
+    },
+    {
+      name: 'Madhya Pradesh',
+      aliases: ['madhya pradesh', 'mp', 'm.p', 'm p', 'मध्य प्रदेश', 'एमपी']
+    },
+    {
+      name: 'Maharashtra',
+      aliases: ['maharashtra', 'maharastra', 'महाराष्ट्र']
+    },
+    {
+      name: 'Manipur',
+      aliases: ['manipur', 'मणिपुर']
+    },
+    {
+      name: 'Meghalaya',
+      aliases: ['meghalaya', 'मेघालय']
+    },
+    {
+      name: 'Mizoram',
+      aliases: ['mizoram', 'मिजोरम']
+    },
+    {
+      name: 'Nagaland',
+      aliases: ['nagaland', 'नागालैंड']
+    },
+    {
+      name: 'Odisha',
+      aliases: ['odisha', 'orissa', 'ओडिशा', 'उड़ीसा', 'उड़ीसा']
+    },
+    {
+      name: 'Punjab',
+      aliases: ['punjab', 'panjab', 'पंजाब']
+    },
+    {
+      name: 'Rajasthan',
+      aliases: ['rajasthan', 'rajashthan', 'राजस्थान']
+    },
+    {
+      name: 'Sikkim',
+      aliases: ['sikkim', 'सिक्किम']
+    },
+    {
+      name: 'Tamil Nadu',
+      aliases: ['tamil nadu', 'tamilnadu', 'tamil nad', 'tn', 't.n', 't n', 'तमिलनाडु', 'तमिल नाडु']
+    },
+    {
+      name: 'Telangana',
+      aliases: ['telangana', 'telengana', 'तेलंगाना']
+    },
+    {
+      name: 'Tripura',
+      aliases: ['tripura', 'त्रिपुरा']
+    },
+    {
+      name: 'Uttar Pradesh',
+      aliases: ['uttar pradesh', 'uttarpradesh', 'up', 'u.p', 'u p', 'उत्तर प्रदेश', 'यूपी']
+    },
+    {
+      name: 'Uttarakhand',
+      aliases: ['uttarakhand', 'uttaranchal', 'उत्तराखंड', 'उत्तरांचल']
+    },
+    {
+      name: 'West Bengal',
+      aliases: ['west bengal', 'westbengal', 'bengal', 'पश्चिम बंगाल', 'वेस्ट बंगाल', 'बंगाल', 'बांग्ला']
+    },
+    // Union Territories
+    {
+      name: 'Andaman and Nicobar Islands',
+      aliases: ['andaman and nicobar', 'andaman and nicobar islands', 'andaman', 'nicobar', 'अंडमान और निकोबार', 'अंडमान']
+    },
+    {
+      name: 'Chandigarh',
+      aliases: ['chandigarh', 'chandigadh', 'चंडीगढ़']
+    },
+    {
+      name: 'Dadra and Nagar Haveli and Daman and Diu',
+      aliases: ['dadra and nagar haveli', 'daman and diu', 'daman', 'diu', 'dadra', 'nagar haveli', 'दादरा और नगर हवेली', 'दमन और दीव']
+    },
+    {
+      name: 'Delhi',
+      aliases: ['delhi', 'new delhi', 'nct of delhi', 'delhi ncr', 'दिल्ली', 'नई दिल्ली']
+    },
+    {
+      name: 'Jammu and Kashmir',
+      aliases: ['jammu and kashmir', 'jammu & kashmir', 'jammu', 'kashmir', 'j&k', 'j and k', 'जम्मू और कश्मीर', 'जम्मू', 'कश्मीर']
+    },
+    {
+      name: 'Ladakh',
+      aliases: ['ladakh', 'leh', 'लद्दाख']
+    },
+    {
+      name: 'Lakshadweep',
+      aliases: ['lakshadweep', 'lakshadeep', 'लक्षद्वीप']
+    },
+    {
+      name: 'Puducherry',
+      aliases: ['puducherry', 'pondicherry', 'पुडुचेरी', 'पांडिचेरी']
+    }
+  ];
+
+  // Blacklist of everyday non-geographical and non-agricultural items (e.g., "pencil")
+  const BLACKLIST_WORDS = [
+    'pencil', 'pen', 'paper', 'eraser', 'sharpener', 'ruler', 'scale', 'marker', 'notebook', 'book',
+    'table', 'chair', 'desk', 'bed', 'sofa', 'fan', 'light', 'bulb', 'door', 'window',
+    'mobile', 'phone', 'laptop', 'computer', 'mouse', 'keyboard', 'charger', 'cable', 'headphone', 'earphone', 'camera',
+    'car', 'bike', 'motorcycle', 'bicycle', 'bus', 'train', 'truck', 'scooter', 'aeroplane', 'airplane',
+    'bottle', 'glass', 'cup', 'plate', 'spoon', 'knife', 'fork', 'bag', 'shoes', 'shoe', 'shirt', 'pant', 'tshirt', 'jeans', 'clothes',
+    'dog', 'cat', 'elephant', 'tiger', 'lion', 'bird', 'fish', 'rat',
+    'hello', 'hi', 'hey', 'test', 'testing', 'what', 'why', 'how', 'who', 'when', 'where', 'ok', 'okay', 'nothing', 'cancel'
+  ];
+
+  function isBlacklistedWord(text) {
+    if (!text) return false;
+    const clean = String(text).trim().toLowerCase();
+    const tokens = clean.split(/[\s,]+/);
+    return tokens.some(tok => BLACKLIST_WORDS.includes(tok)) || BLACKLIST_WORDS.includes(clean);
+  }
+
+  function capitalizeWords(str) {
+    if (!str) return '';
+    return str.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  /**
+   * Match spoken input against 36 Indian States and Union Territories
+   * Rejects non-states such as "pencil", "mobile", etc.
+   */
+  function matchIndianState(rawText) {
+    if (!rawText) return null;
+    const clean = String(rawText).trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!clean) return null;
+
+    if (isBlacklistedWord(clean)) {
+      return null;
+    }
+
+    for (const item of INDIAN_STATES_AND_UTS) {
+      if (clean === item.name.toLowerCase()) return item.name;
+      for (const alias of item.aliases) {
+        if (clean === alias.toLowerCase()) return item.name;
+        const regex = new RegExp(`(^|\\b)${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\b|$)`, 'i');
+        if (regex.test(clean)) {
+          return item.name;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Curated catalog of Indian Agricultural Crops
+  const COMMON_CROPS = [
+    // Grains & Cereals
+    'wheat', 'rice', 'paddy', 'maize', 'corn', 'bajra', 'pearl millet', 'jowar', 'sorghum', 'barley', 'ragi', 'finger millet', 'oats',
+    'गेहूं', 'गेहूँ', 'चावल', 'धान', 'मक्का', 'बाजरा', 'ज्वार', 'जौ', 'रागी',
+    // Pulses & Legumes
+    'pulses', 'gram', 'chana', 'chickpea', 'bengal gram', 'arhar', 'tur', 'pigeon pea', 'urad', 'black gram', 'moong', 'green gram', 'masoor', 'red lentil', 'lentil', 'peas', 'matar', 'rajma', 'soybean',
+    'दाल', 'चना', 'अरहर', 'तुअर', 'उड़द', 'मूंग', 'मसूर', 'मटर', 'सोयाबीन', 'राजमा',
+    // Cash, Fiber & Plantation
+    'cotton', 'sugarcane', 'jute', 'tobacco', 'rubber', 'tea', 'coffee', 'betel', 'paan', 'arecanut', 'supari', 'coconut', 'cashew',
+    'कपास', 'गन्ना', 'जूट', 'तंबाकू', 'रबर', 'चाय', 'कॉफी', 'पान', 'सुपारी', 'नारियल', 'काजू',
+    // Oilseeds
+    'mustard', 'sarson', 'groundnut', 'peanut', 'moongphali', 'sunflower', 'sesame', 'til', 'castor', 'arandi', 'safflower', 'kusum', 'linseed', 'alsi',
+    'सरसों', 'मूंगफली', 'सूरजमुखी', 'तिल', 'अरंडी', 'अलसी',
+    // Vegetables
+    'potato', 'aloo', 'onion', 'pyaz', 'tomato', 'tamatar', 'brinjal', 'eggplant', 'baingan', 'chilli', 'mirch', 'green chilli',
+    'garlic', 'lahsun', 'ginger', 'adrak', 'turmeric', 'haldi', 'okra', 'lady finger', 'bhindi', 'cabbage', 'cauliflower', 'carrot', 'radish', 'spinach', 'palak', 'coriander', 'dhaniya', 'cumin', 'jeera', 'fenugreek', 'methi', 'bottle gourd', 'lauki', 'bitter gourd', 'karela', 'cucumber', 'kheera',
+    'आलू', 'प्याज', 'टमाटर', 'बैंगन', 'मिर्च', 'लहसुन', 'अदरक', 'हल्दी', 'भिंडी', 'पत्तागोभी', 'फूलगोभी', 'गाजर', 'मूली', 'पालक', 'धनिया', 'जीरा', 'मेथी', 'लौकी', 'करेला', 'खीरा',
+    // Fruits
+    'mango', 'aam', 'banana', 'kela', 'apple', 'seb', 'guava', 'amrood', 'papaya', 'papita', 'orange', 'santra', 'grapes', 'angoor', 'pomegranate', 'anar', 'watermelon', 'tarbooj', 'muskmelon', 'kharbooza', 'lemon', 'nimbu',
+    'आम', 'केला', 'सेब', 'अमरूद', 'पपीता', 'संतरा', 'अंगूर', 'अनार', 'तरबूज', 'खरबूजा', 'नींबू'
+  ];
+
+  function matchAgriculturalCrop(rawText) {
+    if (!rawText) return null;
+    const clean = String(rawText).trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!clean) return null;
+
+    if (isBlacklistedWord(clean)) return null;
+
+    for (const crop of COMMON_CROPS) {
+      if (clean === crop) return capitalizeWords(clean);
+      const regex = new RegExp(`(^|\\b)${crop.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\b|$)`, 'i');
+      if (regex.test(clean)) {
+        return capitalizeWords(crop);
+      }
+    }
+    return null;
+  }
+
+  function matchLandSize(rawText, lang) {
+    if (!rawText || isBlacklistedWord(rawText)) return null;
+    const num = convertSpokenNumberToDigits(rawText, lang);
+    const parsed = parseFloat(num);
+    if (isNaN(parsed) || parsed <= 0 || parsed > 10000) return null;
+    return parsed;
+  }
+
+  function matchAnnualIncome(rawText, lang) {
+    if (!rawText || isBlacklistedWord(rawText)) return null;
+    const num = convertSpokenNumberToDigits(rawText, lang);
+    const parsed = parseFloat(num);
+    if (isNaN(parsed) || parsed < 500) return null;
+    return parsed;
+  }
+
+  function matchExistingDebt(rawText, lang) {
+    if (!rawText || isBlacklistedWord(rawText)) return null;
+    const lower = String(rawText).toLowerCase().trim();
+    if (lower === 'zero' || lower === 'none' || lower === 'nil' || lower === 'no' || lower === 'शून्य' || lower === 'कोई नहीं' || lower === 'कुछ नहीं') {
+      return 0;
+    }
+    const num = convertSpokenNumberToDigits(rawText, lang);
+    const parsed = parseFloat(num);
+    if (isNaN(parsed) || parsed < 0) return null;
+    return parsed;
+  }
+
+  function matchDistrict(rawText) {
+    if (!rawText || isBlacklistedWord(rawText)) return null;
+    const clean = String(rawText).trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (clean.length < 2) return null;
+    if (/^\d+$/.test(clean)) return null;
+    if (!/[\p{L}]/u.test(clean)) return null;
+    return capitalizeWords(clean);
+  }
+
+  /**
+   * Unified validator for form inputs and voice-guided steps
+   * Returns: { valid: boolean, sanitizedValue: any, errorMsg: string, audioMsg: string }
+   */
+  function validateVoiceInput(targetId, transcript, lang = 'hi') {
+    const isHi = lang === 'hi';
+    const cleanTranscript = (transcript || '').trim();
+
+    if (!cleanTranscript) {
+      return {
+        valid: false,
+        sanitizedValue: null,
+        errorMsg: isHi ? 'कोई आवाज नहीं सुनी गई। कृपया पुनः बोलें।' : 'No speech detected. Please speak again.',
+        audioMsg: isHi ? 'कोई आवाज नहीं सुनी गई। कृपया फिर से बोलिए।' : 'No speech detected. Please speak again.'
+      };
+    }
+
+    const key = String(targetId).toLowerCase().replace('-input', '').replace('-status-select', '').replace('-select', '');
+
+    if (key.includes('state')) {
+      const stateMatch = matchIndianState(cleanTranscript);
+      if (!stateMatch) {
+        return {
+          valid: false,
+          sanitizedValue: null,
+          errorMsg: isHi
+            ? `अमान्य इनपुट: "${cleanTranscript}"। कृपया किसी सही भारतीय राज्य का नाम बोलें (जैसे पंजाब, महाराष्ट्र या उत्तर प्रदेश)।`
+            : `Incorrect input: "${cleanTranscript}". Please say a valid Indian state (e.g., Punjab, Maharashtra, or Uttar Pradesh).`,
+          audioMsg: isHi
+            ? 'अमान्य इनपुट। कृपया सही भारतीय राज्य का नाम बोलिए, जैसे पंजाब, महाराष्ट्र या उत्तर प्रदेश।'
+            : 'Incorrect input. Please say a valid Indian state name like Punjab, Maharashtra, or Uttar Pradesh.'
+        };
+      }
+      return { valid: true, sanitizedValue: stateMatch, errorMsg: null, audioMsg: null };
+    }
+
+    if (key.includes('crop')) {
+      const cropMatch = matchAgriculturalCrop(cleanTranscript);
+      if (!cropMatch) {
+        return {
+          valid: false,
+          sanitizedValue: null,
+          errorMsg: isHi
+            ? `अमान्य इनपुट: "${cleanTranscript}"। कृपया सही फसल का नाम बोलें (जैसे गेहूं, धान, कपास या गन्ना)।`
+            : `Incorrect input: "${cleanTranscript}". Please say a valid crop name (e.g., Wheat, Rice, Cotton, or Sugarcane).`,
+          audioMsg: isHi
+            ? 'अमान्य इनपुट। कृपया सही फसल का नाम बोलिए, जैसे गेहूं, धान, कपास या गन्ना।'
+            : 'Incorrect input. Please say a valid crop name like Wheat, Rice, Cotton, or Sugarcane.'
+        };
+      }
+      return { valid: true, sanitizedValue: cropMatch, errorMsg: null, audioMsg: null };
+    }
+
+    if (key.includes('land')) {
+      const landMatch = matchLandSize(cleanTranscript, lang);
+      if (landMatch === null) {
+        return {
+          valid: false,
+          sanitizedValue: null,
+          errorMsg: isHi
+            ? `अमान्य इनपुट: "${cleanTranscript}"। कृपया अपनी जमीन का आकार एकड़ में बोलें (जैसे 2.5 एकड़ या 5 एकड़)।`
+            : `Incorrect input: "${cleanTranscript}". Please say your land size in acres (e.g., 2.5 acres or 5 acres).`,
+          audioMsg: isHi
+            ? 'अमान्य इनपुट। कृपया अपनी जमीन का आकार एकड़ में बोलिए, जैसे दो एकड़ या पांच एकड़।'
+            : 'Incorrect input. Please say your land size in acres, for example 2.5 or 5.'
+        };
+      }
+      return { valid: true, sanitizedValue: landMatch, errorMsg: null, audioMsg: null };
+    }
+
+    if (key.includes('district')) {
+      const distMatch = matchDistrict(cleanTranscript);
+      if (!distMatch) {
+        return {
+          valid: false,
+          sanitizedValue: null,
+          errorMsg: isHi
+            ? `अमान्य इनपुट: "${cleanTranscript}"। कृपया अपने सही जिले का नाम बोलें (जैसे लुधियाना, पुणे या करनाल)।`
+            : `Incorrect input: "${cleanTranscript}". Please say a valid district name (e.g., Ludhiana, Pune, or Karnal).`,
+          audioMsg: isHi
+            ? 'अमान्य इनपुट। कृपया अपने जिले का नाम बोलिए, जैसे लुधियाना, पुणे या करनाल।'
+            : 'Incorrect input. Please say a valid district name like Ludhiana, Pune, or Karnal.'
+        };
+      }
+      return { valid: true, sanitizedValue: distMatch, errorMsg: null, audioMsg: null };
+    }
+
+    if (key.includes('income')) {
+      const incomeMatch = matchAnnualIncome(cleanTranscript, lang);
+      if (incomeMatch === null) {
+        return {
+          valid: false,
+          sanitizedValue: null,
+          errorMsg: isHi
+            ? `अमान्य इनपुट: "${cleanTranscript}"। कृपया अपनी वार्षिक आय रुपये में बोलें (जैसे 2 लाख या 50,000 रुपये)।`
+            : `Incorrect input: "${cleanTranscript}". Please say your annual farm income in rupees (e.g., 2 Lakh or 50,000).`,
+          audioMsg: isHi
+            ? 'अमान्य इनपुट। कृपया वार्षिक आय रुपये में बोलिए, जैसे दो लाख या पचास हजार रुपये।'
+            : 'Incorrect input. Please say your annual farm income in rupees, for example 2 Lakh or 50,000.'
+        };
+      }
+      return { valid: true, sanitizedValue: incomeMatch, errorMsg: null, audioMsg: null };
+    }
+
+    if (key.includes('loan') || key.includes('debt')) {
+      const debtMatch = matchExistingDebt(cleanTranscript, lang);
+      if (debtMatch === null) {
+        return {
+          valid: false,
+          sanitizedValue: null,
+          errorMsg: isHi
+            ? `अमान्य इनपुट: "${cleanTranscript}"। कृपया बकाया ऋण की राशि बोलें या शून्य बोलें।`
+            : `Incorrect input: "${cleanTranscript}". Please say your outstanding loan amount in rupees, or say zero.`,
+          audioMsg: isHi
+            ? 'अमान्य इनपुट। कृपया बकाया ऋण की राशि बोलिए या शून्य बोलिए।'
+            : 'Incorrect input. Please say your outstanding debt amount in rupees, or say zero.'
+        };
+      }
+      return { valid: true, sanitizedValue: debtMatch, errorMsg: null, audioMsg: null };
+    }
+
+    if (key.includes('aadhaar')) {
+      const ynMatch = parseYesNo(cleanTranscript);
+      if (!ynMatch) {
+        return {
+          valid: false,
+          sanitizedValue: null,
+          errorMsg: isHi
+            ? `अमान्य इनपुट: "${cleanTranscript}"। कृपया केवल 'हाँ' या 'नहीं' बोलें।`
+            : `Incorrect input: "${cleanTranscript}". Please say Yes or No.`,
+          audioMsg: isHi
+            ? 'अमान्य इनपुट। कृपया हाँ या नहीं बोलिए।'
+            : 'Incorrect input. Please say Yes or No.'
+        };
+      }
+      return { valid: true, sanitizedValue: ynMatch, errorMsg: null, audioMsg: null };
+    }
+
+    // Generic blacklist safety check
+    if (isBlacklistedWord(cleanTranscript)) {
+      return {
+        valid: false,
+        sanitizedValue: null,
+        errorMsg: isHi ? `अमान्य इनपुट: "${cleanTranscript}"। कृपया सही विवरण बोलें।` : `Incorrect input: "${cleanTranscript}". Please provide a valid value.`,
+        audioMsg: isHi ? 'अमान्य इनपुट। कृपया सही जानकारी बोलिए।' : 'Incorrect input. Please provide a valid value.'
+      };
+    }
+
+    return { valid: true, sanitizedValue: cleanTranscript, errorMsg: null, audioMsg: null };
   }
 
   // Active Speech Recognition instance
@@ -211,25 +642,32 @@
       const transcript = event.results[0][0].transcript;
       showVoiceStatusPill(`Heard: "${transcript}"`, false);
 
-      if (inputEl.type === 'number') {
-        const parsed = convertSpokenNumberToDigits(transcript, currentLang);
-        inputEl.value = isNaN(parsed) ? transcript : parsed;
-      } else if (inputEl.tagName === 'SELECT') {
-        const yn = parseYesNo(transcript);
-        if (yn) {
-          inputEl.value = yn;
-        } else {
-          // Check matching options
-          for (let i = 0; i < inputEl.options.length; i++) {
-            if (inputEl.options[i].text.toLowerCase().includes(transcript.toLowerCase()) ||
-              inputEl.options[i].value.toLowerCase().includes(transcript.toLowerCase())) {
-              inputEl.selectedIndex = i;
-              break;
-            }
-          }
+      const fieldId = inputEl.id || inputEl.name || (btnEl ? btnEl.dataset.target : '');
+      const validation = validateVoiceInput(fieldId, transcript, currentLang);
+
+      if (!validation.valid) {
+        showVoiceStatusPill(`⚠️ ${validation.errorMsg}`, false);
+        if (window.showToast) {
+          window.showToast(`⚠️ ${validation.errorMsg}`);
         }
+        // Speak auditory guidance: "Incorrect input..."
+        if (typeof window.speakKisanText === 'function') {
+          window.speakKisanText(validation.audioMsg, currentLang);
+        } else if (typeof window.speakText === 'function') {
+          window.speakText(validation.audioMsg, currentLang);
+        }
+        inputEl.classList.add('input-voice-invalid');
+        setTimeout(() => inputEl.classList.remove('input-voice-invalid'), 2200);
+        return;
+      }
+
+      // Valid: safely set value
+      if (inputEl.type === 'number') {
+        inputEl.value = validation.sanitizedValue;
+      } else if (inputEl.tagName === 'SELECT') {
+        inputEl.value = validation.sanitizedValue;
       } else {
-        inputEl.value = transcript;
+        inputEl.value = validation.sanitizedValue;
       }
 
       // Trigger standard change and input events
@@ -396,7 +834,7 @@
             <div class="voice-prompt-card">
               <div class="voice-step-indicator" id="voice-step-indicator">Step 1 of 7</div>
               <h3 class="voice-question-text" id="voice-question-text">Listening...</h3>
-              <div class="voice-helper-tip" id="voice-helper-tip">Speak clearly after the beep</div>
+              <div class="voice-helper-tip" id="voice-helper-tip">Speak clearly after the prompt</div>
             </div>
 
             <!-- Listening Visualizer Animation -->
@@ -473,8 +911,9 @@
       if (prevBtn) prevBtn.disabled = stepIdx === 0;
 
       // Speak prompt using natural TTS or speechSynthesis
-      if (window.speakKisanText) {
-        window.speakKisanText(promptText, lang, () => {
+      const speakFn = window.speakKisanText || window.speakText;
+      if (speakFn) {
+        speakFn(promptText, lang, () => {
           this.triggerListen();
         });
       } else {
@@ -485,7 +924,8 @@
     triggerListen() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        document.getElementById('voice-recognized-value').textContent = 'Voice input not supported in this browser.';
+        const valEl = document.getElementById('voice-recognized-value');
+        if (valEl) valEl.textContent = 'Voice input not supported in this browser.';
         return;
       }
 
@@ -511,31 +951,48 @@
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         const recognizedValue = document.getElementById('voice-recognized-value');
+        const questionText = document.getElementById('voice-question-text');
         const targetEl = document.getElementById(step.targetId);
 
-        let finalValue = transcript;
+        // Strict semantic validation for the step
+        const validation = validateVoiceInput(step.targetId || step.id, transcript, currentLang);
 
-        if (step.type === 'number') {
-          const parsed = convertSpokenNumberToDigits(transcript, currentLang);
-          finalValue = parsed;
-          if (targetEl) targetEl.value = parsed;
-        } else if (step.type === 'yesno') {
-          const yn = parseYesNo(transcript);
-          finalValue = yn === 'yes' ? 'Yes (हाँ)' : (yn === 'no' ? 'No (नहीं)' : transcript);
-          if (targetEl && yn) {
-            targetEl.value = yn;
+        if (!validation.valid) {
+          if (recognizedValue) {
+            recognizedValue.innerHTML = `<span style="color: #dc2626; font-weight: 700;">⚠️ ${validation.errorMsg}</span>`;
           }
-        } else {
-          if (targetEl) targetEl.value = transcript;
+          if (window.showToast) {
+            window.showToast(`⚠️ ${validation.errorMsg}`);
+          }
+          if (questionText) {
+            questionText.innerHTML = `<span style="color: #dc2626;">${validation.errorMsg}</span>`;
+          }
+
+          // Speak auditory prompt explaining the incorrect input and re-prompting
+          const speakFn = window.speakKisanText || window.speakText;
+          if (speakFn) {
+            speakFn(validation.audioMsg, currentLang, () => {
+              setTimeout(() => {
+                if (questionText) {
+                  questionText.textContent = (step.prompt[currentLang] || step.prompt['hi'] || step.prompt['en']);
+                }
+                this.triggerListen();
+              }, 400);
+            });
+          }
+          return;
         }
 
+        // VALID: Populate field and advance
+        const finalValue = validation.sanitizedValue;
         if (targetEl) {
+          targetEl.value = finalValue;
           targetEl.dispatchEvent(new Event('input', { bubbles: true }));
           targetEl.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
         if (recognizedValue) {
-          recognizedValue.textContent = `"${finalValue}"`;
+          recognizedValue.innerHTML = `<span style="color: #15803d; font-weight: 700;">✓ "${finalValue}"</span>`;
         }
 
         // Advance to next question after 1.5s pause
@@ -594,6 +1051,11 @@
   window.startListeningForField = startListeningForField;
   window.convertSpokenNumberToDigits = convertSpokenNumberToDigits;
   window.parseYesNo = parseYesNo;
+  window.validateVoiceInput = validateVoiceInput;
+  window.matchIndianState = matchIndianState;
+  window.matchAgriculturalCrop = matchAgriculturalCrop;
+  window.isBlacklistedWord = isBlacklistedWord;
+  window.INDIAN_STATES_AND_UTS = INDIAN_STATES_AND_UTS;
 
   // Auto-bind microphone buttons on inputs
   function bindInputMicrophoneButtons() {
