@@ -19,7 +19,6 @@ app.use('/api', docsRoutes);
 app.use('/api', apiRoutes);
 
 const DATA_DIR = path.join(__dirname, 'Data', 'Data');
-const SCHEMES_FILE = path.join(__dirname, 'src', 'data', 'schemesDatabase.json');
 const LOANS_FILE = path.join(DATA_DIR, 'loans.json');
 
 // Helper to read JSON files safely
@@ -108,162 +107,11 @@ function enrichLoan(loan) {
 }
 
 // -------------------------------------------------------------
-// REST API ROUTES
+// -------------------------------------------------------------
+// REST API ROUTES (Core agricultural loans)
 // -------------------------------------------------------------
 
-// 1. Get all schemes (supports search & category filters)
-app.get('/api/schemes', (req, res) => {
-  const { search = '', category = 'all' } = req.query;
-  let schemes = readJson(SCHEMES_FILE, []);
-
-  if (search.trim()) {
-    const q = search.trim().toLowerCase();
-    schemes = schemes.filter(s => 
-      s.name.toLowerCase().includes(q) ||
-      s.shortName.toLowerCase().includes(q) ||
-      (s.tagline && s.tagline.toLowerCase().includes(q)) ||
-      (s.category && s.category.toLowerCase().includes(q))
-    );
-  }
-
-  if (category && category !== 'all') {
-    schemes = schemes.filter(s => {
-      if (category === 'crop') return s.id === 'kcc' || s.id === 'miss' || s.id === 'pmfby';
-      if (category === 'infra') return s.id === 'aif' || s.id === 'ahidf' || s.id === 'smam';
-      if (category === 'income') return s.id === 'pm-kisan' || s.id === 'pm-kmy';
-      if (category === 'more') return ['pm-kusum', 'pmfme', 'acabc'].includes(s.id);
-      return true;
-    });
-  }
-
-  res.json({ success: true, count: schemes.length, data: schemes });
-});
-
-// 2. Get single scheme by ID
-app.get('/api/schemes/:id', (req, res) => {
-  const schemes = readJson(SCHEMES_FILE, []);
-  const scheme = schemes.find(s => s.id === req.params.id);
-  if (!scheme) {
-    return res.status(404).json({ success: false, message: 'Scheme not found' });
-  }
-  res.json({ success: true, data: scheme });
-});
-
-// 3. Check Eligibility Engine
-app.post('/api/eligibility', (req, res) => {
-  const {
-    cropType = '',
-    annualIncome = 0,
-    district = '',
-    landOwnership = 'owner', // 'owner', 'tenant', 'sharecropper', 'leaseholder'
-    mainActivity = 'crop', // 'crop', 'dairy', 'poultry', 'fisheries', 'infra'
-    hasKcc = 'yes',
-    hasAadhaar = 'yes'
-  } = req.body;
-
-  const schemes = readJson(SCHEMES_FILE, []);
-  const normalizedCrop = String(cropType).trim().toLowerCase();
-  const income = Number(annualIncome) || 0;
-  const isAadhaarLinked = String(hasAadhaar).toLowerCase() === 'yes' || hasAadhaar === true;
-  const isKccHolder = String(hasKcc).toLowerCase() === 'yes' || hasKcc === true;
-
-  // 0. Mandatory Aadhaar-Bank Account Linking Check (Statutory DBT Rule)
-  if (!isAadhaarLinked) {
-    return res.json({
-      success: false,
-      code: 'AADHAAR_LINKING_REQUIRED',
-      allowed_to_apply: false,
-      message: 'Aadhaar-bank account linking is mandatory under Government DBT & PFMS directives to qualify or apply for agricultural credit and interest subvention.',
-      aadhaar_linking_guide: {
-        title: 'Mandatory Aadhaar-Bank Account Seeding Instructions',
-        steps: [
-          'Visit your home bank branch with your original Aadhaar Card and bank passbook.',
-          'Request and submit the Aadhaar-Bank Account Seeding / DBT Mandate consent form.',
-          'Alternatively, log in to your Bank Mobile App -> Services -> Aadhaar Seeding / DBT Registration.',
-          'Verify your seeding status on the official UIDAI portal: https://myaadhaar.uidai.gov.in/'
-        ],
-        helpline: '1947 (UIDAI Helpline) or contact your local Lead Bank Manager.'
-      },
-      userInput: { cropType, annualIncome: income, district, landOwnership, mainActivity, hasKcc, hasAadhaar: 'no' },
-      results: []
-    });
-  }
-
-  const results = schemes.map(scheme => {
-    let eligible = true;
-    const reasons = [];
-    const warnings = [];
-
-    // 1. Aadhaar check
-    if (scheme.eligibility && scheme.eligibility.requiresAadhaar && !isAadhaarLinked) {
-      eligible = false;
-      warnings.push('Aadhaar linking is mandatory for this scheme and interest subvention.');
-    } else {
-      reasons.push('Aadhaar is linked with bank account for direct subvention.');
-    }
-
-    // 2. Land Ownership / Farmer Category check
-    const allowedTypes = scheme.eligibility ? scheme.eligibility.farmerTypes || [] : ['all'];
-    if (!allowedTypes.includes(landOwnership) && !allowedTypes.includes('all')) {
-      if (scheme.id === 'pm-kisan' && landOwnership !== 'owner') {
-        eligible = false;
-        warnings.push('PM-KISAN requires cultivable land in your own name; tenant and leaseholder farmers are not covered.');
-      } else if ((landOwnership === 'tenant' || landOwnership === 'sharecropper') && (scheme.id === 'kcc' || scheme.id === 'miss')) {
-        reasons.push('Eligible under tenant farmer & Joint Liability Group (JLG) guidelines.');
-        warnings.push('Bank branch will require a registered tenancy agreement or local cultivation certificate.');
-      } else if (scheme.id === 'aif' || scheme.id === 'ahidf') {
-        reasons.push('Eligible as landholder, enterprise, or farmer group member.');
-      }
-    } else {
-      reasons.push(`Matched landholding status: ${landOwnership.toUpperCase()}`);
-    }
-
-    // 3. Activity / Crop check
-    if (scheme.id === 'ahidf' && mainActivity !== 'dairy' && mainActivity !== 'poultry' && !['dairy', 'meat', 'feed', 'cattle', 'milk'].some(k => normalizedCrop.includes(k))) {
-      warnings.push('Specialized for dairy, animal husbandry, and feed processing infrastructure.');
-    } else if (scheme.id === 'pm-kusum' && mainActivity === 'infra') {
-      reasons.push('Solar pump installation qualifies for 60% capital subsidy.');
-    } else if (scheme.id === 'smam') {
-      reasons.push('40-50% subsidy available for tractors and farm machinery.');
-    } else {
-      reasons.push(`Supports activity: ${cropType || mainActivity.toUpperCase()}`);
-    }
-
-    // 4. KCC synergy
-    if (scheme.id === 'miss') {
-      if (isKccHolder) {
-        reasons.push('Active KCC holder: eligible for immediate 3% prompt repayment subvention (4% net rate).');
-      } else {
-        warnings.push('Must be applied through or linked with a Kisan Credit Card (KCC) account.');
-      }
-    }
-
-    // 5. Income Exclusions
-    if (scheme.id === 'pm-kisan' && income > 2500000) {
-      warnings.push('Higher income tax payers are excluded under statutory PM-KISAN guidelines.');
-    }
-
-    let badge = eligible ? 'Eligible' : 'Conditional / Review Needed';
-    let subventionNote = scheme.highlights ? scheme.highlights[0] : scheme.tagline;
-
-    return {
-      scheme,
-      eligible,
-      badge,
-      reasons,
-      warnings,
-      subventionNote
-    };
-  });
-
-  res.json({
-    success: true,
-    userInput: { cropType, annualIncome: income, district, landOwnership, mainActivity, hasKcc, hasAadhaar },
-    results
-  });
-});
-
-// 4. Get all loans (supports ?status=active|ended|all)
+// Get all loans (supports ?status=active|ended|all)
 app.get('/api/loans', (req, res) => {
   const { status = 'all' } = req.query;
   const rawLoans = readJson(LOANS_FILE, []);

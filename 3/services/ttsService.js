@@ -17,7 +17,7 @@ const CACHE_DIR = path.join(__dirname, '..', '..', 'Data', 'Data', 'tts_cache');
 if (!fs.existsSync(CACHE_DIR)) {
   try {
     fs.mkdirSync(CACHE_DIR, { recursive: true });
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // Voice mappings for Indian languages (Google Cloud Neural2 / WaveNet & Regional Neural models)
@@ -127,7 +127,7 @@ async function synthesizeSpeech({ text = '', language = 'en', speed = 'normal' }
       // Save to disk cache
       try {
         fs.writeFileSync(cacheFilePath, Buffer.from(audioBase64, 'base64'));
-      } catch (e) {}
+      } catch (e) { }
 
       return {
         success: true,

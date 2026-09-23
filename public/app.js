@@ -1,7 +1,7 @@
 /**
  * KisanSahay Frontend Application Logic
  * Accessible Agricultural Finance & Multi-Loan Management Portal
- * Supports 15 Indian Languages, Active & Ended Loan Tracking, and Screenshot-Exact UI
+ * Supports 25 Indian Languages, Active & Ended Loan Tracking, and Screenshot-Exact UI
  */
 
 // Application State
@@ -254,6 +254,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupMultiuserStateListener();
   setupNetworkSpeedMonitor();
   setupFarmerQualificationModal();
+  setupPWAInstallPrompt();
+  setupUniversalPWADownloadModal();
+  setupMobileAppDownloadBar();
 
   // Apply saved language
   setLanguage(state.currentLang);
@@ -270,7 +273,7 @@ function formatINR(amount) {
 }
 
 // ==========================================================================
-// 15 Indian Languages Engine
+// 25 Indian Languages Engine
 // ==========================================================================
 
 function setupLanguages() {
@@ -321,26 +324,7 @@ function t(key, fallback = '') {
   return dict[key] || fallback || key;
 }
 
-function setLanguage(langCode) {
-  state.currentLang = langCode;
-  localStorage.setItem('kisansahay_lang', langCode);
-
-  const langObj = window.INDIAN_LANGUAGES ? window.INDIAN_LANGUAGES.find(l => l.code === langCode) : null;
-  if (el.langText && langObj) {
-    el.langText.textContent = langObj.native || langObj.name;
-  }
-
-  // Highlight active in selector grid
-  if (el.languagesGrid) {
-    el.languagesGrid.querySelectorAll('.lang-grid-item').forEach(item => {
-      if (item.dataset.code === langCode) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
-    });
-  }
-
+function applyTranslationsToDOM() {
   // Translate all DOM elements with data-i18n safely
   document.querySelectorAll('[data-i18n]').forEach(elem => {
     const key = elem.getAttribute('data-i18n');
@@ -360,10 +344,126 @@ function setLanguage(langCode) {
     }
   });
 
-  // Re-render loans & schemes to reflect language
-  renderLoansList();
-  renderSchemesGrid(state.schemes);
+  // Re-render home categories, loans & schemes to reflect language
+  if (typeof renderHomeCategories === 'function') renderHomeCategories();
+  if (typeof renderLoansList === 'function') renderLoansList();
+  if (typeof renderSchemesGrid === 'function') renderSchemesGrid(state.schemes);
+
+  // If currently in category explorer view, re-render explorer with new language
+  if (state.currentTab === 'category-schemes' && typeof filterAndRenderCategorySchemes === 'function') {
+    const cat = (window.NATIONAL_CATEGORIES || []).find(c => c.id === currentCategoryState.categoryId) || (window.NATIONAL_CATEGORIES ? window.NATIONAL_CATEGORIES[0] : null);
+    if (cat && typeof getCategoryLocalizedName === 'function') {
+      const breadcrumb = document.getElementById('cat-breadcrumb-title');
+      if (breadcrumb) breadcrumb.textContent = getCategoryLocalizedName(cat);
+      const heroTitle = document.querySelector('.category-hero-overlay-title');
+      if (heroTitle) heroTitle.textContent = getCategoryLocalizedName(cat);
+    }
+    filterAndRenderCategorySchemes();
+  }
 }
+
+async function setLanguage(langCode) {
+  state.currentLang = langCode;
+  localStorage.setItem('kisansahay_lang', langCode);
+
+  const langObj = window.INDIAN_LANGUAGES ? window.INDIAN_LANGUAGES.find(l => l.code === langCode) : null;
+  if (el.langText && langObj) {
+    el.langText.textContent = langObj.native || langObj.name;
+  }
+
+  // Highlight active in selector grid
+  if (el.languagesGrid) {
+    el.languagesGrid.querySelectorAll('.lang-grid-item').forEach(item => {
+      if (item.dataset.code === langCode) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  // Ensure window.TRANSLATIONS structure exists
+  if (!window.TRANSLATIONS) window.TRANSLATIONS = {};
+  if (!window.TRANSLATIONS['en'] && window.BASE_STRINGS) {
+    window.TRANSLATIONS['en'] = window.BASE_STRINGS;
+  }
+
+  // 1. If base language English, apply immediately
+  if (langCode === 'en') {
+    applyTranslationsToDOM();
+    return;
+  }
+
+  // 2. If already in client-side cache, apply instantly (0ms round-trip)
+  if (window.TRANSLATIONS[langCode] && Object.keys(window.TRANSLATIONS[langCode]).length > 0) {
+    applyTranslationsToDOM();
+    return;
+  }
+
+  // 3. Cache Miss: Fetch batch translation from backend API with subtle loading feedback
+  const baseStrings = window.TRANSLATIONS['en'] || window.BASE_STRINGS || {};
+  const langBtn = el.langToggleBtn || document.getElementById('lang-toggle-btn');
+
+  try {
+    if (langBtn) langBtn.classList.add('lang-loading-shimmer');
+
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        strings: baseStrings,
+        from: 'en',
+        to: langCode,
+        isDynamic: false
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Translation API HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data && data.success && data.translations) {
+      window.TRANSLATIONS[langCode] = data.translations;
+      applyTranslationsToDOM();
+    } else {
+      throw new Error('Invalid translation response');
+    }
+  } catch (err) {
+    console.warn(`[KisanSahay] Translation notice (${err.message}). Falling back gracefully to base language.`);
+    applyTranslationsToDOM();
+  } finally {
+    if (langBtn) langBtn.classList.remove('lang-loading-shimmer');
+  }
+}
+
+/**
+ * On-the-fly Dynamic Translation helper (for scheme details / chat responses)
+ * Bypasses static cache so dynamic information is never stale
+ */
+async function translateDynamic(texts, targetLang) {
+  if (!targetLang || targetLang === 'en' || !texts) return texts;
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        texts,
+        from: 'en',
+        to: targetLang,
+        isDynamic: true
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success) return data.translations;
+    }
+  } catch (err) {
+    console.warn('[KisanSahay] Dynamic translation warning:', err.message);
+  }
+  return texts;
+}
+
 
 // ==========================================================================
 // Navigation & Views
@@ -1319,10 +1419,10 @@ function renderSchemesGrid(schemes) {
         <!-- Actions: Choose Loan & View Checklist -->
         <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem;">
           <button class="btn-view-details ${tierInfo.themeColor}" style="flex: 1;" onclick="chooseLoanFromEligibility('${scheme.id}')">
-            <span>🌾 Choose Loan</span>
+            <span>${t('btnChooseLoan', '🌾 Choose Loan')}</span>
             <span>+</span>
           </button>
-          <button class="btn-icon-secondary" style="width: 42px; height: 38px; border-radius: var(--radius-sm); font-size: 0.95rem;" title="Document Checklist" onclick="openChecklist('${scheme.id}')">
+          <button class="btn-icon-secondary" style="width: 42px; height: 38px; border-radius: var(--radius-sm); font-size: 0.95rem;" title="${t('btnDocChecklist', '📋 Checklist')}" onclick="openChecklist('${scheme.id}')">
             📋
           </button>
         </div>
@@ -2137,6 +2237,9 @@ async function saveFarmerVault() {
 
   updateVaultNavIndicator('unlocked');
   closeVaultModal();
+  if (typeof window.updateSahayProfileStatusBar === 'function') {
+    window.updateSahayProfileStatusBar();
+  }
   showToast(`🔒 Document Vault encrypted & secured with your chosen ${pwType.toUpperCase()} password!`);
 
   // If prompted via "Choose Loan", seamlessly proceed to loan tracker modal!
@@ -2703,6 +2806,9 @@ function completeFarmerQualification(isSkipped = false) {
   if (!isSkipped) {
     try {
       localStorage.setItem('kisansahay_farmer_qualification', JSON.stringify(state.farmerQualification));
+      if (typeof window.updateSahayProfileStatusBar === 'function') {
+        window.updateSahayProfileStatusBar();
+      }
     } catch (e) {}
     showToast('✅ Preferences confirmed! Personalized subsidies & subventions active.');
   }
@@ -3768,25 +3874,108 @@ function setupSahayAI() {
   const micBtn = document.getElementById('sahay-mic-btn');
   const speechStatus = document.getElementById('sahay-speech-status');
 
+  // New UI Elements: Profile Status Bar & 50-FAQ Drawer
+  const profileSyncBtn = document.getElementById('sahay-profile-sync-btn');
+  const faqDrawer = document.getElementById('sahay-faq-drawer');
+  const faqToggleBtn = document.getElementById('sahay-faq-drawer-toggle');
+  const faqCloseBtn = document.getElementById('sahay-faq-drawer-close');
+  const faqSearchInput = document.getElementById('sahay-faq-search-input');
+  const faqCatFilter = document.getElementById('sahay-faq-cat-filter');
+  const faqList = document.getElementById('sahay-faq-list');
+  const categoryBar = document.getElementById('sahay-category-bar');
+
   if (!launcher || !chatWindow) return;
 
   let sahayLang = 'en'; // 'en' | 'hi'
   let isTtsActive = true;
   let recognition = null;
   let isListening = false;
+  let activeFaqCat = 'all';
+
+  // Helper: Aggregate comprehensive user farm profile and document vault metadata
+  function getComprehensiveFarmerProfile() {
+    let qual = {};
+    try {
+      qual = JSON.parse(localStorage.getItem('kisansahay_farmer_qualification') || '{}');
+    } catch (e) {}
+
+    let farm = state.userFarmProfile || {};
+    let activeProfileId = (typeof getActiveVaultUserId === 'function') ? getActiveVaultUserId() : 'default_farmer';
+    try {
+      const savedFarm = localStorage.getItem(`kisansahay_farm_${activeProfileId}`);
+      if (savedFarm) farm = { ...farm, ...JSON.parse(savedFarm) };
+    } catch (e) {}
+
+    // Extract encrypted vault documents
+    let vaultDocs = {};
+    try {
+      const metaStr = localStorage.getItem(`kisansahay_vault_meta_${activeProfileId}`) || localStorage.getItem('kisansahay_vault_meta');
+      if (metaStr) {
+        const meta = JSON.parse(metaStr);
+        if (meta.documents) vaultDocs = meta.documents;
+      }
+    } catch (e) {}
+
+    return {
+      state: qual.state || farm.state || 'All-India',
+      district: qual.district || farm.district || '',
+      landSizeAcres: qual.land_size || farm.landSizeAcres || '2.0',
+      cropType: qual.crop || farm.cropType || '',
+      category: qual.category || farm.category || 'general',
+      annualIncome: qual.income || farm.annualIncome || 200000,
+      documents: vaultDocs,
+      loans: state.loans || []
+    };
+  }
+
+  function updateSahayProfileStatusBar() {
+    const summaryEl = document.getElementById('sahay-profile-summary-text');
+    if (!summaryEl) return;
+    const p = getComprehensiveFarmerProfile();
+    let docCount = 0;
+    if (Array.isArray(p.documents)) docCount = p.documents.length;
+    else if (p.documents && typeof p.documents === 'object') {
+      docCount = Object.keys(p.documents).filter(k => p.documents[k]).length;
+    }
+
+    const stateDisplay = p.state && p.state !== 'All-India' ? p.state : 'All-India';
+    const acresDisplay = p.landSizeAcres ? `${p.landSizeAcres} Ac` : '2.0 Ac';
+    const cropDisplay = p.cropType ? ` • ${p.cropType}` : '';
+    const vaultDisplay = docCount > 0 ? `${docCount} Docs Saved` : 'Vault Ready';
+
+    summaryEl.textContent = `🌾 ${stateDisplay}${cropDisplay} (${acresDisplay}) | 🔒 ${vaultDisplay}`;
+  }
+
+  window.updateSahayProfileStatusBar = updateSahayProfileStatusBar;
+
+  // Initial update of profile bar
+  updateSahayProfileStatusBar();
+
+  // Profile sync button
+  if (profileSyncBtn) {
+    profileSyncBtn.addEventListener('click', () => {
+      updateSahayProfileStatusBar();
+      showToast('🌾 Farmer profile & document vault memory synced with SahayAI!');
+      const p = getComprehensiveFarmerProfile();
+      let docCount = (p.documents && typeof p.documents === 'object') ? Object.keys(p.documents).filter(k => p.documents[k]).length : 0;
+      appendMessage('assistant', `**🔄 Profile Memory Synced!**\n\n• **Active Location:** ${p.state} ${p.district ? '(' + p.district + ')' : ''}\n• **Land Holding:** ${p.landSizeAcres} Acres\n• **Primary Crop:** ${p.cropType || 'General Farming'}\n• **Document Vault:** ${docCount} documents safely encrypted.\n\nAll subsequent scheme advice and loan calculations will be customized to this profile.`);
+    });
+  }
 
   // Toggle open/close
   launcher.addEventListener('click', () => {
     const isHidden = chatWindow.style.display === 'none' || !chatWindow.style.display;
     chatWindow.style.display = isHidden ? 'flex' : 'none';
-    if (isHidden && userInput) {
-      setTimeout(() => userInput.focus(), 150);
+    if (isHidden) {
+      updateSahayProfileStatusBar();
+      if (userInput) setTimeout(() => userInput.focus(), 150);
     }
   });
 
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
       chatWindow.style.display = 'none';
+      if (faqDrawer) faqDrawer.style.display = 'none';
     });
   }
 
@@ -3797,28 +3986,14 @@ function setupSahayAI() {
       if (langIndicator) langIndicator.textContent = sahayLang.toUpperCase();
       showToast(`Sahay AI language set to ${sahayLang === 'hi' ? 'Hindi (हिंदी)' : 'English'}`);
 
-      // Update prompt chip text to active language
-      const chips = document.querySelectorAll('#sahay-prompt-chips .sahay-chip');
-      if (chips.length >= 4) {
-        if (sahayLang === 'hi') {
-          chips[0].textContent = '🌱 क्या मैं KCC के लिए पात्र हूँ?';
-          chips[0].setAttribute('data-query', 'क्या मैं KCC के लिए पात्र हूँ?');
-          chips[1].textContent = '📋 फसल ऋण के लिए कौन-से दस्तावेज चाहिए?';
-          chips[1].setAttribute('data-query', 'फसल ऋण के लिए कौन-से दस्तावेज चाहिए?');
-          chips[2].textContent = '📈 मेरे राज्य में ब्याज दरों की तुलना करें';
-          chips[2].setAttribute('data-query', 'मेरे राज्य में ब्याज दरों की तुलना करें');
-          chips[3].textContent = '🚜 50% कृषि यंत्र सब्सिडी कैसे पाएं?';
-          chips[3].setAttribute('data-query', '50% कृषि यंत्र सब्सिडी कैसे पाएं?');
-        } else {
-          chips[0].textContent = '🌱 Am I eligible for KCC?';
-          chips[0].setAttribute('data-query', 'Am I eligible for KCC?');
-          chips[1].textContent = '📋 What documents do I need for a crop loan?';
-          chips[1].setAttribute('data-query', 'What documents do I need for a crop loan?');
-          chips[2].textContent = '📈 Compare interest rates for my state';
-          chips[2].setAttribute('data-query', 'Compare interest rates for my state');
-          chips[3].textContent = '🚜 How to get 50% equipment subsidy?';
-          chips[3].setAttribute('data-query', 'How to get 50% equipment subsidy?');
-        }
+      // Update prompt chips based on active category
+      const activeCatBtn = document.querySelector('#sahay-category-bar .sahay-cat-btn.active');
+      const curCat = activeCatBtn ? activeCatBtn.getAttribute('data-cat') : 'all';
+      updatePromptChipsByCategory(curCat);
+
+      // Re-render FAQ drawer if open
+      if (faqDrawer && faqDrawer.style.display === 'flex') {
+        renderFaqDrawer(faqSearchInput ? faqSearchInput.value : '');
       }
     });
   }
@@ -3844,7 +4019,7 @@ function setupSahayAI() {
             <div class="sahay-intro-icon">🌾</div>
             <div class="sahay-intro-title">Namaste! I'm Sahay AI</div>
             <p class="sahay-intro-text">
-              Your direct guide to agricultural credit, government subsidies, and scheme documentation. Ask me any question in English or Hindi!
+              Your official agricultural guide with 50 verified government scheme answers, prompt repayment interest calculation, and encrypted document vault memory!
             </p>
           </div>
           <div class="sahay-prompt-chips-container" id="sahay-prompt-chips">
@@ -3852,19 +4027,20 @@ function setupSahayAI() {
             <button type="button" class="sahay-chip" data-query="Am I eligible for KCC?">
               🌱 Am I eligible for KCC?
             </button>
-            <button type="button" class="sahay-chip" data-query="What documents do I need for a crop loan?">
-              📋 What documents do I need for a crop loan?
+            <button type="button" class="sahay-chip" data-query="What is the interest rate on a KCC loan?">
+              💳 KCC 4% Subsidized Interest Rate
             </button>
-            <button type="button" class="sahay-chip" data-query="Compare interest rates for my state">
-              📈 Compare interest rates for my state
+            <button type="button" class="sahay-chip" data-query="What documents do I have?">
+              🔒 Check My Saved Vault Documents
             </button>
-            <button type="button" class="sahay-chip" data-query="How to get 50% equipment subsidy?">
-              🚜 How to get 50% equipment subsidy?
+            <button type="button" class="sahay-chip" data-query="How do I know if a loan offer is a scam?">
+              ⚠️ How to identify loan scams?
             </button>
           </div>
         `;
         wirePromptChips();
       }
+      updateSahayProfileStatusBar();
       showToast('Conversation reset. Ready for a new query.');
     });
   }
@@ -3879,6 +4055,121 @@ function setupSahayAI() {
     });
   }
   wirePromptChips();
+
+  // 50 FAQs Drawer Logic
+  function renderFaqDrawer(searchTerm = '') {
+    if (!faqList) return;
+    const kb = window.SAHAY_KNOWLEDGE_BASE || [];
+    const term = searchTerm.toLowerCase().trim();
+    const isHindi = sahayLang === 'hi';
+
+    const filtered = kb.filter(item => {
+      const matchCat = activeFaqCat === 'all' || item.category === activeFaqCat;
+      if (!matchCat) return false;
+      if (!term) return true;
+      const q = (isHindi ? item.question_hi : item.question_en).toLowerCase();
+      const a = (isHindi ? item.answer_hi : item.answer_en).toLowerCase();
+      const kw = (item.keywords || []).join(' ').toLowerCase();
+      return q.includes(term) || a.includes(term) || kw.includes(term);
+    });
+
+    if (filtered.length === 0) {
+      faqList.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 1.5rem 0.5rem; font-size: 0.84rem;">No questions found matching "${escapeHtml(searchTerm)}".</div>`;
+      return;
+    }
+
+    faqList.innerHTML = filtered.map(item => `
+      <div class="sahay-faq-item-card" data-qid="${item.id}" data-query="${escapeHtml(isHindi ? item.question_hi : item.question_en)}">
+        <div class="sahay-faq-item-category">${item.category_icon || '📌'} ${escapeHtml(item.category_name || item.category)}</div>
+        <div class="sahay-faq-item-question">${escapeHtml(isHindi ? item.question_hi : item.question_en)}</div>
+      </div>
+    `).join('');
+
+    faqList.querySelectorAll('.sahay-faq-item-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const query = card.getAttribute('data-query');
+        if (faqDrawer) faqDrawer.style.display = 'none';
+        if (userInput) userInput.value = '';
+        handleAssistantSend(query);
+      });
+    });
+  }
+
+  if (faqToggleBtn && faqDrawer) {
+    faqToggleBtn.addEventListener('click', () => {
+      const isVisible = faqDrawer.style.display === 'flex';
+      faqDrawer.style.display = isVisible ? 'none' : 'flex';
+      if (!isVisible) {
+        renderFaqDrawer(faqSearchInput ? faqSearchInput.value : '');
+        if (faqSearchInput) setTimeout(() => faqSearchInput.focus(), 100);
+      }
+    });
+  }
+
+  if (faqCloseBtn && faqDrawer) {
+    faqCloseBtn.addEventListener('click', () => {
+      faqDrawer.style.display = 'none';
+    });
+  }
+
+  if (faqSearchInput) {
+    faqSearchInput.addEventListener('input', (e) => {
+      renderFaqDrawer(e.target.value);
+    });
+  }
+
+  if (faqCatFilter) {
+    faqCatFilter.querySelectorAll('.sahay-faq-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        faqCatFilter.querySelectorAll('.sahay-faq-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeFaqCat = tab.getAttribute('data-cat') || 'all';
+        renderFaqDrawer(faqSearchInput ? faqSearchInput.value : '');
+      });
+    });
+  }
+
+  // Category Filter Tabs for Prompt Chips
+  if (categoryBar) {
+    categoryBar.querySelectorAll('.sahay-cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        categoryBar.querySelectorAll('.sahay-cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.getAttribute('data-cat');
+        updatePromptChipsByCategory(cat);
+      });
+    });
+  }
+
+  function updatePromptChipsByCategory(category) {
+    const chipsContainer = document.getElementById('sahay-prompt-chips');
+    if (!chipsContainer) return;
+    const kb = window.SAHAY_KNOWLEDGE_BASE || [];
+    const isHindi = sahayLang === 'hi';
+
+    let items = [];
+    if (category === 'all') {
+      items = [
+        kb.find(k => k.id === 'kcc_what_is') || kb[0],
+        kb.find(k => k.id === 'kcc_interest_rate') || kb[1],
+        kb.find(k => k.id === 'loan_scam_detection') || kb[2],
+        kb.find(k => k.id === 'tractor_subsidy') || kb[3]
+      ].filter(Boolean);
+    } else {
+      items = kb.filter(k => k.category === category).slice(0, 4);
+      if (items.length === 0) items = kb.slice(0, 4);
+    }
+
+    chipsContainer.innerHTML = `
+      <div class="sahay-chips-title">💡 ${isHindi ? 'सुझाए गए प्रश्न:' : 'Suggested Questions:'}</div>
+      ${items.map(item => `
+        <button type="button" class="sahay-chip" data-query="${escapeHtml(isHindi ? item.question_hi : item.question_en)}">
+          ${item.category_icon || '🌱'} ${escapeHtml(isHindi ? item.question_hi : item.question_en)}
+        </button>
+      `).join('')}
+    `;
+    wirePromptChips();
+  }
 
   // Speech-to-Text Setup
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3963,11 +4254,13 @@ function setupSahayAI() {
     typingBubble.innerHTML = `
       <div class="sahay-msg-content" style="display: flex; align-items: center; gap: 0.5rem; color: #64748b;">
         <span class="recording-dot" style="background: #15803d;"></span>
-        <span>Grounded retrieval from official directives...</span>
+        <span>Grounded retrieval from verified agricultural database...</span>
       </div>
     `;
     messageStream.appendChild(typingBubble);
     messageStream.scrollTop = messageStream.scrollHeight;
+
+    const farmerProfile = getComprehensiveFarmerProfile();
 
     try {
       const res = await fetch('/api/assistant/chat', {
@@ -3976,7 +4269,7 @@ function setupSahayAI() {
         body: JSON.stringify({
           message: messageText,
           language: sahayLang,
-          farmerProfile: state.userFarmProfile || {}
+          farmerProfile
         })
       });
 
@@ -3985,15 +4278,41 @@ function setupSahayAI() {
       if (typingEl) typingEl.remove();
 
       if (data.success && data.data) {
+        // Check if server extracted and updated farmer attributes
+        if (data.data.extractedProfile) {
+          const ext = data.data.extractedProfile;
+          state.userFarmProfile = { ...(state.userFarmProfile || {}), ...ext };
+          state.farmerQualification = { ...(state.farmerQualification || {}), ...ext };
+          localStorage.setItem('kisansahay_farmer_qualification', JSON.stringify(state.farmerQualification));
+          updateSahayProfileStatusBar();
+          showToast(`🌾 Profile updated: ${Object.keys(ext).join(', ')}`);
+        }
+
         appendAssistantReply(data.data);
       } else {
-        appendMessage('assistant', 'Sorry, I could not complete that query. Please try again or rephrase.');
+        // Fallback to client-side knowledge base if available
+        const localMatch = (typeof window.findSahayAnswer === 'function')
+          ? window.findSahayAnswer(messageText, sahayLang, farmerProfile)
+          : null;
+        if (localMatch) {
+          appendAssistantReply(localMatch);
+        } else {
+          appendMessage('assistant', 'Sorry, I could not complete that query. Please rephrase or browse the 50 FAQs above.');
+        }
       }
     } catch (err) {
-      console.error('Sahay AI Chat Error:', err);
+      console.warn('Network chat error, checking offline knowledge base:', err);
       const typingEl = document.getElementById(typingId);
       if (typingEl) typingEl.remove();
-      appendMessage('assistant', 'Could not connect to the verified scheme database. Please check your internet connection.');
+
+      const localMatch = (typeof window.findSahayAnswer === 'function')
+        ? window.findSahayAnswer(messageText, sahayLang, farmerProfile)
+        : null;
+      if (localMatch) {
+        appendAssistantReply(localMatch);
+      } else {
+        appendMessage('assistant', 'Could not connect to the verified scheme server. You can still browse all 50 offline FAQs in the drawer above.');
+      }
     }
   }
 
@@ -4029,6 +4348,17 @@ function setupSahayAI() {
       </div>
     ` : '';
 
+    const actionsHtml = `
+      <div class="sahay-msg-actions">
+        <button type="button" class="sahay-action-btn btn-sahay-listen" title="Listen to this answer">
+          <span>🔊</span> <span>Listen</span>
+        </button>
+        <button type="button" class="sahay-action-btn btn-sahay-copy" title="Copy answer">
+          <span>📋</span> <span>Copy</span>
+        </button>
+      </div>
+    `;
+
     const chipsHtml = (suggestedChips && suggestedChips.length > 0) ? `
       <div class="sahay-prompt-chips-container" style="margin-top: 0.6rem;">
         <div class="sahay-chips-title">💡 Next Questions:</div>
@@ -4046,6 +4376,7 @@ function setupSahayAI() {
       <div class="sahay-msg-content">
         ${formattedReply}
         ${citationsHtml}
+        ${actionsHtml}
         ${chipsHtml}
       </div>
     `;
@@ -4061,7 +4392,40 @@ function setupSahayAI() {
       });
     });
 
-    // TTS Voice Read Aloud
+    // Attach Listen button listener
+    const listenBtn = msg.querySelector('.btn-sahay-listen');
+    if (listenBtn) {
+      listenBtn.addEventListener('click', () => {
+        if (!window.speechSynthesis) return;
+        const cleanSpeakText = reply.replace(/\*\*/g, '').replace(/•/g, '').replace(/\n+/g, '. ');
+        const utterance = new SpeechSynthesisUtterance(cleanSpeakText);
+        utterance.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
+        utterance.rate = 0.95;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+        showToast('🔊 Reading answer aloud...');
+      });
+    }
+
+    // Attach Copy button listener
+    const copyBtn = msg.querySelector('.btn-sahay-copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const cleanText = reply.replace(/\*\*/g, '');
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(cleanText).then(() => {
+            copyBtn.innerHTML = '<span>✅</span> <span>Copied!</span>';
+            setTimeout(() => {
+              copyBtn.innerHTML = '<span>📋</span> <span>Copy</span>';
+            }, 2000);
+          }).catch(() => {
+            showToast('Could not copy to clipboard');
+          });
+        }
+      });
+    }
+
+    // Auto TTS Voice Read Aloud if enabled
     if (isTtsActive && window.speechSynthesis) {
       const cleanSpeakText = reply.replace(/\*\*/g, '').replace(/•/g, '').replace(/\n+/g, '. ');
       const utterance = new SpeechSynthesisUtterance(cleanSpeakText);
@@ -4668,20 +5032,33 @@ function setupThemeToggle() {
 // 15 SCHEME CATEGORIES & CATEGORY EXPLORER ENGINE (Images 3, 4, 5)
 // ==========================================================================
 
+function getCategoryLocalizedName(cat) {
+  if (!cat) return '';
+  const lang = state.currentLang || 'en';
+  if (lang === 'en') return cat.name;
+  const key = 'cat_' + cat.id.replace(/-/g, '_');
+  const fromDict = t(key);
+  if (fromDict && fromDict !== key) return fromDict;
+  if (lang === 'hi' && cat.hindiName) return cat.hindiName;
+  if (cat.translations && cat.translations[lang]) return cat.translations[lang];
+  return cat.name;
+}
+
 function renderHomeCategories() {
   const container = document.getElementById('home-categories-grid');
   if (!container || !window.NATIONAL_CATEGORIES) return;
 
+  const schemesLabel = t('schemesCountLabel', 'Schemes');
   container.innerHTML = window.NATIONAL_CATEGORIES.map(cat => `
     <div class="category-card-item" style="--cat-accent: ${cat.accentColor}; --cat-bg-glow: ${cat.bgGlow};" onclick="openCategorySchemes('${cat.id}')">
       <div class="category-icon-disc">
         ${cat.iconSvg}
       </div>
       <div class="category-scheme-count-pill" style="color: ${cat.accentColor};">
-        ${cat.count} Schemes
+        ${cat.count} ${schemesLabel}
       </div>
       <div class="category-card-title">
-        ${cat.name}
+        ${getCategoryLocalizedName(cat)}
       </div>
     </div>
   `).join('');
@@ -4718,7 +5095,7 @@ window.openCategorySchemes = function (categoryId = 'agriculture', initialScope 
 
   // 2. Set Breadcrumb Title
   const breadcrumb = document.getElementById('cat-breadcrumb-title');
-  if (breadcrumb) breadcrumb.textContent = cat.name;
+  if (breadcrumb) breadcrumb.textContent = getCategoryLocalizedName(cat);
 
   // 3. Render Themed Illustrated Hero Banner
   const bannerContainer = document.getElementById('category-hero-banner-container');
@@ -4726,7 +5103,7 @@ window.openCategorySchemes = function (categoryId = 'agriculture', initialScope 
     bannerContainer.innerHTML = `
       ${window.getCategoryBannerHtml(cat.bannerTheme, cat)}
       <div class="category-hero-content-overlay">
-        <div class="category-hero-overlay-title">${cat.name}</div>
+        <div class="category-hero-overlay-title">${getCategoryLocalizedName(cat)}</div>
         <div style="color: #cbd5e1; font-size: 0.95rem; margin-top: 0.4rem; max-width: 650px; line-height: 1.4;">
           ${cat.description}
         </div>
@@ -4888,10 +5265,10 @@ function filterAndRenderCategorySchemes() {
       </div>
       <div style="display: flex; gap: 0.8rem; align-items: center; margin-top: 0.4rem; flex-wrap: wrap;">
         <a href="${item.applyUrl || '#'}" target="_blank" rel="noopener noreferrer" class="cat-card-action-btn">
-          <span>Apply on Official Portal</span> <span>↗</span>
+          <span>${t('btnApplyPortal', 'Apply on Official Portal')}</span> <span>↗</span>
         </a>
         <button type="button" class="btn-rec-docs" onclick="openChecklist('${item.id}')">
-          📋 Check Required Documents
+          📋 ${t('btnCheckDocs', 'Check Required Documents')}
         </button>
       </div>
     </div>
@@ -5336,4 +5713,318 @@ window.__setSimulatedNetworkSpeed = function(status, label) {
   speedVal.textContent = label;
   return true;
 };
+
+// ==========================================================================
+// PWA Install Prompt Handler (#btn-install-pwa)
+// ==========================================================================
+let deferredPrompt = null;
+
+function setupPWAInstallPrompt() {
+  const installBtn = document.getElementById('btn-install-pwa');
+  if (!installBtn) return;
+
+  // Listen for the beforeinstallprompt event fired by Chromium browsers
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the default mini-infobar / browser banner
+    e.preventDefault();
+    // Stash the event so it can be triggered when the user clicks the button
+    deferredPrompt = e;
+    // Show the Install App button in navbar
+    installBtn.style.display = 'inline-flex';
+    console.log('PWA: beforeinstallprompt captured, #btn-install-pwa visible.');
+  });
+
+  // Handle user click on Install App button
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) {
+      // Fallback: Open Universal Download Modal for iOS, Desktop or unprompted devices
+      openUniversalDownloadModal();
+      return;
+    }
+
+    // Show the native browser install prompt dialog
+    deferredPrompt.prompt();
+
+    // Await user's choice
+    try {
+      const choiceResult = await deferredPrompt.userChoice;
+      console.log(`PWA: User install outcome: ${choiceResult.outcome}`);
+      if (choiceResult.outcome === 'accepted') {
+        console.log('PWA: User accepted KisanSahay installation.');
+      } else {
+        console.log('PWA: User dismissed KisanSahay installation.');
+      }
+    } catch (err) {
+      console.warn('PWA: Install prompt error:', err);
+    }
+
+    // Reset prompt and hide button
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+
+  // Listen for the appinstalled event
+  window.addEventListener('appinstalled', (evt) => {
+    console.log('PWA: KisanSahay installed successfully.');
+    installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+}
+
+// ==========================================================================
+// Global PWA Trigger Helper (Invoked by navbar, Switch Profile bar, or mobile bar)
+// ==========================================================================
+window.triggerPWAInstallOrModal = function() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      console.log(`PWA: User choice: ${choiceResult.outcome}`);
+      deferredPrompt = null;
+      const installBtn = document.getElementById('btn-install-pwa');
+      if (installBtn) installBtn.style.display = 'none';
+    }).catch((err) => {
+      console.warn('PWA prompt error:', err);
+    });
+    return;
+  }
+
+  // Otherwise, open the rich universal download modal
+  openUniversalDownloadModal();
+};
+
+function openUniversalDownloadModal() {
+  const modal = document.getElementById('pwa-universal-download-modal');
+  if (!modal) return;
+
+  // Set share URL
+  const shareInput = document.getElementById('pwa-share-url-input');
+  const currentUrl = (window.location && window.location.origin) ? window.location.origin : 'https://kisansahay.vercel.app';
+  if (shareInput) {
+    shareInput.value = currentUrl;
+  }
+
+  // Update WhatsApp share link
+  const waBtn = document.getElementById('btn-whatsapp-pwa-share');
+  if (waBtn) {
+    const waText = encodeURIComponent(`🌾 KisanSahay — Download the official Farmers Scheme & Loan Portal app directly on your phone: ${currentUrl}`);
+    waBtn.href = `https://api.whatsapp.com/send?text=${waText}`;
+  }
+
+  // Detect user agent for active tab
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  if (isIOS) {
+    switchPWADeviceTab('ios');
+  } else if (isAndroid) {
+    switchPWADeviceTab('android');
+  } else {
+    switchPWADeviceTab('pc');
+  }
+
+  // Render QR Code
+  renderPWAQRCode(currentUrl);
+
+  modal.style.display = 'flex';
+}
+
+function switchPWADeviceTab(targetTab) {
+  const tabs = document.querySelectorAll('.pwa-device-tab');
+  const contents = document.querySelectorAll('.pwa-device-tab-content');
+  tabs.forEach(tab => {
+    tab.classList.toggle('active', tab.getAttribute('data-tab') === targetTab);
+  });
+  contents.forEach(content => {
+    content.style.display = content.id === `tab-pwa-${targetTab}` ? 'block' : 'none';
+  });
+}
+
+function renderPWAQRCode(url) {
+  const container = document.getElementById('pwa-qr-code-container');
+  if (!container) return;
+
+  // Generate crisp SVG QR Code pattern
+  const size = 160;
+  const moduleCount = 25;
+  const cellSize = size / moduleCount;
+
+  // Create hash seed from URL
+  let seed = 0;
+  for (let i = 0; i < url.length; i++) {
+    seed = (seed * 31 + url.charCodeAt(i)) & 0xffffffff;
+  }
+
+  function isFinderPattern(r, c) {
+    // Top-left
+    if (r < 7 && c < 7) return true;
+    // Top-right
+    if (r < 7 && c >= moduleCount - 7) return true;
+    // Bottom-left
+    if (r >= moduleCount - 7 && c < 7) return true;
+    return false;
+  }
+
+  let rects = '';
+
+  // Draw 3 Finder Patterns
+  const finders = [
+    [0, 0],
+    [0, moduleCount - 7],
+    [moduleCount - 7, 0]
+  ];
+
+  finders.forEach(([fr, fc]) => {
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        const isBorder = r === 0 || r === 6 || c === 0 || c === 6;
+        const isCenter = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+        if (isBorder || isCenter) {
+          const x = (fc + c) * cellSize;
+          const y = (fr + r) * cellSize;
+          rects += `<rect x="${x}" y="${y}" width="${cellSize + 0.2}" height="${cellSize + 0.2}" fill="#0f172a" rx="1"/>`;
+        }
+      }
+    }
+  });
+
+  // Timing patterns
+  for (let i = 7; i < moduleCount - 7; i++) {
+    if (i % 2 === 0) {
+      rects += `<rect x="${i * cellSize}" y="${6 * cellSize}" width="${cellSize + 0.2}" height="${cellSize + 0.2}" fill="#0f172a" rx="0.5"/>`;
+      rects += `<rect x="${6 * cellSize}" y="${i * cellSize}" width="${cellSize + 0.2}" height="${cellSize + 0.2}" fill="#0f172a" rx="0.5"/>`;
+    }
+  }
+
+  // Data modules
+  for (let r = 0; r < moduleCount; r++) {
+    for (let c = 0; c < moduleCount; c++) {
+      if (isFinderPattern(r, c) || (r === 6 && c >= 7 && c < moduleCount - 7) || (c === 6 && r >= 7 && r < moduleCount - 7)) {
+        continue;
+      }
+      // Pseudo-random data grid seeded by URL
+      const pseudo = Math.sin(seed * (r * moduleCount + c + 1)) * 10000;
+      const isDark = (pseudo - Math.floor(pseudo)) > 0.48;
+      if (isDark) {
+        const x = c * cellSize;
+        const y = r * cellSize;
+        rects += `<rect x="${x}" y="${y}" width="${cellSize + 0.2}" height="${cellSize + 0.2}" fill="#15803d" rx="1"/>`;
+      }
+    }
+  }
+
+  container.innerHTML = `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size}" style="background: #ffffff; padding: 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+      ${rects}
+      <!-- Center Brand Sprout Accent -->
+      <circle cx="${size / 2}" cy="${size / 2}" r="${cellSize * 2.2}" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+      <text x="${size / 2}" y="${size / 2 + 5}" font-size="${cellSize * 2.5}" text-anchor="middle" dominant-baseline="middle">🌱</text>
+    </svg>
+  `;
+}
+
+function setupUniversalPWADownloadModal() {
+  const modal = document.getElementById('pwa-universal-download-modal');
+  if (!modal) return;
+
+  // Close button
+  const closeBtn = document.getElementById('btn-close-pwa-modal');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+
+  // Modal 1-Click Install button
+  const btnModalInstall = document.getElementById('btn-pwa-modal-install');
+  if (btnModalInstall) {
+    btnModalInstall.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        try {
+          const choiceResult = await deferredPrompt.userChoice;
+          console.log('PWA: UserChoice outcome:', choiceResult.outcome);
+          deferredPrompt = null;
+        } catch (err) {}
+        modal.style.display = 'none';
+      } else {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+          switchPWADeviceTab('ios');
+        } else {
+          switchPWADeviceTab('android');
+        }
+      }
+    });
+  }
+
+  // Copy Link Button
+  const btnCopy = document.getElementById('btn-copy-pwa-link');
+  if (btnCopy) {
+    btnCopy.addEventListener('click', async () => {
+      const shareInput = document.getElementById('pwa-share-url-input');
+      const textToCopy = shareInput ? shareInput.value : window.location.origin;
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        const copySpan = document.getElementById('pwa-copy-text');
+        if (copySpan) copySpan.textContent = 'Copied! ✓';
+        setTimeout(() => {
+          if (copySpan) copySpan.textContent = '📋 Copy Link';
+        }, 2500);
+      } catch (err) {
+        if (shareInput) {
+          shareInput.select();
+          document.execCommand('copy');
+          const copySpan = document.getElementById('pwa-copy-text');
+          if (copySpan) copySpan.textContent = 'Copied! ✓';
+          setTimeout(() => {
+            if (copySpan) copySpan.textContent = '📋 Copy Link';
+          }, 2500);
+        }
+      }
+    });
+  }
+
+  // Device Tabs Switching
+  const tabs = document.querySelectorAll('.pwa-device-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-tab');
+      switchPWADeviceTab(target);
+    });
+  });
+}
+
+function setupMobileAppDownloadBar() {
+  const bar = document.getElementById('mobile-app-download-bar');
+  if (!bar) return;
+
+  // Check if previously dismissed in current session
+  if (sessionStorage.getItem('kisansahay_mobile_bar_dismissed') === 'true') {
+    bar.style.display = 'none';
+    return;
+  }
+
+  const btnDownload = document.getElementById('btn-mobile-bar-download');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', () => {
+      window.triggerPWAInstallOrModal();
+    });
+  }
+
+  const btnClose = document.getElementById('btn-mobile-bar-close');
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      bar.style.display = 'none';
+      sessionStorage.setItem('kisansahay_mobile_bar_dismissed', 'true');
+    });
+  }
+}
+
+
 

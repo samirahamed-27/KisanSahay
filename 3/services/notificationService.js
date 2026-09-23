@@ -45,7 +45,7 @@ function ensureFiles() {
     fs.writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(initial, null, 2), 'utf8');
     try {
       fs.writeFileSync(SRC_NOTIFS_FILE, JSON.stringify(initial, null, 2), 'utf8');
-    } catch (e) {}
+    } catch (e) { }
   }
 
   if (!fs.existsSync(SUBSCRIPTIONS_FILE)) {
@@ -69,7 +69,7 @@ function writeNotifications(data) {
     fs.writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(data, null, 2), 'utf8');
     try {
       fs.writeFileSync(SRC_NOTIFS_FILE, JSON.stringify(data, null, 2), 'utf8');
-    } catch (e) {}
+    } catch (e) { }
     return true;
   } catch (err) {
     logger.error('Failed to write notifications file', { error: err.message });

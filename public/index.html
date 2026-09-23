@@ -10,6 +10,13 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#16a34a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KisanSahay">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
 </head>
 
 <body>
@@ -52,6 +59,13 @@
 
       <!-- Header Actions -->
       <div class="header-actions">
+        <!-- Install PWA App Button (Shown when installable) -->
+        <button class="btn-install-pwa" id="btn-install-pwa" style="display: none;"
+          title="Install KisanSahay App / ऐप इंस्टॉल करें" aria-label="Install KisanSahay App">
+          <span class="install-pwa-icon">⬇️</span>
+          <span class="install-pwa-text" data-i18n="installApp">Install App</span>
+        </button>
+
         <!-- Farmer Document Vault Quick Access -->
         <button class="vault-nav-btn" id="btn-vault-nav" title="Farmer Encrypted Document Vault">
           <span class="vault-nav-icon" id="vault-nav-icon">
@@ -65,8 +79,8 @@
           <span class="vault-indicator-dot uninitialized" id="vault-indicator-dot" title="Vault status"></span>
         </button>
 
-        <!-- 15 Languages Dropdown / Selector Button -->
-        <button class="lang-select-btn" id="lang-toggle-btn" title="Choose from 15 Indian Languages / भाषा चुनें">
+        <!-- 25 Languages Dropdown / Selector Button -->
+        <button class="lang-select-btn" id="lang-toggle-btn" title="Choose from 25 Indian Languages / भाषा चुनें">
           <span>🌐</span>
           <span id="lang-text">English</span>
           <small>▾</small>
@@ -270,7 +284,7 @@
       </div>
       <div>
         <button type="button" class="btn-find-schemes-hero" onclick="switchView('eligibility')">
-          <span>Find Schemes For You</span>
+          <span data-i18n="findSchemesForYou">Find Schemes For You</span>
           <span>➔</span>
         </button>
       </div>
@@ -278,28 +292,28 @@
       <div class="hero-counters-grid">
         <div class="hero-counter-card" onclick="openCategorySchemes('agriculture')">
           <div class="hero-counter-number">5020+</div>
-          <div class="hero-counter-label">Total Schemes ➔</div>
+          <div class="hero-counter-label"><span data-i18n="totalSchemesLabel">Total Schemes</span> ➔</div>
         </div>
         <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'central')">
           <div class="hero-counter-number">740+</div>
-          <div class="hero-counter-label">Central Schemes ➔</div>
+          <div class="hero-counter-label"><span data-i18n="centralSchemesLabel">Central Schemes</span> ➔</div>
         </div>
         <div class="hero-counter-card" onclick="openCategorySchemes('agriculture', 'state')">
           <div class="hero-counter-number">4280+</div>
-          <div class="hero-counter-label">States/UTs Schemes ➔</div>
+          <div class="hero-counter-label"><span data-i18n="statesSchemesLabel">States/UTs Schemes</span> ➔</div>
         </div>
       </div>
 
       <div class="hero-scope-tabs">
         <button type="button" class="hero-scope-tab-btn active"
           onclick="document.getElementById('home-categories-section')?.scrollIntoView({ behavior: 'smooth' })">
-          Categories
+          <span data-i18n="tabCategories">Categories</span>
         </button>
         <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'state')">
-          States/UTs
+          <span data-i18n="tabStates">States/UTs</span>
         </button>
         <button type="button" class="hero-scope-tab-btn" onclick="openCategorySchemes('agriculture', 'central')">
-          Central Ministries
+          <span data-i18n="tabCentralMinistries">Central Ministries</span>
         </button>
       </div>
     </section>
@@ -308,8 +322,8 @@
          IMAGE 2: "HOW IT WORKS" 3-STEP FLOW PIPELINE
          ==================================================================== -->
     <section class="how-it-works-section">
-      <div class="how-it-works-sub">How it works</div>
-      <h2 class="how-it-works-title">Easy steps to apply for Government Schemes</h2>
+      <div class="how-it-works-sub" data-i18n="howItWorksTitle">How it works</div>
+      <h2 class="how-it-works-title" data-i18n="howItWorksSubtitle">Easy steps to apply for Government Schemes</h2>
 
       <div class="how-it-works-grid">
         <!-- Step 1: Enter Details -->
@@ -321,8 +335,8 @@
               <path d="m9 14 2 2 4-4" />
             </svg>
           </div>
-          <h3 class="step-title"><span class="step-num">1: </span>Enter Details</h3>
-          <p class="step-desc">Start by entering your <strong>basic farm and location details!</strong></p>
+          <h3 class="step-title"><span class="step-num">1: </span><span data-i18n="step1Title">Enter Details</span></h3>
+          <p class="step-desc" data-i18n="step1Desc">Start by entering your basic farm and location details!</p>
         </div>
 
         <div class="how-it-works-arrow">➔</div>
@@ -337,8 +351,8 @@
               <path d="m14.5 15.5 2.5 2.5" />
             </svg>
           </div>
-          <h3 class="step-title"><span class="step-num">2: </span>Search</h3>
-          <p class="step-desc">Our intelligent engine will <strong>find the most relevant schemes!</strong></p>
+          <h3 class="step-title"><span class="step-num">2: </span><span data-i18n="step2Title">Search</span></h3>
+          <p class="step-desc" data-i18n="step2Desc">Our intelligent engine will find the most relevant schemes!</p>
         </div>
 
         <div class="how-it-works-arrow">➔</div>
@@ -354,9 +368,8 @@
               <path d="M12 21a9 9 0 0 0 9-9c0-.7-.08-1.38-.23-2.03" />
             </svg>
           </div>
-          <h3 class="step-title"><span class="step-num">3: </span>Select &amp; Apply</h3>
-          <p class="step-desc"><strong>Select and apply</strong> for the best suited scheme with full document
-            checklist.</p>
+          <h3 class="step-title"><span class="step-num">3: </span><span data-i18n="step3Title">Select &amp; Apply</span></h3>
+          <p class="step-desc" data-i18n="step3Desc">Select and apply for the best suited scheme with full document checklist.</p>
         </div>
       </div>
     </section>
@@ -366,8 +379,8 @@
          ==================================================================== -->
     <section class="categories-section" id="home-categories-section">
       <div class="categories-section-header">
-        <h2 class="categories-title">Find schemes based on categories</h2>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">
+        <h2 class="categories-title" data-i18n="homeCategoriesTitle">Find schemes based on categories</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;" data-i18n="homeCategoriesSubtitle">
           Explore all Central & State government schemes, loans, and subsidies categorized across sectors.
         </p>
       </div>
@@ -389,11 +402,11 @@
       <!-- Breadcrumb & Back Navigation -->
       <div class="category-explorer-top-bar">
         <button type="button" class="btn-back-to-categories" id="btn-back-categories" onclick="switchView('home')">
-          <span>←</span> <span>Back</span>
+          <span>←</span> <span data-i18n="btnBack">Back</span>
         </button>
         <div style="font-size: 0.85rem; color: var(--text-muted);">
           <a href="javascript:void(0)" onclick="switchView('home')"
-            style="color: inherit; text-decoration: none; font-weight: 500;">Home</a> &gt; Categories &gt; <span
+            style="color: inherit; text-decoration: none; font-weight: 500;" data-i18n="navHome">Home</a> &gt; <span data-i18n="tabCategories">Categories</span> &gt; <span
             id="cat-breadcrumb-title" style="color: var(--accent-emerald, #10b981); font-weight: 700;">Agriculture,
             Rural &amp; Environment</span>
         </div>
@@ -407,7 +420,7 @@
       <!-- Search Input with Exact Match Hint -->
       <div class="cat-search-wrap">
         <div class="cat-search-input-box">
-          <input type="text" id="cat-search-input" class="cat-search-input" placeholder="Search" autocomplete="off">
+          <input type="text" id="cat-search-input" class="cat-search-input" placeholder="Search schemes by name or keyword..." data-i18n-placeholder="searchPlaceholder" autocomplete="off">
           <button type="button" id="cat-search-btn" class="cat-search-btn" title="Search Schemes">
             🔍
           </button>
@@ -419,9 +432,9 @@
 
       <!-- Segmented Scope Tabs (All Schemes | Central | State) -->
       <div class="cat-scope-tabs-bar" id="cat-scope-tabs-bar">
-        <button type="button" class="cat-scope-tab active" data-cat-scope="all">All Schemes</button>
-        <button type="button" class="cat-scope-tab" data-cat-scope="central">Central</button>
-        <button type="button" class="cat-scope-tab" data-cat-scope="state">State</button>
+        <button type="button" class="cat-scope-tab active" data-cat-scope="all" data-i18n="scopeAll">All Schemes</button>
+        <button type="button" class="cat-scope-tab" data-cat-scope="central" data-i18n="scopeCentral">Central</button>
+        <button type="button" class="cat-scope-tab" data-cat-scope="state" data-i18n="scopeState">State</button>
       </div>
 
       <!-- Two-Column Explorer Layout -->
@@ -429,8 +442,8 @@
         <!-- Left Filter Sidebar -->
         <aside class="cat-filter-sidebar">
           <div class="cat-sidebar-header">
-            <span class="cat-sidebar-title">Filter By</span>
-            <button type="button" class="cat-btn-reset-filters" id="cat-btn-reset-filters">Reset Filters</button>
+            <span class="cat-sidebar-title" data-i18n="filterBy">Filter By</span>
+            <button type="button" class="cat-btn-reset-filters" id="cat-btn-reset-filters" data-i18n="resetFilters">Reset Filters</button>
           </div>
 
           <div class="cat-filter-group">
@@ -1192,21 +1205,23 @@
 
 
   <!-- ==========================================================================
-       MODAL 1: 15 Indian Languages Selector
+       MODAL 1: 25 Indian Languages Selector
        ========================================================================== -->
   <div class="modal-overlay" id="lang-modal">
-    <div class="modal-dialog">
-      <button class="modal-close-x" id="lang-modal-close">✕</button>
-      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <span style="font-size: 1.4rem;">🌐</span>
-        <h2 style="font-size: 1.4rem; color: #0f172a;">Select Language / भाषा चुनें</h2>
+    <div class="modal-dialog lang-modal-dialog">
+      <button class="modal-close-x" id="lang-modal-close" title="Close">✕</button>
+      <div class="lang-modal-header">
+        <div class="lang-modal-icon-disc">🌐</div>
+        <div>
+          <h2 class="lang-modal-title" data-i18n="selectLanguageTitle">Select Language / भाषा चुनें</h2>
+          <p class="lang-modal-subtitle" data-i18n="selectLanguageSubtitle">
+            Choose from 25 major Indian languages. The entire application content will change instantly.
+          </p>
+        </div>
       </div>
-      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1rem;">
-        Choose from 15 major Indian languages. The entire application content will change instantly.
-      </p>
 
       <div class="lang-grid-selector" id="languages-grid-container">
-        <!-- 15 Languages rendered dynamically -->
+        <!-- 25 Languages rendered dynamically -->
       </div>
     </div>
   </div>
@@ -2027,7 +2042,7 @@
       <span class="sahay-pulse-beacon"></span>
     </button>
 
-    <!-- Floating Chat Window (380-420px wide) -->
+    <!-- Floating Chat Window (380-450px wide) -->
     <div id="sahay-chat-window" class="sahay-chat-window" style="display: none;">
       <!-- Chat Header -->
       <div class="sahay-header">
@@ -2035,10 +2050,14 @@
           <div class="sahay-avatar">🤖</div>
           <div>
             <div class="sahay-header-title">Sahay AI <span class="sahay-badge-official">Govt Verified</span></div>
-            <div class="sahay-header-sub">Farm Loans & Schemes Assistant</div>
+            <div class="sahay-header-sub">Farm Loans &amp; Schemes Assistant</div>
           </div>
         </div>
         <div class="sahay-header-actions">
+          <!-- 50 FAQs Browser Trigger -->
+          <button type="button" id="sahay-faq-drawer-toggle" class="btn-sahay-header-action" title="Browse 50 Farmer FAQs">
+            📚
+          </button>
           <!-- Audio Read Aloud Toggle -->
           <button type="button" id="sahay-tts-toggle" class="btn-sahay-header-action" title="Toggle Voice Read Aloud">
             <span id="sahay-tts-icon">🔊</span>
@@ -2058,6 +2077,52 @@
         </div>
       </div>
 
+      <!-- Farmer Profile & Vault Status Bar -->
+      <div class="sahay-profile-status-bar" id="sahay-profile-status-bar">
+        <div class="sahay-profile-pill-left">
+          <span class="sahay-live-dot"></span>
+          <span id="sahay-profile-summary-text">🌾 Farm: Ready • All-India | 🔒 Vault: Active</span>
+        </div>
+        <button type="button" id="sahay-profile-sync-btn" class="sahay-profile-pill-btn" title="Refresh My Data &amp; Documents">
+          Sync 🔄
+        </button>
+      </div>
+
+      <!-- Searchable 50-FAQ Drawer (Collapsible overlay) -->
+      <div id="sahay-faq-drawer" class="sahay-faq-drawer" style="display: none;">
+        <div class="sahay-faq-drawer-header">
+          <span>📚 50 Official Farmer FAQs</span>
+          <button type="button" id="sahay-faq-drawer-close" class="btn-sahay-close-sub">✕</button>
+        </div>
+        <div class="sahay-faq-search-wrap">
+          <input type="text" id="sahay-faq-search-input" placeholder="Search 50 farmer questions (KCC, Subsidy, PMFBY)..." autocomplete="off">
+        </div>
+        <div class="sahay-faq-cat-filter" id="sahay-faq-cat-filter">
+          <button type="button" class="sahay-faq-tab active" data-cat="all">All (50)</button>
+          <button type="button" class="sahay-faq-tab" data-cat="kcc">💳 KCC</button>
+          <button type="button" class="sahay-faq-tab" data-cat="pm_kisan">🌾 PM-KISAN</button>
+          <button type="button" class="sahay-faq-tab" data-cat="crop_insurance">🛡️ Insurance</button>
+          <button type="button" class="sahay-faq-tab" data-cat="land_soil_irrigation">🧪 Soil &amp; Land</button>
+          <button type="button" class="sahay-faq-tab" data-cat="equipment_mechanization">🚜 Equipment</button>
+          <button type="button" class="sahay-faq-tab" data-cat="warehousing_marketing">🏪 Storage</button>
+          <button type="button" class="sahay-faq-tab" data-cat="loan_application">📝 Loans</button>
+          <button type="button" class="sahay-faq-tab" data-cat="debt_risk_safety">⚠️ Debt Safety</button>
+        </div>
+        <div class="sahay-faq-list" id="sahay-faq-list">
+          <!-- Dynamically populated from window.SAHAY_KNOWLEDGE_BASE -->
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs Bar for Chat Stream -->
+      <div class="sahay-category-bar" id="sahay-category-bar">
+        <button type="button" class="sahay-cat-btn active" data-cat="all">⭐ Popular</button>
+        <button type="button" class="sahay-cat-btn" data-cat="kcc">💳 KCC</button>
+        <button type="button" class="sahay-cat-btn" data-cat="pm_kisan">🌾 PM-KISAN</button>
+        <button type="button" class="sahay-cat-btn" data-cat="crop_insurance">🛡️ Insurance</button>
+        <button type="button" class="sahay-cat-btn" data-cat="equipment_mechanization">🚜 Equipment</button>
+        <button type="button" class="sahay-cat-btn" data-cat="debt_risk_safety">⚠️ Debt Safety</button>
+      </div>
+
       <!-- Chat Message Stream -->
       <div id="sahay-message-stream" class="sahay-message-stream">
         <!-- Intro Card (Farmer-friendly original copy) -->
@@ -2065,8 +2130,7 @@
           <div class="sahay-intro-icon">🌾</div>
           <div class="sahay-intro-title">Namaste! I'm Sahay AI</div>
           <p class="sahay-intro-text">
-            Your direct guide to agricultural credit, government subsidies, and scheme documentation. Ask me any
-            question in English or Hindi!
+            Your official agricultural guide with 50 verified government scheme answers, prompt repayment interest calculation, and encrypted document vault memory!
           </p>
         </div>
 
@@ -2076,14 +2140,14 @@
           <button type="button" class="sahay-chip" data-query="Am I eligible for KCC?">
             🌱 Am I eligible for KCC?
           </button>
-          <button type="button" class="sahay-chip" data-query="What documents do I need for a crop loan?">
-            📋 What documents do I need for a crop loan?
+          <button type="button" class="sahay-chip" data-query="What is the interest rate on a KCC loan?">
+            💳 KCC 4% Subsidized Interest Rate
           </button>
-          <button type="button" class="sahay-chip" data-query="Compare interest rates for my state">
-            📈 Compare interest rates for my state
+          <button type="button" class="sahay-chip" data-query="What documents do I have?">
+            🔒 Check My Saved Vault Documents
           </button>
-          <button type="button" class="sahay-chip" data-query="How to get 50% equipment subsidy?">
-            🚜 How to get 50% equipment subsidy?
+          <button type="button" class="sahay-chip" data-query="How do I know if a loan offer is a scam?">
+            ⚠️ How to identify loan scams?
           </button>
         </div>
       </div>
@@ -2100,7 +2164,7 @@
             🎙️
           </button>
           <input type="text" id="sahay-user-input" class="sahay-text-input"
-            placeholder="Ask about loans, KCC, subsidies..." autocomplete="off">
+            placeholder="Ask about loans, KCC, subsidies, vault docs..." autocomplete="off">
           <button type="submit" id="sahay-send-btn" class="btn-sahay-send" title="Send Query">
             ➤
           </button>
@@ -2407,13 +2471,190 @@
       </div>
     </div>
 
+    <!-- ==========================================================================
+       Universal PWA Download & Mobile Install Modal
+       ========================================================================== -->
+    <div class="modal-overlay" id="pwa-universal-download-modal" style="display: none; z-index: 10000;">
+      <div class="modal-dialog pwa-download-modal-dialog">
+        <button class="modal-close-btn" id="btn-close-pwa-modal" aria-label="Close modal">✕</button>
+
+        <!-- Modal Header with App Icon -->
+        <div class="pwa-modal-header">
+          <div class="pwa-modal-icon-badge">
+            <img src="/icons/icon-192.png" alt="KisanSahay App Icon" width="64" height="64" class="pwa-modal-app-logo">
+          </div>
+          <div class="pwa-modal-title-wrap">
+            <div class="pwa-modal-brand-badge">
+              <span>🌾 KisanSahay</span>
+              <span class="pwa-verified-pill">Official PWA</span>
+            </div>
+            <h3 class="pwa-modal-title">Download KisanSahay App</h3>
+            <p class="pwa-modal-subtitle">Direct install on Android, iPhone & PC • Offline ready • 0 MB storage</p>
+          </div>
+        </div>
+
+        <!-- Key Perks Grid -->
+        <div class="pwa-perks-grid">
+          <div class="pwa-perk-item">
+            <span class="pwa-perk-icon">⚡</span>
+            <div>
+              <strong>Direct 1-Tap Install</strong>
+              <small>No store login or password required</small>
+            </div>
+          </div>
+          <div class="pwa-perk-item">
+            <span class="pwa-perk-icon">📶</span>
+            <div>
+              <strong>Full Offline Mode</strong>
+              <small>Access schemes & EMI reminders anytime</small>
+            </div>
+          </div>
+          <div class="pwa-perk-item">
+            <span class="pwa-perk-icon">💾</span>
+            <div>
+              <strong>Zero Device Bloat</strong>
+              <small>Takes under 2 MB, saving phone storage</small>
+            </div>
+          </div>
+          <div class="pwa-perk-item">
+            <span class="pwa-perk-icon">🗣️</span>
+            <div>
+              <strong>25 Indian Languages</strong>
+              <small>Voice-assisted for rural accessibility</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main 1-Click Install CTA Button -->
+        <div class="pwa-modal-install-cta">
+          <button type="button" class="btn-pwa-big-install" id="btn-pwa-modal-install">
+            <span class="btn-pwa-icon">⬇️</span>
+            <span class="btn-pwa-label-group">
+              <span class="btn-pwa-label">Install KisanSahay App Now</span>
+              <span class="btn-pwa-sub">Tap to download directly to your home screen</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- Shareable Download Link Card for Everyone -->
+        <div class="pwa-share-link-card">
+          <div class="pwa-share-card-header">
+            <span class="pwa-share-icon">🔗</span>
+            <div class="pwa-share-info">
+              <strong>Shareable Download Link for Everyone</strong>
+              <span>Send this link so anyone can open & install on their mobile</span>
+            </div>
+          </div>
+          <div class="pwa-link-copy-row">
+            <input type="text" id="pwa-share-url-input" class="pwa-url-input" readonly
+              value="https://kisansahay.vercel.app">
+            <button type="button" class="btn-pwa-copy-link" id="btn-copy-pwa-link" title="Copy website download link">
+              <span id="pwa-copy-text">📋 Copy Link</span>
+            </button>
+          </div>
+          <div class="pwa-share-social-row">
+            <a href="#" target="_blank" rel="noopener noreferrer" class="btn-pwa-share-wa" id="btn-whatsapp-pwa-share">
+              <span>🟢</span> <span>WhatsApp पर ऐप लिंक भेजें (Share via WhatsApp)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Device-Specific Instructions (Tabs for Android, iPhone, PC) -->
+        <div class="pwa-device-tabs-wrap">
+          <div class="pwa-device-tabs-header">
+            <button type="button" class="pwa-device-tab active" data-tab="android">🤖 Android Phone</button>
+            <button type="button" class="pwa-device-tab" data-tab="ios">🍎 iPhone / iPad</button>
+            <button type="button" class="pwa-device-tab" data-tab="pc">💻 Computer / Laptop</button>
+          </div>
+
+          <div class="pwa-device-tab-content active" id="tab-pwa-android">
+            <ol class="pwa-steps-list">
+              <li><span>1</span> Tap the <strong>"Install KisanSahay App Now"</strong> button above.</li>
+              <li><span>2</span> Or in Chrome, tap the menu (<strong>⋮</strong> three dots) $\rightarrow$ select
+                <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.
+              </li>
+              <li><span>3</span> Confirm <strong>"Install"</strong> — KisanSahay icon will appear on your mobile home
+                screen!</li>
+            </ol>
+          </div>
+
+          <div class="pwa-device-tab-content" id="tab-pwa-ios" style="display: none;">
+            <ol class="pwa-steps-list">
+              <li><span>1</span> Open this website in <strong>Safari</strong> on your iPhone or iPad.</li>
+              <li><span>2</span> Tap the <strong>Share button</strong> <span class="ios-share-glyph">⎋</span> (square
+                with arrow pointing up at the bottom).</li>
+              <li><span>3</span> Scroll down and tap <strong>"Add to Home Screen"</strong> (होम स्क्रीन में जोड़ें).
+              </li>
+              <li><span>4</span> Tap <strong>"Add"</strong> at the top right — KisanSahay is immediately installed on
+                your home screen!</li>
+            </ol>
+          </div>
+
+          <div class="pwa-device-tab-content" id="tab-pwa-pc" style="display: none;">
+            <ol class="pwa-steps-list">
+              <li><span>1</span> In Chrome, Microsoft Edge, or Brave, look for the <strong>Install icon</strong> (<span
+                  style="font-size:1.05rem;">⊕</span> or 🖥️) on the right side of the address bar.</li>
+              <li><span>2</span> Click <strong>"Install KisanSahay"</strong>.</li>
+              <li><span>3</span> KisanSahay will launch in its own standalone desktop window with an app shortcut on
+                your Desktop!</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Mobile QR Code Scan Box -->
+        <div class="pwa-qr-scan-card">
+          <div class="pwa-qr-code-box" id="pwa-qr-code-container">
+            <!-- Dynamic High-Contrast SVG QR code rendered via JavaScript -->
+          </div>
+          <div class="pwa-qr-desc">
+            <strong>📱 Scan with Smartphone Camera to Open & Download</strong>
+            <span>Point any smartphone camera at this QR code to immediately open KisanSahay and download it on
+              mobile.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Floating Mobile App Download Bar (Visible on mobile screens) -->
+    <aside class="mobile-app-download-bar" id="mobile-app-download-bar" aria-label="Download KisanSahay Mobile App">
+      <div class="mobile-bar-left">
+        <img src="/icons/icon-192.png" alt="KisanSahay" class="mobile-bar-icon" width="36" height="36">
+        <div class="mobile-bar-text">
+          <span class="mobile-bar-title">KisanSahay App</span>
+          <span class="mobile-bar-sub">0 MB • Offline • 15 Languages</span>
+        </div>
+      </div>
+      <div class="mobile-bar-right">
+        <button type="button" class="btn-mobile-bar-download" id="btn-mobile-bar-download">
+          <span>⬇️ Download App</span>
+        </button>
+        <button type="button" class="btn-mobile-bar-close" id="btn-mobile-bar-close"
+          aria-label="Dismiss banner">✕</button>
+      </div>
+    </aside>
+
+
     <!-- Scripts -->
     <script src="different_languages.js"></script>
     <script src="schemes_data.js"></script>
     <script src="categories_data.js"></script>
     <script src="multiuser.js"></script>
     <script src="voice_input.js"></script>
+    <script src="sahay_knowledge.js"></script>
     <script src="app.js"></script>
+
+    <!-- Progressive Web App (PWA) Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('KisanSahay Service Worker registered with scope:', reg.scope))
+            .catch(err => console.error('KisanSahay Service Worker registration failed:', err));
+        });
+      }
+    </script>
+
 </body>
 
 </html>
