@@ -1236,7 +1236,13 @@
     <div class="tracker-stats-grid">
       <!-- 1. Active Loans -->
       <div class="stat-card-clean">
-        <div class="stat-icon-square blue">💳</div>
+        <div class="stat-icon-square blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="3"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+            <circle cx="6" cy="15" r="1" fill="currentColor"></circle>
+          </svg>
+        </div>
         <div>
           <div class="stat-label" data-i18n="statActiveLoans">Active Loans</div>
           <div class="stat-value" id="val-stat-count">0</div>
@@ -1245,28 +1251,43 @@
 
       <!-- 2. Total Paid -->
       <div class="stat-card-clean">
-        <div class="stat-icon-square green">₹</div>
+        <div class="stat-icon-square green">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+        </div>
         <div>
           <div class="stat-label" data-i18n="statTotalPaid">Total Paid</div>
-          <div class="stat-value" id="val-stat-paid" style="color: #15803d;">₹0</div>
+          <div class="stat-value stat-val-paid" id="val-stat-paid">₹0</div>
         </div>
       </div>
 
       <!-- 3. Total Due -->
       <div class="stat-card-clean">
-        <div class="stat-icon-square orange">⏳</div>
+        <div class="stat-icon-square orange">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
         <div>
           <div class="stat-label" data-i18n="statTotalDue">Total Due</div>
-          <div class="stat-value" id="val-stat-due" style="color: #ea580c;">₹0</div>
+          <div class="stat-value stat-val-due" id="val-stat-due">₹0</div>
         </div>
       </div>
 
       <!-- 4. Monthly EMIs -->
       <div class="stat-card-clean">
-        <div class="stat-icon-square cyan">📈</div>
+        <div class="stat-icon-square cyan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+        </div>
         <div>
           <div class="stat-label" data-i18n="statMonthlyEmi">Monthly EMIs</div>
-          <div class="stat-value" id="val-stat-emi">₹0</div>
+          <div class="stat-value stat-val-emi" id="val-stat-emi">₹0</div>
         </div>
       </div>
     </div>
@@ -1813,9 +1834,14 @@
 
       <!-- Header Banner -->
       <div class="vault-modal-header">
-        <div class="vault-modal-badge">
-          <span id="vault-header-icon">🔒</span>
-          <span id="vault-header-status">Encrypted Farmer Vault</span>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <div class="vault-modal-badge" style="margin-bottom: 0;">
+            <span id="vault-header-icon">🔒</span>
+            <span id="vault-header-status">Encrypted Farmer Vault</span>
+          </div>
+          <button type="button" class="btn-clear-vault" id="btn-vault-clear-all" title="Clear all fields to enter your own documents">
+            <span>✨</span> <span>Clear All Fields</span>
+          </button>
         </div>
         <h2 class="vault-modal-title" data-i18n="vaultTitle">Farmer Document Vault & Verification</h2>
         <p class="vault-modal-desc" data-i18n="vaultSubtitle">
@@ -1917,8 +1943,7 @@
       <div class="vault-security-box">
         <div class="security-box-header">
           <span style="font-size: 1.15rem;">🔐</span>
-          <span style="font-weight: 700; color: #0f172a;" data-i18n="vaultPasswordChoice">Choose Security Lock
-            Method:</span>
+          <span class="security-choice-title" data-i18n="vaultPasswordChoice">Choose Security Lock Method:</span>
         </div>
 
         <!-- 3 Password Tabs: Word, PIN, Pattern -->

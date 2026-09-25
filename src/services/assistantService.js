@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
 const { getSoilFertilityForLocation } = require('./soilFertilityEngine');
+const { ragAnswer, getRagStatus } = require('./ragService');
 
 const SCHEMES_FILE = path.join(__dirname, '..', 'data', 'schemesDatabase.json');
 const KNOWLEDGE_FILE = path.join(__dirname, '..', 'data', 'sahayKnowledgeBase.json');
@@ -557,16 +558,115 @@ function generateGroundedAnswer(userQuery, retrievedSchemes, farmerProfile = {},
 
 /**
  * Main chat handler for Sahay AI
+ * Pipeline:
+ *   1. Extract profile attributes from query
+ *   2. Try local 50-item knowledge base (fast, no LLM)
+ *   3. Try local scheme retrieval (fast, no LLM)
+ *   4. Fall through to RAG pipeline (Ollama llama3.2 + nomic-embed-text)
+ *   5. If RAG not available, return best-effort scheme answer
  */
 async function processAssistantQuery(query, options = {}) {
   const { language = 'en', farmerProfile = {} } = options;
   const extractedProfile = extractProfileAttributes(query);
   const effectiveProfile = { ...farmerProfile, ...(extractedProfile || {}) };
+
+  // ── Step 1: Local Knowledge Base (50 curated FAQs) ──────────────────
+  // Threshold lowered to 35 to match the scoring logic in findBestKnowledgeMatch.
+  // The old threshold of 60 caused near-exact KB matches (score 35–59) to fall
+  // through to RAG and return unrelated cooperative-DB answers.
+  const kbMatch = findBestKnowledgeMatch(query);
+  if (kbMatch && kbMatch.score >= 35) {
+    // Good local match — answer immediately without LLM
+    const retrieved = retrieveRelevantSchemes(query, effectiveProfile, 3);
+    const result = generateGroundedAnswer(query, retrieved, effectiveProfile, language);
+    if (extractedProfile) result.extractedProfile = extractedProfile;
+    result.source = 'knowledge_base';
+    return result;
+  }
+
+  // ── Step 1b: Local Intent Detection ─────────────────────────────────
+  // For well-known agricultural intents (KCC, documents, subsidies, rates)
+  // prefer the curated local scheme answers over medium-confidence RAG results.
+  // This prevents the RAG pipeline from returning generic cooperative-DB answers
+  // for specific scheme/loan queries that the local engine handles perfectly.
+  const q = (query || '').toLowerCase();
+  const isKnownIntent =
+    q.includes('kcc') || q.includes('kisan credit') ||
+    q.includes('document') || q.includes('khasra') || q.includes('दस्तावेज') ||
+    q.includes('equipment') || q.includes('subsidy') || q.includes('tractor') || q.includes('सब्सिडी') || q.includes('यंत्र') ||
+    q.includes('interest rate') || q.includes('ब्याज दर') ||
+    q.includes('eligib') || q.includes('पात्र');
+
+  if (isKnownIntent) {
+    const retrieved = retrieveRelevantSchemes(query, effectiveProfile, 3);
+    const result = generateGroundedAnswer(query, retrieved, effectiveProfile, language);
+    if (extractedProfile) result.extractedProfile = extractedProfile;
+    result.source = 'local_retrieval';
+    return result;
+  }
+
+  // ── Step 2: RAG Pipeline (Ollama) ───────────────────────────────────
+  // Only used for open-ended questions not covered by local KB or known intents.
+  const ragStatus = getRagStatus();
+  if (ragStatus.ready) {
+    try {
+      const ragResult = await ragAnswer(query, {
+        topK: 5,
+        language,
+        farmerProfile: effectiveProfile
+      });
+
+      // Only use RAG answer if it has at least medium confidence
+      if (ragResult.ragUsed && ragResult.confidence !== 'none') {
+        // Format RAG citations to match the existing Sahay AI citation schema
+        const citations = ragResult.sources.slice(0, 3).map(s => ({
+          schemeName: s.title,
+          authority: s.category === 'scheme' ? 'Government of India' :
+                     s.category === 'act' ? 'Ministry of Cooperation / Govt. of India' :
+                     'Government of India — Official Document',
+          url: s.url || 'https://www.india.gov.in/',
+          lastVerifiedAt: '2026-09-23',
+          ragScore: s.score
+        }));
+
+        const isHindi = language === 'hi' || /[\u0900-\u097F]/.test(query);
+
+        // Generate suggested follow-up chips
+        const followUpChips = isHindi
+          ? ['PM-KISAN की पूरी जानकारी दें', 'KCC के लिए पात्रता क्या है?', 'सहकारी समितियाँ क्या हैं?']
+          : ['Tell me more about PM-KISAN', 'Am I eligible for KCC?', 'What are cooperative societies?'];
+
+        // Append confidence indicator to answer for transparency
+        const confidenceNote = ragResult.confidence === 'medium'
+          ? isHindi
+            ? '\n\n*📊 यह उत्तर आपकी डेटा फाइलों पर आधारित है। मध्यम-विश्वास स्तर।*'
+            : '\n\n*📊 Answer grounded in your data files. Medium confidence — verify with official sources.*'
+          : '';
+
+        return {
+          reply: ragResult.answer + confidenceNote,
+          language: isHindi ? 'hi' : 'en',
+          citations,
+          suggestedChips: followUpChips,
+          retrievedCount: ragResult.sources.length,
+          source: 'rag_pipeline',
+          ragConfidence: ragResult.confidence,
+          ragScore: ragResult.bestScore,
+          timestamp: new Date().toISOString(),
+          ...(extractedProfile ? { extractedProfile } : {})
+        };
+      }
+    } catch (ragErr) {
+      // RAG failed (e.g. Ollama not running) — log and gracefully fall through
+      logger.warn('[RAG] RAG pipeline unavailable, falling back to local retrieval:', ragErr.message);
+    }
+  }
+
+  // ── Step 3: Local Scheme Retrieval Fallback ─────────────────────────
   const retrieved = retrieveRelevantSchemes(query, effectiveProfile, 3);
   const result = generateGroundedAnswer(query, retrieved, effectiveProfile, language);
-  if (extractedProfile) {
-    result.extractedProfile = extractedProfile;
-  }
+  if (extractedProfile) result.extractedProfile = extractedProfile;
+  result.source = 'local_retrieval';
   return result;
 }
 

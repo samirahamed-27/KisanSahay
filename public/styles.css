@@ -66,7 +66,7 @@ body {
   background-color: #faf5ea;
   background-image: 
     linear-gradient(to right, rgba(250, 245, 234, 0.40) 0%, rgba(250, 245, 234, 0.70) 45%, rgba(250, 245, 234, 0.92) 100%),
-    url('/assets/wheat_field_bg.png');
+    url('./assets/wheat_field_bg.png');
   background-repeat: no-repeat;
   background-position: left center;
   background-size: cover;
@@ -805,33 +805,42 @@ h4,
 }
 
 .stat-icon-square {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.15rem;
+  transition: all 0.25s ease;
+}
+
+.stat-icon-square svg {
+  display: block;
 }
 
 .stat-icon-square.blue {
   background: #eff6ff;
   color: #2563eb;
+  border: 1px solid #dbeafe;
 }
 
 .stat-icon-square.green {
   background: #f0fdf4;
   color: #16a34a;
+  border: 1px solid #dcfce7;
 }
 
 .stat-icon-square.orange {
   background: #fff7ed;
   color: #ea580c;
+  border: 1px solid #ffedd5;
 }
 
 .stat-icon-square.cyan {
   background: #f0fdfa;
   color: #0d9488;
+  border: 1px solid #ccfbf1;
 }
 
 .stat-card-clean .stat-label {
@@ -845,6 +854,86 @@ h4,
   font-weight: 800;
   color: #0f172a;
   font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.stat-val-paid {
+  color: #16a34a;
+}
+
+.stat-val-due {
+  color: #ea580c;
+}
+
+.stat-val-emi {
+  color: #0f172a;
+}
+
+/* Dark mode overrides for stat cards */
+body.dark-mode .stat-card-clean {
+  background: #0f172a;
+  border-color: #1e293b;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-mode .stat-card-clean:hover {
+  border-color: #10b981;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(16, 185, 129, 0.2);
+}
+
+body.dark-mode .stat-card-clean .stat-label {
+  color: #94a3b8;
+}
+
+body.dark-mode .stat-card-clean .stat-value {
+  color: #f8fafc;
+}
+
+body.dark-mode #val-stat-count {
+  color: #38bdf8 !important;
+}
+
+body.dark-mode .stat-val-paid,
+body.dark-mode #val-stat-paid {
+  color: #4ade80 !important;
+}
+
+body.dark-mode .stat-val-due,
+body.dark-mode #val-stat-due {
+  color: #fb923c !important;
+}
+
+body.dark-mode .stat-val-emi,
+body.dark-mode #val-stat-emi {
+  color: #c084fc !important;
+}
+
+body.dark-mode .stat-icon-square.blue {
+  background: rgba(37, 99, 235, 0.18);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+}
+
+body.dark-mode .stat-icon-square.green {
+  background: rgba(22, 163, 74, 0.18);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
+}
+
+body.dark-mode .stat-icon-square.orange {
+  background: rgba(234, 88, 12, 0.18);
+  color: #fb923c;
+  border-color: rgba(251, 146, 60, 0.35);
+  box-shadow: 0 0 12px rgba(251, 146, 60, 0.2);
+}
+
+body.dark-mode .stat-icon-square.cyan {
+  background: rgba(13, 148, 136, 0.18);
+  color: #2dd4bf;
+  border-color: rgba(20, 184, 166, 0.35);
+  box-shadow: 0 0 12px rgba(20, 184, 166, 0.2);
 }
 
 /* Tabs: Active Loans vs Ended Loans */
@@ -1362,6 +1451,7 @@ h4,
   grid-template-columns: repeat(3, 1fr);
   gap: 1.8rem;
   margin-top: 2rem;
+  perspective: 1200px;
 }
 
 .scheme-card-box {
@@ -1372,13 +1462,40 @@ h4,
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  transition: var(--transition);
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.3s ease;
+  will-change: transform, box-shadow;
+  cursor: pointer;
 }
 
 .scheme-card-box:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: rgba(21, 128, 61, 0.35);
+  transform: perspective(1200px) translateY(-6px) scale(1.015);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12), 0 0 16px rgba(16, 185, 129, 0.15);
+  border-color: rgba(21, 128, 61, 0.45);
+}
+
+/* Dynamic 3D Pop Forward Towards Screen on Scheme Click */
+.scheme-card-box.is-card-forward,
+.cat-scheme-card.is-card-forward {
+  transform: perspective(1200px) translateZ(48px) scale(1.04) translateY(-10px) !important;
+  box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.45), 
+              0 0 35px rgba(16, 185, 129, 0.45),
+              0 0 0 2.5px #10b981 !important;
+  border-color: #10b981 !important;
+  z-index: 35 !important;
+}
+
+body.dark-mode .scheme-card-box.is-card-forward,
+body.dark-mode .cat-scheme-card.is-card-forward {
+  transform: perspective(1200px) translateZ(48px) scale(1.04) translateY(-10px) !important;
+  box-shadow: 0 36px 72px -10px rgba(0, 0, 0, 0.88), 
+              0 0 45px rgba(52, 211, 153, 0.55),
+              0 0 0 2.5px #34d399 !important;
+  border-color: #34d399 !important;
+  z-index: 35 !important;
 }
 
 .scheme-top-banner {
@@ -3700,15 +3817,43 @@ body.dark-mode .btn-install-pwa:hover {
 .vault-modal-title {
   font-size: 1.45rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-dark, #0f172a);
   line-height: 1.2;
   margin-bottom: 0.35rem;
 }
 
 .vault-modal-desc {
   font-size: 0.88rem;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   line-height: 1.45;
+}
+
+.security-choice-title {
+  font-weight: 700;
+  color: var(--text-dark, #0f172a);
+}
+
+.btn-clear-vault {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-vault:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .vault-scheme-notice {
@@ -5697,16 +5842,17 @@ body.dark-mode {
   --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.65);
 
-  /* Image 2 Dark Mode Doodle Theme Background */
-  background-color: #080c14;
+  /* Improved Luxury Dark Mode Background with Gradient Depth */
+  background-color: #060911;
   background-image: 
-    radial-gradient(ellipse 90% 55% at 50% -10%, rgba(35, 48, 70, 0.35), transparent 70%),
-    linear-gradient(rgba(8, 12, 20, 0.82), rgba(8, 12, 20, 0.90)),
-    url('/assets/dark_doodle_bg.png');
+    radial-gradient(ellipse 90% 55% at 50% -10%, rgba(30, 58, 138, 0.35), transparent 70%),
+    radial-gradient(ellipse 70% 45% at 85% 75%, rgba(16, 185, 129, 0.12), transparent 60%),
+    linear-gradient(rgba(6, 9, 17, 0.86), rgba(6, 9, 17, 0.94)),
+    url('./assets/dark_doodle_bg.png');
   background-attachment: fixed;
-  background-repeat: no-repeat, no-repeat, repeat;
-  background-position: center top, center center, center top;
-  background-size: 100% 100%, 100% 100%, 512px auto;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  background-position: center top, right bottom, center center, center top;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 512px auto;
   color: #f8fafc;
 }
 
@@ -6087,6 +6233,76 @@ body.dark-mode #btn-load-more-schemes {
 body.dark-mode #btn-load-more-schemes:hover {
   background: #16a34a !important;
   color: #ffffff !important;
+}
+
+body.dark-mode .modal-vault-dialog {
+  background: #0b1120 !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(16, 185, 129, 0.12) !important;
+  color: #f8fafc !important;
+}
+
+body.dark-mode .vault-modal-title {
+  color: #f8fafc !important;
+}
+
+body.dark-mode .vault-modal-desc {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .security-choice-title,
+body.dark-mode .security-box-header span {
+  color: #f8fafc !important;
+}
+
+body.dark-mode .vault-modal-badge {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+body.dark-mode .modal-vault-dialog .input-clean {
+  background: #060a12 !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .modal-vault-dialog .input-clean::placeholder {
+  color: #64748b !important;
+}
+
+body.dark-mode .modal-vault-dialog .input-clean:focus {
+  border-color: #10b981 !important;
+  background: #0b1528 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+}
+
+body.dark-mode .doc-badge-req {
+  background: rgba(220, 38, 38, 0.2) !important;
+  color: #fca5a5 !important;
+}
+
+body.dark-mode .doc-badge-opt {
+  background: rgba(30, 41, 59, 0.8) !important;
+  color: #94a3b8 !important;
+  border: 1px solid #334155;
+}
+
+body.dark-mode .btn-clear-vault {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+body.dark-mode .btn-clear-vault:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+body.dark-mode .vault-modal-footer {
+  border-top: 1px solid #1e293b;
+  background: #080d1a;
 }
 
 body.dark-mode .vault-nav-btn {

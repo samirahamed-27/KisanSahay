@@ -3,6 +3,11 @@ node_modules/
 *.log
 *.keystore
 scratch/
+.venv/
+chroma_db/
+
+# RAG vector index (generated — run: node scripts/buildRagIndex.js)
+src/data/rag_index.json
 
 # iOS / Capacitor
 ios/App/Pods/
