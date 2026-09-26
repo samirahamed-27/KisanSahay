@@ -426,10 +426,120 @@ async function setLanguage(langCode) {
   }
 }
 
+// ==========================================================================
+// Client-Side Translation Cache Engine (In-Memory + LocalStorage)
+// Keyed by: targetLang + ':::' + text
+// ==========================================================================
+
+const TRANSLATION_CACHE_STORAGE_KEY = 'kisansahay_translation_cache_v1';
+const translationTextCache = new Map();
+const fieldSourceTextMap = new Map();
+
+function getTranslationCacheKey(text, targetLang) {
+  return `${(targetLang || '').toLowerCase().trim()}:::${(text || '').trim()}`;
+}
+
+function getCachedTranslation(text, targetLang) {
+  if (!text || typeof text !== 'string') return null;
+  const key = getTranslationCacheKey(text, targetLang);
+  return translationTextCache.get(key) || null;
+}
+
+let saveCacheTimeout = null;
+function saveTranslationCacheToStorage() {
+  if (typeof localStorage === 'undefined') return;
+  if (saveCacheTimeout) clearTimeout(saveCacheTimeout);
+  saveCacheTimeout = setTimeout(() => {
+    try {
+      const obj = {};
+      let count = 0;
+      for (const [k, v] of translationTextCache.entries()) {
+        obj[k] = v;
+        count++;
+        if (count >= 2000) break; // Cache cap
+      }
+      localStorage.setItem(TRANSLATION_CACHE_STORAGE_KEY, JSON.stringify(obj));
+    } catch (e) {
+      console.debug('[KisanSahay] Could not persist translation cache:', e);
+    }
+  }, 300);
+}
+
+function setCachedTranslation(text, targetLang, translatedText) {
+  if (!text || typeof text !== 'string' || !translatedText || typeof translatedText !== 'string') return;
+  const key = getTranslationCacheKey(text, targetLang);
+  translationTextCache.set(key, translatedText);
+  saveTranslationCacheToStorage();
+}
+
+function invalidateTranslationCache(text, targetLang) {
+  if (!text) return;
+  if (targetLang) {
+    const key = getTranslationCacheKey(text, targetLang);
+    translationTextCache.delete(key);
+  } else {
+    const suffix = `:::${text.trim()}`;
+    for (const k of Array.from(translationTextCache.keys())) {
+      if (k.endsWith(suffix)) {
+        translationTextCache.delete(k);
+      }
+    }
+  }
+  saveTranslationCacheToStorage();
+}
+
+function initTranslationCache() {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem(TRANSLATION_CACHE_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+          for (const [k, v] of Object.entries(parsed)) {
+            translationTextCache.set(k, v);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.debug('[KisanSahay] Could not read translation cache from storage:', e);
+  }
+
+  // Pre-seed from window.TRANSLATIONS if available
+  try {
+    if (typeof window !== 'undefined' && window.TRANSLATIONS && window.TRANSLATIONS['en']) {
+      const enMap = window.TRANSLATIONS['en'];
+      for (const [lang, langMap] of Object.entries(window.TRANSLATIONS)) {
+        if (lang === 'en' || !langMap || typeof langMap !== 'object') continue;
+        for (const [k, enText] of Object.entries(enMap)) {
+          if (langMap[k] && typeof enText === 'string' && typeof langMap[k] === 'string') {
+            const cacheKey = getTranslationCacheKey(enText, lang);
+            if (!translationTextCache.has(cacheKey)) {
+              translationTextCache.set(cacheKey, langMap[k]);
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore
+  }
+}
+
+initTranslationCache();
+
+// Expose cache utilities on window
+window.translationTextCache = translationTextCache;
+window.getCachedTranslation = getCachedTranslation;
+window.setCachedTranslation = setCachedTranslation;
+window.invalidateTranslationCache = invalidateTranslationCache;
+
 /**
- * Reusable frontend batch translation function.
- * - Returns the input unchanged if targetLang === 'en'.
- * - Otherwise calls /api/translate once with the full object and returns the translated result in the same shape.
+ * Reusable frontend batch translation function with caching.
+ * - Keyed by text + targetLang (in-memory + localStorage).
+ * - Skips API call completely if all texts were already translated into targetLang.
+ * - If source text for a key changes, invalidates the previous cache entry.
+ * - Only sends cache misses to /api/translate.
  * - This is the ONLY function in the codebase that calls the translate API directly.
  *
  * @param {Object} fieldsObject - JSON object containing { key: text } pairs
@@ -442,13 +552,46 @@ async function translateBatch(fieldsObject, targetLang) {
     return fieldsObject;
   }
 
-  // 2. Call /api/translate once with the full object
+  const normLang = targetLang.toLowerCase().trim();
+  const result = {};
+  const misses = {}; // Only keys whose source text is not in cache
+
+  // 2. Check each field against the text + targetLang cache
+  for (const [key, text] of Object.entries(fieldsObject)) {
+    if (!text || typeof text !== 'string') {
+      result[key] = text;
+      continue;
+    }
+
+    // Invalidate cache entry if source text for this key changed
+    if (fieldSourceTextMap.has(key)) {
+      const prevText = fieldSourceTextMap.get(key);
+      if (prevText !== text) {
+        invalidateTranslationCache(prevText, normLang);
+      }
+    }
+    fieldSourceTextMap.set(key, text);
+
+    const cached = getCachedTranslation(text, normLang);
+    if (cached !== null) {
+      result[key] = cached;
+    } else {
+      misses[key] = text;
+    }
+  }
+
+  // 3. Skip API call completely if all exact texts were already translated into targetLang
+  if (Object.keys(misses).length === 0) {
+    return result;
+  }
+
+  // 4. Call /api/translate once with only the cache misses
   try {
-    const payload = Object.assign({}, fieldsObject, {
-      target_lang: targetLang
+    const payload = Object.assign({}, misses, {
+      target_lang: normLang
     });
 
-    const res = await fetch(`/api/translate?target_lang=${encodeURIComponent(targetLang)}`, {
+    const res = await fetch(`/api/translate?target_lang=${encodeURIComponent(normLang)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -456,15 +599,31 @@ async function translateBatch(fieldsObject, targetLang) {
 
     if (!res.ok) {
       console.warn(`[KisanSahay] Translation API HTTP ${res.status}. Returning original fields.`);
-      return fieldsObject;
+      for (const [k, orig] of Object.entries(misses)) {
+        result[k] = orig;
+      }
+      return result;
     }
 
     const data = await res.json();
-    const result = (data && data.translations) ? data.translations : data;
-    return (result && typeof result === 'object') ? result : fieldsObject;
+    const translatedMisses = (data && data.translations) ? data.translations : data;
+
+    // 5. Store newly translated results in cache and build final result
+    for (const [k, origText] of Object.entries(misses)) {
+      const translatedVal = (translatedMisses && translatedMisses[k]) ? translatedMisses[k] : origText;
+      result[k] = translatedVal;
+      if (translatedVal && translatedVal !== origText) {
+        setCachedTranslation(origText, normLang, translatedVal);
+      }
+    }
+
+    return result;
   } catch (err) {
     console.warn(`[KisanSahay] Translation network error (${err.message}). Returning original fields.`);
-    return fieldsObject;
+    for (const [k, orig] of Object.entries(misses)) {
+      result[k] = orig;
+    }
+    return result;
   }
 }
 
