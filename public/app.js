@@ -1464,13 +1464,15 @@ function setupSchemesSearch() {
     });
   }
 
-  el.filterChipBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      el.filterChipBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      applySchemesFilters(true);
+  if (el.filterChipBtns && el.filterChipBtns.length > 0) {
+    el.filterChipBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        el.filterChipBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applySchemesFilters(true);
+      });
     });
-  });
+  }
 
   const allIndiaSelect = document.getElementById('schemes-all-india-state-select');
   if (allIndiaSelect) {

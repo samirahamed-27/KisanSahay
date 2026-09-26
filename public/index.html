@@ -1093,9 +1093,6 @@
        ========================================================================== -->
   <main id="view-schemes" class="page-view">
     <div class="schemes-top-header">
-      <div class="schemes-pill-badge">
-        <span>📄</span> <span data-i18n="schemesBadge">All Schemes</span>
-      </div>
       <h1 class="schemes-title" data-i18n="schemesTitle">Government Schemes</h1>
       <p class="schemes-subtitle" data-i18n="schemesSubtitle">
         Browse all available government loan and support schemes for farmers. Click any scheme to see full details,
@@ -1107,15 +1104,6 @@
         <span class="search-icon">🔍</span>
         <input type="text" class="search-schemes-input" id="schemes-search-input"
           placeholder="Search schemes by name or keyword..." data-i18n-placeholder="searchPlaceholder">
-      </div>
-
-      <!-- Filter Chips: Categories -->
-      <div class="schemes-filter-chips">
-        <button class="filter-chip-btn active" data-filter="all" data-i18n="filterAll">All Schemes</button>
-        <button class="filter-chip-btn" data-filter="crop" data-i18n="filterCrop">Crop Loans</button>
-        <button class="filter-chip-btn" data-filter="infra" data-i18n="filterInfra">Infrastructure Loans</button>
-        <button class="filter-chip-btn" data-filter="income" data-i18n="filterIncome">Income Support</button>
-        <button class="filter-chip-btn" data-filter="more" data-i18n="filterMore">More Support</button>
       </div>
 
       <!-- All-India State Loan Facilities Selector Bar -->
@@ -1192,10 +1180,8 @@
           <span id="schemes-count-text">Showing verified schemes (⭐ Top Recommended on top)</span>
         </div>
         <div class="schemes-sort-control">
-          <label for="schemes-sort-select" style="font-size: 0.85rem; font-weight: 700; color: #475569;">Sort
-            By:</label>
-          <select id="schemes-sort-select" class="select-clean"
-            style="padding: 0.4rem 0.85rem; font-size: 0.85rem; width: auto; font-weight: 600;">
+          <label for="schemes-sort-select" class="schemes-sort-label">Sort By:</label>
+          <select id="schemes-sort-select" class="select-clean schemes-sort-dropdown">
             <option value="recommended" selected>⭐ Top Recommended (Green First)</option>
             <option value="interest_asc">📉 Lowest Interest Rate First</option>
             <option value="amount_desc">💰 Highest Loan Limit First</option>

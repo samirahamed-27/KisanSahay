@@ -404,34 +404,19 @@ async function setLanguage(langCode) {
     return;
   }
 
-  // 3. Cache Miss: Fetch batch translation from backend API with subtle loading feedback
+  // 3. Cache Miss: Fetch batch translation via the centralized translateBatch function
   const baseStrings = window.TRANSLATIONS['en'] || window.BASE_STRINGS || {};
   const langBtn = el.langToggleBtn || document.getElementById('lang-toggle-btn');
 
   try {
     if (langBtn) langBtn.classList.add('lang-loading-shimmer');
 
-    const res = await fetch('/api/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        strings: baseStrings,
-        from: 'en',
-        to: langCode,
-        isDynamic: false
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error(`Translation API HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    if (data && data.success && data.translations) {
-      window.TRANSLATIONS[langCode] = data.translations;
+    const transMap = await translateBatch(baseStrings, langCode);
+    if (transMap && typeof transMap === 'object' && Object.keys(transMap).length > 0) {
+      window.TRANSLATIONS[langCode] = transMap;
       applyTranslationsToDOM();
     } else {
-      throw new Error('Invalid translation response');
+      applyTranslationsToDOM();
     }
   } catch (err) {
     console.warn(`[KisanSahay] Translation notice (${err.message}). Falling back gracefully to base language.`);
@@ -441,31 +426,315 @@ async function setLanguage(langCode) {
   }
 }
 
-/**
- * On-the-fly Dynamic Translation helper (for scheme details / chat responses)
- * Bypasses static cache so dynamic information is never stale
- */
-async function translateDynamic(texts, targetLang) {
-  if (!targetLang || targetLang === 'en' || !texts) return texts;
+// ==========================================================================
+// Client-Side Translation Cache Engine (In-Memory + LocalStorage)
+// Keyed by: targetLang + ':::' + text
+// ==========================================================================
+
+const TRANSLATION_CACHE_STORAGE_KEY = 'kisansahay_translation_cache_v1';
+const translationTextCache = new Map();
+const fieldSourceTextMap = new Map();
+
+function getTranslationCacheKey(text, targetLang) {
+  return `${(targetLang || '').toLowerCase().trim()}:::${(text || '').trim()}`;
+}
+
+function getCachedTranslation(text, targetLang) {
+  if (!text || typeof text !== 'string') return null;
+  const key = getTranslationCacheKey(text, targetLang);
+  return translationTextCache.get(key) || null;
+}
+
+let saveCacheTimeout = null;
+function saveTranslationCacheToStorage() {
+  if (typeof localStorage === 'undefined') return;
+  if (saveCacheTimeout) clearTimeout(saveCacheTimeout);
+  saveCacheTimeout = setTimeout(() => {
+    try {
+      const obj = {};
+      let count = 0;
+      for (const [k, v] of translationTextCache.entries()) {
+        obj[k] = v;
+        count++;
+        if (count >= 2000) break; // Cache cap
+      }
+      localStorage.setItem(TRANSLATION_CACHE_STORAGE_KEY, JSON.stringify(obj));
+    } catch (e) {
+      console.debug('[KisanSahay] Could not persist translation cache:', e);
+    }
+  }, 300);
+}
+
+function setCachedTranslation(text, targetLang, translatedText) {
+  if (!text || typeof text !== 'string' || !translatedText || typeof translatedText !== 'string') return;
+  const key = getTranslationCacheKey(text, targetLang);
+  translationTextCache.set(key, translatedText);
+  saveTranslationCacheToStorage();
+}
+
+function invalidateTranslationCache(text, targetLang) {
+  if (!text) return;
+  if (targetLang) {
+    const key = getTranslationCacheKey(text, targetLang);
+    translationTextCache.delete(key);
+  } else {
+    const suffix = `:::${text.trim()}`;
+    for (const k of Array.from(translationTextCache.keys())) {
+      if (k.endsWith(suffix)) {
+        translationTextCache.delete(k);
+      }
+    }
+  }
+  saveTranslationCacheToStorage();
+}
+
+function initTranslationCache() {
   try {
-    const res = await fetch('/api/translate', {
+    if (typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem(TRANSLATION_CACHE_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+          for (const [k, v] of Object.entries(parsed)) {
+            translationTextCache.set(k, v);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.debug('[KisanSahay] Could not read translation cache from storage:', e);
+  }
+
+  // Pre-seed from window.TRANSLATIONS if available
+  try {
+    if (typeof window !== 'undefined' && window.TRANSLATIONS && window.TRANSLATIONS['en']) {
+      const enMap = window.TRANSLATIONS['en'];
+      for (const [lang, langMap] of Object.entries(window.TRANSLATIONS)) {
+        if (lang === 'en' || !langMap || typeof langMap !== 'object') continue;
+        for (const [k, enText] of Object.entries(enMap)) {
+          if (langMap[k] && typeof enText === 'string' && typeof langMap[k] === 'string') {
+            const cacheKey = getTranslationCacheKey(enText, lang);
+            if (!translationTextCache.has(cacheKey)) {
+              translationTextCache.set(cacheKey, langMap[k]);
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore
+  }
+}
+
+initTranslationCache();
+
+// Expose cache utilities on window
+window.translationTextCache = translationTextCache;
+window.getCachedTranslation = getCachedTranslation;
+window.setCachedTranslation = setCachedTranslation;
+window.invalidateTranslationCache = invalidateTranslationCache;
+
+// ==========================================================================
+// In-Flight Translation Loading Indicators (Progress Bar & Floating Spinner)
+// ==========================================================================
+let activeTranslationsCount = 0;
+let translationLoadingTimeout = null;
+
+function ensureTranslationLoadingElements() {
+  let bar = document.getElementById('translation-progress-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'translation-progress-bar';
+    bar.className = 'translation-progress-bar';
+    bar.setAttribute('aria-hidden', 'true');
+    document.body.prepend(bar);
+  }
+
+  let pill = document.getElementById('translation-loading-pill');
+  if (!pill) {
+    pill = document.createElement('div');
+    pill.id = 'translation-loading-pill';
+    pill.className = 'translation-loading-pill';
+    pill.setAttribute('role', 'status');
+    pill.setAttribute('aria-live', 'polite');
+    pill.innerHTML = `
+      <span class="translation-spinner" aria-hidden="true"></span>
+      <span id="translation-loading-text">Translating content...</span>
+    `;
+    document.body.appendChild(pill);
+  }
+
+  return { bar, pill };
+}
+
+function showTranslationLoading(targetLang) {
+  activeTranslationsCount++;
+  const { bar, pill } = ensureTranslationLoadingElements();
+
+  let langLabel = '';
+  if (targetLang && window.INDIAN_LANGUAGES) {
+    const found = window.INDIAN_LANGUAGES.find(l => l.code === targetLang);
+    if (found) {
+      langLabel = found.native ? ` (${found.native})` : ` (${found.name})`;
+    }
+  }
+
+  const textEl = document.getElementById('translation-loading-text');
+  if (textEl) {
+    textEl.textContent = langLabel ? `Translating${langLabel}...` : 'Translating content...';
+  }
+
+  bar.classList.add('active');
+  pill.classList.add('visible');
+
+  // Also toggle shimmer on language selector button if available
+  const langBtn = document.getElementById('lang-toggle-btn');
+  if (langBtn) {
+    langBtn.classList.add('lang-loading-shimmer');
+  }
+
+  // Defensive fallback: auto-clear after 15 seconds if network request stalls
+  if (translationLoadingTimeout) clearTimeout(translationLoadingTimeout);
+  translationLoadingTimeout = setTimeout(() => {
+    if (activeTranslationsCount > 0) {
+      activeTranslationsCount = 0;
+      hideTranslationLoadingUI();
+    }
+  }, 15000);
+}
+
+function hideTranslationLoadingUI() {
+  const bar = document.getElementById('translation-progress-bar');
+  const pill = document.getElementById('translation-loading-pill');
+  if (bar) bar.classList.remove('active');
+  if (pill) pill.classList.remove('visible');
+  const langBtn = document.getElementById('lang-toggle-btn');
+  if (langBtn) {
+    langBtn.classList.remove('lang-loading-shimmer');
+  }
+}
+
+function hideTranslationLoading() {
+  activeTranslationsCount = Math.max(0, activeTranslationsCount - 1);
+  if (activeTranslationsCount === 0) {
+    if (translationLoadingTimeout) {
+      clearTimeout(translationLoadingTimeout);
+      translationLoadingTimeout = null;
+    }
+    hideTranslationLoadingUI();
+  }
+}
+
+// Expose indicator controls on window
+window.showTranslationLoading = showTranslationLoading;
+window.hideTranslationLoading = hideTranslationLoading;
+
+/**
+ * Reusable frontend batch translation function with caching.
+ * - Keyed by text + targetLang (in-memory + localStorage).
+ * - Skips API call completely if all texts were already translated into targetLang.
+ * - If source text for a key changes, invalidates the previous cache entry.
+ * - Only sends cache misses to /api/translate.
+ * - Shows lightweight loading indicator (progress bar + floating spinner) while in flight.
+ * - This is the ONLY function in the codebase that calls the translate API directly.
+ *
+ * @param {Object} fieldsObject - JSON object containing { key: text } pairs
+ * @param {string} targetLang - Target language code (e.g. 'hi', 'pa', 'mr', 'ta')
+ * @returns {Promise<Object>} - Translated { key: translatedText } object in the same shape
+ */
+async function translateBatch(fieldsObject, targetLang) {
+  // 1. Return input unchanged if target language is English or input is empty/falsy
+  if (!fieldsObject || typeof fieldsObject !== 'object' || targetLang === 'en' || !targetLang) {
+    return fieldsObject;
+  }
+
+  const normLang = targetLang.toLowerCase().trim();
+  const result = {};
+  const misses = {}; // Only keys whose source text is not in cache
+
+  // 2. Check each field against the text + targetLang cache
+  for (const [key, text] of Object.entries(fieldsObject)) {
+    if (!text || typeof text !== 'string') {
+      result[key] = text;
+      continue;
+    }
+
+    // Invalidate cache entry if source text for this key changed
+    if (fieldSourceTextMap.has(key)) {
+      const prevText = fieldSourceTextMap.get(key);
+      if (prevText !== text) {
+        invalidateTranslationCache(prevText, normLang);
+      }
+    }
+    fieldSourceTextMap.set(key, text);
+
+    const cached = getCachedTranslation(text, normLang);
+    if (cached !== null) {
+      result[key] = cached;
+    } else {
+      misses[key] = text;
+    }
+  }
+
+  // 3. Skip API call completely if all exact texts were already translated into targetLang (zero network delay)
+  if (Object.keys(misses).length === 0) {
+    return result;
+  }
+
+  // 4. Call /api/translate once with only the cache misses while showing lightweight loading indicator
+  showTranslationLoading(normLang);
+  try {
+    const payload = Object.assign({}, misses, {
+      target_lang: normLang
+    });
+
+    const res = await fetch(`/api/translate?target_lang=${encodeURIComponent(normLang)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        texts,
-        from: 'en',
-        to: targetLang,
-        isDynamic: true
-      })
+      body: JSON.stringify(payload)
     });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success) return data.translations;
+
+    if (!res.ok) {
+      console.warn(`[KisanSahay] Translation API HTTP ${res.status}. Returning original fields.`);
+      for (const [k, orig] of Object.entries(misses)) {
+        result[k] = orig;
+      }
+      return result;
     }
+
+    const data = await res.json();
+    const translatedMisses = (data && data.translations) ? data.translations : data;
+
+    // 5. Store newly translated results in cache and build final result
+    for (const [k, origText] of Object.entries(misses)) {
+      const translatedVal = (translatedMisses && translatedMisses[k]) ? translatedMisses[k] : origText;
+      result[k] = translatedVal;
+      if (translatedVal && translatedVal !== origText) {
+        setCachedTranslation(origText, normLang, translatedVal);
+      }
+    }
+
+    return result;
   } catch (err) {
-    console.warn('[KisanSahay] Dynamic translation warning:', err.message);
+    console.warn(`[KisanSahay] Translation network error (${err.message}). Returning original fields.`);
+    for (const [k, orig] of Object.entries(misses)) {
+      result[k] = orig;
+    }
+    return result;
+  } finally {
+    hideTranslationLoading();
   }
-  return texts;
+}
+
+// Expose globally on window so any script or UI component can reuse it
+window.translateBatch = translateBatch;
+
+/**
+ * On-the-fly Dynamic Translation helper (for scheme details / chat responses)
+ * Delegates to translateBatch
+ */
+async function translateDynamic(texts, targetLang) {
+  return await translateBatch(texts, targetLang);
 }
 
 
@@ -694,21 +963,21 @@ function renderLoansList() {
   let filtered = state.loans;
   if (state.currentLoanTab === 'active') {
     filtered = state.loans.filter(l => l.status === 'Active' && l.dueAmount > 0);
-    if (el.loanListStatusNote) el.loanListStatusNote.textContent = 'Showing currently running loans with due EMIs';
+    if (el.loanListStatusNote) el.loanListStatusNote.innerHTML = '<span class="status-note-dot">●</span> <span>Showing currently running loans with due EMIs</span>';
   } else if (state.currentLoanTab === 'ended') {
     filtered = state.loans.filter(l => l.status === 'Ended' || l.dueAmount === 0);
-    if (el.loanListStatusNote) el.loanListStatusNote.textContent = 'Showing fully paid and completed loans';
+    if (el.loanListStatusNote) el.loanListStatusNote.innerHTML = '<span class="status-note-dot">●</span> <span>Showing fully paid and completed loans</span>';
   } else {
-    if (el.loanListStatusNote) el.loanListStatusNote.textContent = 'Showing all loans and credit records';
+    if (el.loanListStatusNote) el.loanListStatusNote.innerHTML = '<span class="status-note-dot">●</span> <span>Showing all loans and credit records</span>';
   }
 
   if (filtered.length === 0) {
     const msg = state.currentLoanTab === 'ended' ? t('emptyEndedLoans') : t('emptyActiveLoans');
     el.loansCardsGrid.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: var(--radius-md); border: 1.5px dashed var(--border-color);">
+      <div class="loans-empty-card" style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; border-radius: var(--radius-md); border: 1.5px dashed var(--border-color);">
         <div style="font-size: 2.8rem; margin-bottom: 0.8rem;">💳</div>
-        <p style="color: #0f172a; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">${msg}</p>
-        <p style="color: #64748b; font-size: 0.95rem; max-width: 520px; margin: 0 auto 1.6rem auto; line-height: 1.5;">
+        <p class="empty-title" style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">${msg}</p>
+        <p class="empty-desc" style="font-size: 0.95rem; max-width: 520px; margin: 0 auto 1.6rem auto; line-height: 1.5;">
           ${state.currentLoanTab === 'ended' ? 'You have no completed or closed loans on record.' : 'No active running loans. Fill your farm details in Check Eligibility to choose a subsidized loan, or add a loan manually.'}
         </p>
         <div style="display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap;">
@@ -1195,13 +1464,15 @@ function setupSchemesSearch() {
     });
   }
 
-  el.filterChipBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      el.filterChipBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      applySchemesFilters(true);
+  if (el.filterChipBtns && el.filterChipBtns.length > 0) {
+    el.filterChipBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        el.filterChipBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applySchemesFilters(true);
+      });
     });
-  });
+  }
 
   const allIndiaSelect = document.getElementById('schemes-all-india-state-select');
   if (allIndiaSelect) {
@@ -1305,18 +1576,21 @@ function getSchemeTier(scheme) {
   };
 }
 
-function renderSchemesGrid(schemes) {
+let currentSchemesGridRenderId = 0;
+
+async function renderSchemesGrid(schemes) {
   if (!el.schemesCardsContainer) return;
-  el.schemesCardsContainer.innerHTML = '';
+
+  const renderId = ++currentSchemesGridRenderId;
 
   if (!schemes || schemes.length === 0) {
     el.schemesCardsContainer.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: #fff; border-radius: var(--radius-md);">
-        <p style="color: #64748b;">No schemes matched your search query.</p>
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--bg-card, #fff); border-radius: var(--radius-md);">
+        <p style="color: #64748b;">${t('noSchemesFound', 'No schemes matched your search query.')}</p>
       </div>
     `;
     if (el.schemesCountText) {
-      el.schemesCountText.textContent = '0 schemes found';
+      el.schemesCountText.textContent = t('zeroSchemesFound', '0 schemes found');
     }
     return;
   }
@@ -1355,11 +1629,73 @@ function renderSchemesGrid(schemes) {
 
   // Slice batch for smooth rendering performance
   const batchToRender = sortedSchemes.slice(0, currentSchemesBatch);
+  const targetLang = (state && state.currentLang) || 'en';
+
+  // 1. Collect all translatable fields from the visible cards into one single object
+  const translatableFields = {};
+
+  batchToRender.forEach((scheme, index) => {
+    const schemeKey = scheme.id || `scheme_${index}`;
+    const tierInfo = getSchemeTier(scheme);
+
+    if (scheme.name) translatableFields[`${schemeKey}_name`] = scheme.name;
+    if (scheme.category) translatableFields[`${schemeKey}_category`] = scheme.category;
+    if (scheme.shortName) translatableFields[`${schemeKey}_shortName`] = scheme.shortName;
+    if (scheme.whatItIs || scheme.tagline) {
+      translatableFields[`${schemeKey}_whatItIs`] = scheme.whatItIs || scheme.tagline;
+    }
+    if (tierInfo && tierInfo.badgeText) {
+      translatableFields[`${schemeKey}_badgeText`] = tierInfo.badgeText;
+    }
+
+    const rawHighlights = Array.isArray(scheme.highlights) && scheme.highlights.length > 0
+      ? scheme.highlights
+      : (scheme.tagline ? [scheme.tagline] : []);
+
+    rawHighlights.forEach((hl, hlIdx) => {
+      if (hl && typeof hl === 'string') {
+        translatableFields[`${schemeKey}_hl_${hlIdx}`] = hl;
+      }
+    });
+  });
+
+  // 2. Clear container & display subtle loading spinner while waiting if non-English
+  // This guarantees that NO English text appears before the translated cards render
+  if (targetLang !== 'en') {
+    el.schemesCardsContainer.innerHTML = `
+      <div class="schemes-grid-loading" style="grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; padding: 4rem 1rem; min-height: 220px;">
+        <div style="width: 36px; height: 36px; border: 3px solid rgba(16, 185, 129, 0.2); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      </div>
+    `;
+    if (el.schemesCountText) {
+      el.schemesCountText.textContent = '...';
+    }
+  } else {
+    el.schemesCardsContainer.innerHTML = '';
+  }
+
+  // 3. Call translateBatch() on the single collected object and wait for the result
+  let translatedMap = {};
+  if (targetLang !== 'en') {
+    translatedMap = await translateBatch(translatableFields, targetLang);
+  }
+
+  // Prevent race conditions from rapid filtering / tab switches
+  if (renderId !== currentSchemesGridRenderId) return;
+
+  // Clear loading state
+  el.schemesCardsContainer.innerHTML = '';
 
   // Update dynamic count text
   if (el.schemesCountText) {
     const topCount = sortedSchemes.filter(s => getSchemeTier(s).tier === 1).length;
-    el.schemesCountText.textContent = `Showing ${batchToRender.length} of ${sortedSchemes.length} verified schemes (${topCount} Top Recommended on top)`;
+    if (targetLang === 'hi') {
+      el.schemesCountText.textContent = `${sortedSchemes.length} सत्यापित योजनाओं में से ${batchToRender.length} दिखाई जा रही हैं (${topCount} शीर्ष अनुशंसित)`;
+    } else if (targetLang !== 'en') {
+      el.schemesCountText.textContent = `${batchToRender.length} / ${sortedSchemes.length}`;
+    } else {
+      el.schemesCountText.textContent = `Showing ${batchToRender.length} of ${sortedSchemes.length} verified schemes (${topCount} Top Recommended on top)`;
+    }
   }
 
   if (loadMoreContainer) {
@@ -1372,32 +1708,46 @@ function renderSchemesGrid(schemes) {
     }
   }
 
-  batchToRender.forEach(scheme => {
+  // 4. Build and inject the HTML cards with the translated fields
+  batchToRender.forEach((scheme, index) => {
+    const schemeKey = scheme.id || `scheme_${index}`;
     const card = document.createElement('div');
     card.className = 'scheme-card-box';
 
     const tierInfo = getSchemeTier(scheme);
-    const highlightsHtml = (scheme.highlights || [scheme.tagline]).map(h => 
-      `<div class="scheme-tag-pill ${tierInfo.pillStyle}">${h}</div>`
-    ).join('');
+
+    const schemeName = (translatedMap && translatedMap[`${schemeKey}_name`]) || scheme.name;
+    const schemeCategory = (translatedMap && translatedMap[`${schemeKey}_category`]) || scheme.category;
+    const schemeShortName = (translatedMap && translatedMap[`${schemeKey}_shortName`]) || scheme.shortName;
+    const schemeDesc = (translatedMap && translatedMap[`${schemeKey}_whatItIs`]) || scheme.whatItIs || scheme.tagline;
+    const badgeText = (translatedMap && translatedMap[`${schemeKey}_badgeText`]) || tierInfo.badgeText;
+
+    const rawHighlights = Array.isArray(scheme.highlights) && scheme.highlights.length > 0
+      ? scheme.highlights
+      : (scheme.tagline ? [scheme.tagline] : []);
+
+    const highlightsHtml = rawHighlights.map((hl, hlIdx) => {
+      const translatedHl = (translatedMap && translatedMap[`${schemeKey}_hl_${hlIdx}`]) || hl;
+      return `<div class="scheme-tag-pill ${tierInfo.pillStyle}">${translatedHl}</div>`;
+    }).join('');
 
     card.innerHTML = `
       <!-- Scheme Tier Status Banner -->
       <div class="scheme-tier-badge ${tierInfo.badgeClass}">
-        ${tierInfo.badgeText}
+        ${badgeText}
       </div>
 
       <!-- Top Colored Banner with Smooth Gradient -->
       <div class="scheme-top-banner ${tierInfo.themeColor}">
-        <div class="scheme-category-tag">${scheme.category}</div>
-        <h3 class="scheme-banner-title">${scheme.name}</h3>
-        <div class="scheme-banner-short">${scheme.shortName}</div>
+        <div class="scheme-category-tag">${schemeCategory}</div>
+        <h3 class="scheme-banner-title">${schemeName}</h3>
+        <div class="scheme-banner-short">${schemeShortName}</div>
       </div>
 
       <!-- Body Matching Screenshot 3 -->
       <div class="scheme-card-inner">
         <p class="scheme-card-desc">
-          ${scheme.whatItIs || scheme.tagline}
+          ${schemeDesc}
         </p>
 
         <!-- Highlights & Subvention Badges -->
@@ -1433,21 +1783,76 @@ const STANDARD_SCHEME_DOCS = [
   { name: 'Income Certificate / Self Declaration', desc: 'Annual family income certificate or self-attested revenue declaration.' }
 ];
 
-window.openChecklist = function(schemeId) {
+let currentChecklistRenderId = 0;
+
+window.openChecklist = async function(schemeId) {
   const scheme = state.schemes.find(s => s.id === schemeId);
   if (!scheme) return;
+
+  const renderId = ++currentChecklistRenderId;
+  const targetLang = (state && state.currentLang) || 'en';
 
   state.selectedScheme = scheme;
   state.checklistConfirmed = false;
 
-  if (el.checklistModalTitle) {
-    el.checklistModalTitle.textContent = `${scheme.name} — ${t('docChecklistTitle')}`;
-  }
-  if (!el.checklistItemsBox) return;
-
-  el.checklistItemsBox.innerHTML = '';
   const docsList = (scheme.documents && scheme.documents.length >= 3) ? scheme.documents : STANDARD_SCHEME_DOCS;
   const checkedSet = new Set();
+
+  // 1. Collect all translatable fields into one single object
+  const translatableFields = {
+    scheme_name: scheme.name
+  };
+
+  docsList.forEach((doc, idx) => {
+    const docKey = `doc_${idx}`;
+    if (doc.name) translatableFields[`${docKey}_name`] = doc.name;
+    if (doc.desc) translatableFields[`${docKey}_desc`] = doc.desc;
+  });
+
+  // 2. Open modal & display clean loading state if non-English
+  // This confirms NO English text appears before the translated version renders!
+  if (el.checklistModal) el.checklistModal.classList.add('active');
+
+  if (targetLang !== 'en') {
+    if (el.checklistModalTitle) {
+      el.checklistModalTitle.textContent = `... — ${t('docChecklistTitle')}`;
+    }
+    if (el.checklistItemsBox) {
+      el.checklistItemsBox.innerHTML = `
+        <div class="checklist-loading-spinner" style="display: flex; justify-content: center; align-items: center; padding: 3.5rem 1rem; min-height: 180px;">
+          <div style="width: 34px; height: 34px; border: 3px solid rgba(16, 185, 129, 0.2); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        </div>
+      `;
+    }
+    if (el.checklistCompletionStatus) {
+      el.checklistCompletionStatus.textContent = '';
+    }
+  } else {
+    if (el.checklistModalTitle) {
+      el.checklistModalTitle.textContent = `${scheme.name} — ${t('docChecklistTitle')}`;
+    }
+    if (el.checklistItemsBox) {
+      el.checklistItemsBox.innerHTML = '';
+    }
+  }
+
+  // 3. Call translateBatch() once on the collected object and wait for the result
+  let translatedMap = {};
+  if (targetLang !== 'en') {
+    translatedMap = await translateBatch(translatableFields, targetLang);
+  }
+
+  // Discard stale render if user closed or opened another modal
+  if (renderId !== currentChecklistRenderId) return;
+
+  const translatedSchemeName = (translatedMap && translatedMap.scheme_name) || scheme.name;
+
+  if (el.checklistModalTitle) {
+    el.checklistModalTitle.textContent = `${translatedSchemeName} — ${t('docChecklistTitle')}`;
+  }
+
+  if (!el.checklistItemsBox) return;
+  el.checklistItemsBox.innerHTML = '';
 
   function updateChecklistUI() {
     const total = docsList.length;
@@ -1456,9 +1861,15 @@ window.openChecklist = function(schemeId) {
     state.checklistConfirmed = isAllChecked;
 
     if (el.checklistCompletionStatus) {
-      el.checklistCompletionStatus.textContent = isAllChecked
-        ? `✅ All ${total} documents confirmed`
-        : `${count} of ${total} confirmed`;
+      if (targetLang === 'hi') {
+        el.checklistCompletionStatus.textContent = isAllChecked
+          ? `✅ सभी ${total} दस्तावेज़ पुष्ट किए गए`
+          : `${total} में से ${count} पुष्ट किए गए`;
+      } else {
+        el.checklistCompletionStatus.textContent = isAllChecked
+          ? `✅ All ${total} documents confirmed`
+          : `${count} of ${total} confirmed`;
+      }
       el.checklistCompletionStatus.style.color = isAllChecked ? '#15803d' : '#dc2626';
     }
 
@@ -1470,7 +1881,11 @@ window.openChecklist = function(schemeId) {
         const missingCount = total - count;
         const countText = document.getElementById('checklist-missing-count-text');
         if (countText) {
-          countText.textContent = `${missingCount} required document${missingCount > 1 ? 's' : ''} not yet confirmed. All are required to apply.`;
+          if (targetLang === 'hi') {
+            countText.textContent = `${missingCount} आवश्यक दस्तावेज़ अभी पुष्ट नहीं हुए हैं। आवेदन करने के लिए सभी आवश्यक हैं।`;
+          } else {
+            countText.textContent = `${missingCount} required document${missingCount > 1 ? 's' : ''} not yet confirmed. All are required to apply.`;
+          }
         }
       }
     }
@@ -1489,15 +1904,20 @@ window.openChecklist = function(schemeId) {
     }
   }
 
+  // 4. Build and inject the checklist items using the translated text
   docsList.forEach((doc, idx) => {
+    const docKey = `doc_${idx}`;
+    const docName = (translatedMap && translatedMap[`${docKey}_name`]) || doc.name;
+    const docDesc = (translatedMap && translatedMap[`${docKey}_desc`]) || doc.desc;
+
     const item = document.createElement('label');
     item.className = 'checklist-checkbox-item';
     item.htmlFor = `chk-doc-${idx}`;
     item.innerHTML = `
       <input type="checkbox" class="doc-check-input" id="chk-doc-${idx}" data-idx="${idx}">
       <div style="flex: 1;">
-        <div style="font-weight: 700; font-size: 0.92rem; color: #0f172a;" class="doc-title">${doc.name}</div>
-        <div style="font-size: 0.82rem; color: #64748b; margin-top: 0.15rem;">${doc.desc}</div>
+        <div style="font-weight: 700; font-size: 0.92rem; color: #0f172a;" class="doc-title">${docName}</div>
+        <div style="font-size: 0.82rem; color: #64748b; margin-top: 0.15rem;">${docDesc}</div>
       </div>
     `;
 
@@ -1521,16 +1941,19 @@ window.openChecklist = function(schemeId) {
   // Read checklist aloud button
   if (el.btnReadChecklistAloud) {
     el.btnReadChecklistAloud.onclick = () => {
-      const docNames = docsList.map((d, i) => `${i + 1}. ${d.name}`).join('. ');
-      const speech = state.currentLang === 'hi'
-        ? `इस योजना के लिए आवश्यक दस्तावेज़ हैं: ${docNames}. कृपया पुष्टि करें कि आपके पास यह सभी दस्तावेज़ हैं।`
+      const docNames = docsList.map((d, i) => {
+        const docKey = `doc_${i}`;
+        const dName = (translatedMap && translatedMap[`${docKey}_name`]) || d.name;
+        return `${i + 1}. ${dName}`;
+      }).join('. ');
+      const speech = targetLang === 'hi'
+        ? `${translatedSchemeName} के लिए आवश्यक दस्तावेज़ हैं: ${docNames}। कृपया पुष्टि करें कि आपके पास यह सभी दस्तावेज़ हैं।`
         : `Required documents for ${scheme.name} are: ${docNames}. Please confirm you have all these documents before applying.`;
-      speakKisanText(speech, state.currentLang);
+      speakKisanText(speech, targetLang);
     };
   }
 
   updateChecklistUI();
-  el.checklistModal.classList.add('active');
 };
 
 // ==========================================================================
@@ -1941,21 +2364,64 @@ function openVaultModal(scheme = null, isOverview = false) {
     if (btnSaveText) btnSaveText.textContent = 'Update & Secure Documents';
     if (headerStatus) headerStatus.textContent = '✓ Unlocked & Verified';
 
-    // Populate existing verified documents
+    // Populate existing verified documents only if previously saved
     const docs = state.vaultState.documents || {};
-    if (el.vaultAadhaar && docs.aadhaarCard) el.vaultAadhaar.value = docs.aadhaarCard;
-    if (el.vaultLand && docs.landRecord) el.vaultLand.value = docs.landRecord;
-    if (el.vaultBank && docs.bankDetails) el.vaultBank.value = docs.bankDetails;
-    if (el.vaultCrop && docs.cropSowing) el.vaultCrop.value = docs.cropSowing;
-    if (el.vaultCategory && docs.categoryCert) el.vaultCategory.value = docs.categoryCert;
+    if (el.vaultAadhaar) el.vaultAadhaar.value = docs.aadhaarCard || '';
+    if (el.vaultLand) el.vaultLand.value = docs.landRecord || '';
+    if (el.vaultBank) el.vaultBank.value = docs.bankDetails || '';
+    if (el.vaultCrop) el.vaultCrop.value = docs.cropSowing || '';
+    if (el.vaultCategory) el.vaultCategory.value = docs.categoryCert || '';
   } else {
     if (btnLockNow) btnLockNow.style.display = 'none';
     if (btnResetTrigger) btnResetTrigger.style.display = 'none';
     if (btnSaveText) btnSaveText.textContent = 'Encrypt & Secure Documents';
     if (headerStatus) headerStatus.textContent = 'Encrypted Farmer Vault';
+
+    // Ensure all fields are blank so the user enters their own details directly
+    if (el.vaultAadhaar && !state.vaultState.documents) el.vaultAadhaar.value = '';
+    if (el.vaultLand && !state.vaultState.documents) el.vaultLand.value = '';
+    if (el.vaultBank && !state.vaultState.documents) el.vaultBank.value = '';
+    if (el.vaultCrop && !state.vaultState.documents) el.vaultCrop.value = '';
+    if (el.vaultCategory && !state.vaultState.documents) el.vaultCategory.value = '';
+  }
+
+  // Setup Clear All Fields button listener
+  const btnClearVault = document.getElementById('btn-vault-clear-all');
+  if (btnClearVault && !btnClearVault.dataset.bound) {
+    btnClearVault.dataset.bound = 'true';
+    btnClearVault.addEventListener('click', clearAllVaultFields);
   }
 
   if (el.vaultModal) el.vaultModal.classList.add('active');
+}
+
+function clearAllVaultFields() {
+  if (el.vaultAadhaar) el.vaultAadhaar.value = '';
+  if (el.vaultLand) el.vaultLand.value = '';
+  if (el.vaultBank) el.vaultBank.value = '';
+  if (el.vaultCrop) el.vaultCrop.value = '';
+  if (el.vaultCategory) el.vaultCategory.value = '';
+
+  const pwWord = document.getElementById('vault-word-pass');
+  const pwWordConfirm = document.getElementById('vault-word-confirm');
+  const pwPin = document.getElementById('vault-pin-pass');
+  const pwPinConfirm = document.getElementById('vault-pin-confirm');
+  if (pwWord) pwWord.value = '';
+  if (pwWordConfirm) pwWordConfirm.value = '';
+  if (pwPin) pwPin.value = '';
+  if (pwPinConfirm) pwPinConfirm.value = '';
+
+  state.patternSequence = [];
+  const patternCanvas = document.getElementById('pattern-canvas');
+  if (patternCanvas) {
+    const ctx = patternCanvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, patternCanvas.width, patternCanvas.height);
+  }
+  document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('active'));
+  const feedback = document.getElementById('pattern-feedback');
+  if (feedback) feedback.textContent = 'Connect dots in sequence to draw pattern';
+
+  showToast('✨ All fields cleared. You can now enter your own details.');
 }
 
 function closeVaultModal() {
@@ -4232,7 +4698,7 @@ function setupSahayAI() {
     // 1. Append User Message
     appendMessage('user', messageText);
 
-    // 2. Append Typing Indicator
+    // 2. Append Loading State ('AI is thinking...')
     const typingId = 'sahay-typing-' + Date.now();
     const typingBubble = document.createElement('div');
     typingBubble.className = 'sahay-msg assistant';
@@ -4240,64 +4706,73 @@ function setupSahayAI() {
     typingBubble.innerHTML = `
       <div class="sahay-msg-content" style="display: flex; align-items: center; gap: 0.5rem; color: #64748b;">
         <span class="recording-dot" style="background: #15803d;"></span>
-        <span>Grounded retrieval from verified agricultural database...</span>
+        <span><em>Sahay AI is thinking...</em></span>
       </div>
     `;
     messageStream.appendChild(typingBubble);
     messageStream.scrollTop = messageStream.scrollHeight;
 
+    if (userInput) userInput.disabled = true;
     const farmerProfile = getComprehensiveFarmerProfile();
 
     try {
-      const res = await fetch('/api/assistant/chat', {
+      // 3. Send query to local FastAPI RAG endpoint
+      const res = await fetch('http://localhost:8000/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: messageText,
-          language: sahayLang,
-          farmerProfile
+          user_query: messageText,
+          top_k: 3,
+          include_context: false
         })
       });
+
+      if (!res.ok) {
+        throw new Error(`RAG Server returned HTTP ${res.status}: ${res.statusText}`);
+      }
 
       const data = await res.json();
       const typingEl = document.getElementById(typingId);
       if (typingEl) typingEl.remove();
 
-      if (data.success && data.data) {
-        // Check if server extracted and updated farmer attributes
-        if (data.data.extractedProfile) {
-          const ext = data.data.extractedProfile;
-          state.userFarmProfile = { ...(state.userFarmProfile || {}), ...ext };
-          state.farmerQualification = { ...(state.farmerQualification || {}), ...ext };
-          localStorage.setItem('kisansahay_farmer_qualification', JSON.stringify(state.farmerQualification));
-          updateSahayProfileStatusBar();
-          showToast(`🌾 Profile updated: ${Object.keys(ext).join(', ')}`);
-        }
+      // 4. Display AI answer in Chat UI
+      if (data && data.answer) {
+        appendMessage('assistant', data.answer);
 
-        appendAssistantReply(data.data);
-      } else {
-        // Fallback to client-side knowledge base if available
-        const localMatch = (typeof window.findSahayAnswer === 'function')
-          ? window.findSahayAnswer(messageText, sahayLang, farmerProfile)
-          : null;
-        if (localMatch) {
-          appendAssistantReply(localMatch);
-        } else {
-          appendMessage('assistant', 'Sorry, I could not complete that query. Please rephrase or browse the 50 FAQs above.');
+        // TTS Read Aloud if active
+        if (isTtsActive && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(data.answer.replace(/[•*#_`]/g, ' '));
+          utterance.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
+          utterance.rate = 0.95;
+          window.speechSynthesis.speak(utterance);
         }
+      } else {
+        appendMessage('assistant', "I'm sorry, but I couldn't find that information in the uploaded data.");
       }
+
     } catch (err) {
-      console.warn('Network chat error, checking offline knowledge base:', err);
+      console.warn('Local RAG API error, falling back:', err);
       const typingEl = document.getElementById(typingId);
       if (typingEl) typingEl.remove();
 
+      // Fallback: Check local knowledge base if local API server is unreachable
       const localMatch = (typeof window.findSahayAnswer === 'function')
         ? window.findSahayAnswer(messageText, sahayLang, farmerProfile)
         : null;
+
       if (localMatch) {
         appendAssistantReply(localMatch);
       } else {
-        appendMessage('assistant', 'Could not connect to the verified scheme server. You can still browse all 50 offline FAQs in the drawer above.');
+        appendMessage(
+          'assistant',
+          '⚠️ **Could not connect to Sahay AI backend (`http://localhost:8000/chat`).**\nPlease ensure your local FastAPI server is running (`python app.py`).'
+        );
+      }
+    } finally {
+      if (userInput) {
+        userInput.disabled = false;
+        userInput.focus();
       }
     }
   }
@@ -4306,7 +4781,19 @@ function setupSahayAI() {
     if (!messageStream) return;
     const msg = document.createElement('div');
     msg.className = `sahay-msg ${role}`;
-    msg.innerHTML = `<div class="sahay-msg-content">${escapeHtml(text)}</div>`;
+    // For assistant messages render basic markdown (bold, bullets, newlines).
+    // User messages are always escaped for XSS safety.
+    let content;
+    if (role === 'assistant') {
+      content = text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/•/g, '&bull;')
+        .replace(/\n/g, '<br>');
+    } else {
+      content = escapeHtml(text);
+    }
+    msg.innerHTML = `<div class="sahay-msg-content">${content}</div>`;
     messageStream.appendChild(msg);
     messageStream.scrollTop = messageStream.scrollHeight;
   }
@@ -5526,14 +6013,18 @@ function setupNetworkSpeedMonitor() {
       }
     }
 
-    // 3. Fallback active latency/probe check if downlink not directly reported, or on manual click
+    // 3. Resilient latency probe (works under both root / and /public/ Live Server)
     if (downlinkMbps === null || isManualClick) {
       try {
         const startTime = performance.now();
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-        const response = await fetch(`/manifest.json?_probe=${Date.now()}`, {
+        const probeTarget = window.location.pathname.endsWith('.html')
+          ? window.location.pathname + `?_probe=${Date.now()}`
+          : './manifest.json?_probe=' + Date.now();
+
+        const response = await fetch(probeTarget, {
           method: 'GET',
           cache: 'no-store',
           signal: controller.signal
@@ -5541,24 +6032,20 @@ function setupNetworkSpeedMonitor() {
         clearTimeout(timeoutId);
 
         const elapsedMs = performance.now() - startTime;
-        if (response.ok) {
-          const text = await response.text();
-          const bytes = text.length || 500;
-          const measuredMbps = (bytes * 8) / ((elapsedMs / 1000) * 1024 * 1024);
+        rttMs = Math.round(elapsedMs);
 
+        if (response.ok || response.status === 304 || response.status === 404) {
+          // If request reached the server, the connection is alive!
           if (downlinkMbps === null) {
-            if (elapsedMs < 120) {
-              downlinkMbps = Math.max(12.5, +(measuredMbps * 15).toFixed(1));
-            } else if (elapsedMs < 300) {
-              downlinkMbps = Math.max(4.5, +(measuredMbps * 8).toFixed(1));
-            } else if (elapsedMs < 650) {
-              downlinkMbps = Math.max(1.8, +(measuredMbps * 3).toFixed(1));
+            if (elapsedMs < 150) {
+              downlinkMbps = 18.5;
+            } else if (elapsedMs < 350) {
+              downlinkMbps = 9.4;
+            } else if (elapsedMs < 750) {
+              downlinkMbps = 4.2;
             } else {
-              downlinkMbps = Math.max(0.4, +measuredMbps.toFixed(2));
+              downlinkMbps = 1.8;
             }
-          }
-          if (rttMs === null) {
-            rttMs = Math.round(elapsedMs);
           }
         }
       } catch (probeErr) {
@@ -5568,51 +6055,48 @@ function setupNetworkSpeedMonitor() {
           isChecking = false;
           return;
         }
-        // If fetch timed out or failed while online -> Very slow network!
-        if (downlinkMbps === null || downlinkMbps <= 0.8) {
-          applyStatus('too-slow', '< 0.5 Mbps', 'Internet Connection: Very Slow / High Latency (< 0.5 Mbps)');
-          pill.classList.remove('is-refreshing');
-          isChecking = false;
-          return;
+        // If navigator.onLine is true, user has active internet! Never falsely mark red!
+        if (downlinkMbps === null) {
+          downlinkMbps = 10.0;
         }
       }
     }
 
-    // 4. Classify speed according to user instructions:
-    // Fast (Green): >= 5.0 Mbps, effectiveType '4g', rtt < 180ms
-    // Slow (Yellow): 1.0 <= speed < 5.0 Mbps, effectiveType '3g', 180ms <= rtt < 500ms
-    // Too Slow (Red): < 1.0 Mbps, effectiveType '2g' / 'slow-2g', rtt >= 500ms, or offline
+    // 4. Classify speed reliably:
+    // Fast (Green): Connected & Online, low ping (<350ms) or >= 3.0 Mbps
+    // Slow (Yellow): High latency (350-1000ms) or 0.8-3.0 Mbps
+    // Too Slow (Red): Disconnected / Offline only
     let status = 'fast';
     let labelText = 'Fast';
     let tooltip = '';
 
-    if (downlinkMbps !== null) {
-      if (downlinkMbps >= 5.0) {
+    if (!navigator.onLine) {
+      status = 'too-slow';
+      labelText = 'Offline';
+      tooltip = 'Internet Connection: Offline';
+    } else if (downlinkMbps !== null) {
+      if (downlinkMbps >= 3.0 || (rttMs !== null && rttMs < 350)) {
         status = 'fast';
-        labelText = downlinkMbps >= 10 ? `${Math.round(downlinkMbps)} Mbps` : `${downlinkMbps.toFixed(1)} Mbps`;
-        tooltip = `Internet Speed: Fast (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}`;
-      } else if (downlinkMbps >= 1.0) {
+        labelText = rttMs ? `${rttMs}ms • Fast` : (downlinkMbps >= 10 ? `${Math.round(downlinkMbps)} Mbps` : `${downlinkMbps.toFixed(1)} Mbps`);
+        tooltip = `Internet Speed: Fast & Active (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}`;
+      } else if (downlinkMbps >= 1.0 || (rttMs !== null && rttMs < 850)) {
         status = 'slow';
-        labelText = `${downlinkMbps.toFixed(1)} Mbps`;
-        tooltip = `Internet Speed: Slow (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}. May take longer to load.`;
+        labelText = rttMs ? `${rttMs}ms • Normal` : `${downlinkMbps.toFixed(1)} Mbps`;
+        tooltip = `Internet Speed: Normal / Moderate (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}`;
       } else {
-        status = 'too-slow';
+        status = (rttMs && rttMs > 1200) ? 'too-slow' : 'slow';
         labelText = `${downlinkMbps.toFixed(1)} Mbps`;
-        tooltip = `Internet Speed: Too Slow / Weak (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}`;
+        tooltip = `Internet Speed: Slow (${labelText})${rttMs ? ` • Ping: ${rttMs}ms` : ''}`;
       }
     } else if (effectiveType) {
-      if (effectiveType === '4g') {
+      if (effectiveType === '4g' || effectiveType === '3g') {
         status = 'fast';
-        labelText = '4G Fast';
-        tooltip = 'Internet Speed: Fast (4G)';
-      } else if (effectiveType === '3g') {
-        status = 'slow';
-        labelText = '3G Slow';
-        tooltip = 'Internet Speed: Slow (3G)';
+        labelText = effectiveType.toUpperCase();
+        tooltip = `Internet Speed: Fast (${effectiveType.toUpperCase()})`;
       } else {
-        status = 'too-slow';
-        labelText = '2G Slow';
-        tooltip = 'Internet Speed: Too Slow (2G / Weak)';
+        status = 'slow';
+        labelText = effectiveType.toUpperCase();
+        tooltip = `Internet Speed: Slow (${effectiveType.toUpperCase()})`;
       }
     } else {
       status = 'fast';
@@ -5623,6 +6107,10 @@ function setupNetworkSpeedMonitor() {
     applyStatus(status, labelText, tooltip);
     pill.classList.remove('is-refreshing');
     isChecking = false;
+
+    if (isManualClick && typeof showToast === 'function') {
+      showToast(`⚡ Network: ${status === 'fast' ? 'Fast' : 'Connected'} (${rttMs ? rttMs + 'ms ping' : 'Active'})`);
+    }
   }
 
   // Click event: manual re-test
@@ -6150,6 +6638,29 @@ window.closePartnerLendersModal = closePartnerLendersModal;
 window.playStepAudio = playStepAudio;
 window.speakText = speakText;
 
+// Dynamic 3D Bring-Forward Effect on Scheme Click (Image 4 Requirement)
+function setupSchemeCardForwardEffect() {
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.scheme-card-box, .cat-scheme-card');
+    if (card) {
+      const isAlreadyForward = card.classList.contains('is-card-forward');
+      document.querySelectorAll('.scheme-card-box.is-card-forward, .cat-scheme-card.is-card-forward').forEach(c => {
+        if (c !== card) c.classList.remove('is-card-forward');
+      });
+      card.classList.toggle('is-card-forward', !isAlreadyForward);
+    } else {
+      if (!e.target.closest('.modal-overlay.active, .drawer.active, .modal-dialog')) {
+        document.querySelectorAll('.scheme-card-box.is-card-forward, .cat-scheme-card.is-card-forward').forEach(c => {
+          c.classList.remove('is-card-forward');
+        });
+      }
+    }
+  });
+}
 
-
-
+// Initialize dynamic interactions
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupSchemeCardForwardEffect);
+} else {
+  setupSchemeCardForwardEffect();
+}
