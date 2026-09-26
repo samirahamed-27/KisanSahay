@@ -5288,469 +5288,392 @@ body.dark-mode .btn-install-pwa:hover {
 
 /* ==========================================================================
    PART 2: SAHAY AI CHAT WIDGET & ASSISTANT STYLES
+   Modern Minimalist Agricultural Tech Design System
    ========================================================================== */
 
+:root {
+  /* Sahay Light Mode Palette */
+  --sahay-bg: #F9FAFB;                     /* Soft White */
+  --sahay-surface: #FFFFFF;
+  --sahay-surface-glass: rgba(255, 255, 255, 0.85);
+  --sahay-border: rgba(163, 177, 138, 0.35); /* Sage Green border tint */
+  --sahay-border-subtle: #E5E7EB;
+  --sahay-primary: #2D5A27;                /* Forest Green */
+  --sahay-primary-hover: #22441d;
+  --sahay-primary-light: rgba(45, 90, 39, 0.08);
+  --sahay-sage: #A3B18A;                   /* Sage Green */
+  --sahay-sage-light: rgba(163, 177, 138, 0.16);
+  --sahay-header-bg: rgba(45, 90, 39, 0.94);
+  --sahay-header-gradient: linear-gradient(135deg, rgba(35, 70, 30, 0.96), rgba(45, 90, 39, 0.92));
+  --sahay-text-primary: #111827;
+  --sahay-text-secondary: #4B5563;
+  --sahay-text-muted: #6B7280;
+  --sahay-card-bg: rgba(255, 255, 255, 0.88);
+  --sahay-card-border: rgba(163, 177, 138, 0.35);
+  --sahay-card-hover-bg: #FFFFFF;
+  --sahay-card-hover-border: #2D5A27;
+  --sahay-card-shadow: 0 3px 12px rgba(45, 90, 39, 0.05);
+  --sahay-card-shadow-hover: 0 8px 24px rgba(45, 90, 39, 0.12);
+  --sahay-badge-bg: rgba(34, 197, 94, 0.14);
+  --sahay-badge-border: rgba(34, 197, 94, 0.45);
+  --sahay-badge-text: #166534;
+  --sahay-badge-glow: 0 0 10px rgba(34, 197, 94, 0.38);
+  --sahay-input-bg: #FFFFFF;
+  --sahay-input-border: #D1D5DB;
+  --sahay-input-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.03);
+  --sahay-input-focus-border: #2D5A27;
+  --sahay-input-focus-glow: 0 0 0 3px rgba(45, 90, 39, 0.12);
+  --sahay-send-btn-bg: linear-gradient(135deg, #2D5A27, #1e3f1a);
+  --sahay-send-btn-hover: linear-gradient(135deg, #23481f, #152c12);
+  --sahay-user-msg-bg: linear-gradient(135deg, #2D5A27, #23481f);
+  --sahay-user-msg-text: #FFFFFF;
+  --sahay-bot-msg-bg: rgba(255, 255, 255, 0.95);
+  --sahay-bot-msg-text: #1F2937;
+  --sahay-bot-msg-border: rgba(163, 177, 138, 0.3);
+  --sahay-launcher-bg: linear-gradient(135deg, #2D5A27, #1e3f1a);
+  --sahay-launcher-shadow: 0 8px 28px rgba(45, 90, 39, 0.36);
+  --sahay-font: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --sahay-glass-blur: blur(10px);
+  --sahay-transition: all 0.3s ease;
+}
+
+/* Dark Mode Palette */
+body.dark-mode {
+  --sahay-bg: #121212;                     /* Deep Charcoal */
+  --sahay-surface: #1E1E1E;
+  --sahay-surface-glass: rgba(18, 18, 18, 0.88);
+  --sahay-border: #2C2C2C;                 /* Slate Gray */
+  --sahay-border-subtle: rgba(255, 255, 255, 0.09);
+  --sahay-primary: #B7E4C7;                /* Neon Mint */
+  --sahay-primary-hover: #d8f3dc;
+  --sahay-primary-light: rgba(183, 228, 199, 0.12);
+  --sahay-sage: #2C2C2C;                   /* Slate Gray */
+  --sahay-sage-light: rgba(44, 44, 44, 0.55);
+  --sahay-header-bg: rgba(20, 24, 21, 0.94);
+  --sahay-header-gradient: linear-gradient(135deg, rgba(18, 22, 19, 0.96), rgba(28, 35, 30, 0.92));
+  --sahay-text-primary: #F3F4F6;
+  --sahay-text-secondary: #9CA3AF;
+  --sahay-text-muted: #6B7280;
+  --sahay-card-bg: rgba(28, 28, 28, 0.85);
+  --sahay-card-border: rgba(183, 228, 199, 0.18);
+  --sahay-card-hover-bg: rgba(38, 44, 40, 0.92);
+  --sahay-card-hover-border: #B7E4C7;
+  --sahay-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --sahay-card-shadow-hover: 0 8px 24px rgba(183, 228, 199, 0.15);
+  --sahay-badge-bg: rgba(183, 228, 199, 0.14);
+  --sahay-badge-border: rgba(183, 228, 199, 0.45);
+  --sahay-badge-text: #B7E4C7;
+  --sahay-badge-glow: 0 0 12px rgba(183, 228, 199, 0.35);
+  --sahay-input-bg: #1A1A1A;
+  --sahay-input-border: #2C2C2C;
+  --sahay-input-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --sahay-input-focus-border: #B7E4C7;
+  --sahay-input-focus-glow: 0 0 0 3px rgba(183, 228, 199, 0.16);
+  --sahay-send-btn-bg: linear-gradient(135deg, #2D5A27, #1e3f1a);
+  --sahay-send-btn-hover: linear-gradient(135deg, #376d30, #254d20);
+  --sahay-user-msg-bg: linear-gradient(135deg, #1f431b, #2D5A27);
+  --sahay-user-msg-text: #FFFFFF;
+  --sahay-bot-msg-bg: rgba(30, 30, 30, 0.92);
+  --sahay-bot-msg-text: #E5E7EB;
+  --sahay-bot-msg-border: rgba(255, 255, 255, 0.08);
+  --sahay-launcher-bg: linear-gradient(135deg, #1d2b1f, #141f16);
+  --sahay-launcher-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(183, 228, 199, 0.15);
+}
+
+/* Widget Container */
 .sahay-widget-container {
   position: fixed;
   bottom: 24px;
   right: 24px;
   z-index: 1000;
+  font-family: var(--sahay-font);
 }
 
+/* Launcher Floating Action Button */
 .sahay-launcher-btn {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  background: linear-gradient(135deg, #15803d, #0f341d);
+  gap: 0.75rem;
+  background: var(--sahay-launcher-bg);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: var(--radius-pill);
-  padding: 0.85rem 1.35rem;
-  font-family: 'Outfit', sans-serif;
-  font-size: 1rem;
+  padding: 0.75rem 1.35rem 0.75rem 1rem;
+  font-family: var(--sahay-font);
+  font-size: 0.95rem;
   font-weight: 700;
-  box-shadow: 0 8px 24px rgba(21, 128, 61, 0.35);
+  letter-spacing: 0.01em;
+  box-shadow: var(--sahay-launcher-shadow);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: var(--sahay-transition);
   position: relative;
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
 }
 
 .sahay-launcher-btn:hover {
   transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 12px 32px rgba(21, 128, 61, 0.45);
+  box-shadow: 0 12px 34px rgba(45, 90, 39, 0.45);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.sahay-launcher-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.sahay-robot-avatar-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: var(--sahay-transition);
+}
+
+.sahay-launcher-btn:hover .sahay-robot-avatar-svg {
+  transform: scale(1.08) rotate(-3deg);
+}
+
+.sahay-launcher-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .sahay-pulse-beacon {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   background: #4ade80;
   border-radius: 50%;
   animation: beaconPulse 2s infinite;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.8);
 }
 
 @keyframes beaconPulse {
   0% {
     transform: scale(0.9);
-    opacity: 0.8;
+    opacity: 0.9;
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
   }
-
   70% {
-    transform: scale(1.1);
+    transform: scale(1.15);
     opacity: 1;
     box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
   }
-
   100% {
     transform: scale(0.9);
-    opacity: 0.8;
+    opacity: 0.9;
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
   }
 }
 
+/* Chat Window */
 .sahay-chat-window {
   position: fixed;
-  bottom: 86px;
+  bottom: 88px;
   right: 24px;
-  width: 410px;
+  width: 418px;
   max-width: calc(100vw - 32px);
-  height: 590px;
+  height: 610px;
   max-height: calc(100vh - 110px);
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
-  border: 1px solid rgba(203, 213, 225, 0.9);
+  background: var(--sahay-surface-glass);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2), 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--sahay-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 1001;
-  animation: sahaySlideUp 0.25s ease-out;
+  animation: sahaySlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
+  transition: var(--sahay-transition);
 }
 
 @keyframes sahaySlideUp {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.98);
+    transform: translateY(20px) scale(0.97);
   }
-
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-/* Header */
+/* Chat Header */
 .sahay-header {
-  background: linear-gradient(135deg, #0f341d, #16532d);
+  background: var(--sahay-header-gradient);
   color: #ffffff;
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 1.05rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
 }
 
 .sahay-header-left {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
 .sahay-avatar {
   width: 38px;
   height: 38px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.sahay-tech-leaf-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.sahay-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .sahay-header-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1rem;
+  font-family: var(--sahay-font);
+  font-size: 1.02rem;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
+  color: #ffffff;
+  line-height: 1.2;
 }
 
+/* Govt Verified Badge: Professional Certification Chip with Soft Glow */
 .sahay-badge-official {
-  font-size: 0.68rem;
-  background: #22c55e;
-  color: #052e16;
-  font-weight: 800;
-  padding: 0.1rem 0.4rem;
-  border-radius: var(--radius-pill);
+  font-size: 0.65rem;
+  background: var(--sahay-badge-bg);
+  border: 1px solid var(--sahay-badge-border);
+  box-shadow: var(--sahay-badge-glow);
+  color: var(--sahay-badge-text);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-transform: capitalize;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: var(--sahay-transition);
+}
+
+.sahay-badge-official:hover {
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.55);
+}
+
+.sahay-verified-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 .sahay-header-sub {
-  font-size: 0.75rem;
-  color: #cbd5e1;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 500;
+  line-height: 1.2;
 }
 
+/* Header Right Utility Actions */
 .sahay-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .btn-sahay-header-action,
 .btn-sahay-lang {
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #ffffff;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
   cursor: pointer;
-  transition: var(--transition);
+  transition: var(--sahay-transition);
+  padding: 0;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .btn-sahay-lang {
   width: auto;
-  padding: 0.15rem 0.55rem;
-  border-radius: var(--radius-pill);
-  font-weight: 800;
+  padding: 0 0.55rem;
+  gap: 0.3rem;
+  font-weight: 700;
   font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.sahay-action-svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+.sahay-action-svg-sm {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
 }
 
 .btn-sahay-header-action:hover,
 .btn-sahay-lang:hover {
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Message Stream */
-.sahay-message-stream {
-  flex: 1;
-  padding: 1rem;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  background: #f8fafc;
-  scrollbar-width: thin;
+.btn-sahay-header-action:active,
+.btn-sahay-lang:active {
+  transform: translateY(0);
 }
 
-.sahay-intro-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-md);
-  padding: 1rem;
-  text-align: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.sahay-intro-icon {
-  font-size: 2rem;
-  margin-bottom: 0.35rem;
-}
-
-.sahay-intro-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.sahay-intro-text {
-  font-size: 0.82rem;
-  color: #64748b;
-  margin-top: 0.25rem;
-  line-height: 1.4;
-}
-
-/* Prompt Chips */
-.sahay-prompt-chips-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-top: 0.25rem;
-}
-
-.sahay-chips-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.sahay-chip {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #1e293b;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.sahay-chip:hover {
-  background: #f0fdf4;
-  border-color: #86efac;
-  color: #15803d;
-  transform: translateX(2px);
-}
-
-/* Chat Bubbles */
-.sahay-msg {
-  display: flex;
-  flex-direction: column;
-  max-width: 86%;
-  animation: msgFadeIn 0.2s ease;
-}
-
-@keyframes msgFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.sahay-msg.user {
-  align-self: flex-end;
-}
-
-.sahay-msg.user .sahay-msg-content {
-  background: #15803d;
-  color: #ffffff;
-  border-radius: 16px 16px 4px 16px;
-  padding: 0.65rem 0.95rem;
-  font-size: 0.88rem;
-  line-height: 1.4;
-  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.2);
-}
-
-.sahay-msg.assistant {
-  align-self: flex-start;
-}
-
-.sahay-msg.assistant .sahay-msg-content {
-  background: #ffffff;
-  color: #0f172a;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px 16px 16px 4px;
-  padding: 0.75rem 1rem;
-  font-size: 0.86rem;
-  line-height: 1.5;
-  box-shadow: var(--shadow-sm);
-}
-
-.sahay-msg.assistant .sahay-msg-content strong {
-  color: #14532d;
-}
-
-/* Citations Pill */
-.sahay-citations-box {
-  margin-top: 0.55rem;
-  padding-top: 0.45rem;
-  border-top: 1px dashed #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sahay-citation-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: #f1f5f9;
-  color: #0369a1;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-pill);
-  padding: 0.2rem 0.6rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-decoration: none;
-  width: fit-content;
-  transition: var(--transition);
-}
-
-.sahay-citation-pill:hover {
-  background: #e0f2fe;
-  border-color: #7dd3fc;
-}
-
-.sahay-citation-date {
-  color: #64748b;
-  font-size: 0.68rem;
-}
-
-/* Speech status banner */
-.sahay-speech-status {
-  background: #fef3c7;
-  color: #92400e;
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 0.4rem 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  border-top: 1px solid #fde68a;
-}
-
-.recording-dot {
-  width: 8px;
-  height: 8px;
-  background: #dc2626;
-  border-radius: 50%;
-  animation: recBlink 1s infinite;
-}
-
-@keyframes recBlink {
-  50% {
-    opacity: 0.3;
-  }
-}
-
-/* Input Form */
-.sahay-input-form {
-  background: #ffffff;
-  border-top: 1px solid #e2e8f0;
-  padding: 0.65rem 0.85rem 0.5rem 0.85rem;
-}
-
-.sahay-input-box {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--radius-pill);
-  padding: 0.25rem 0.35rem 0.25rem 0.5rem;
-  transition: var(--transition);
-}
-
-.sahay-input-box:focus-within {
-  border-color: #15803d;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
-}
-
-.btn-sahay-mic {
-  background: none;
-  border: none;
-  font-size: 1.05rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 50%;
-  color: #64748b;
-  transition: transform 0.15s ease;
-}
-
-.btn-sahay-mic.active {
-  color: #dc2626;
-  animation: pulse 1s infinite;
-}
-
-.sahay-text-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  padding: 0.45rem 0.35rem;
-  font-size: 0.86rem;
-  color: #0f172a;
-  outline: none;
-}
-
-.btn-sahay-send {
-  background: #15803d;
-  border: none;
-  color: #ffffff;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.btn-sahay-send:hover {
-  background: #166534;
-  transform: scale(1.05);
-}
-
-.sahay-disclaimer {
-  font-size: 0.68rem;
-  color: #94a3b8;
-  text-align: center;
-  margin-top: 0.35rem;
-  line-height: 1.25;
-}
-
-/* Sahay Profile & Vault Live Status Bar */
+/* Profile & Vault Status Bar */
 .sahay-profile-status-bar {
-  background: #f0fdf4;
-  border-bottom: 1px solid #dcfce7;
-  padding: 0.35rem 0.85rem;
+  background: var(--sahay-sage-light);
+  border-bottom: 1px solid var(--sahay-border);
+  padding: 0.4rem 0.95rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 0.74rem;
   font-weight: 600;
-  color: #166534;
+  color: var(--sahay-text-primary);
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
+  transition: var(--sahay-transition);
 }
 
 .sahay-profile-pill-left {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5773,37 +5696,45 @@ body.dark-mode .btn-install-pwa:hover {
 }
 
 .sahay-profile-pill-btn {
-  background: #ffffff;
-  border: 1px solid #bbf7d0;
+  background: var(--sahay-surface);
+  border: 1px solid var(--sahay-border);
   border-radius: var(--radius-pill);
-  color: #15803d;
-  font-size: 0.68rem;
+  color: var(--sahay-primary);
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.12rem 0.45rem;
+  padding: 0.16rem 0.55rem;
   cursor: pointer;
-  transition: var(--transition);
+  transition: var(--sahay-transition);
   display: flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.3rem;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .sahay-profile-pill-btn:hover {
-  background: #dcfce7;
-  transform: scale(1.02);
+  background: var(--sahay-primary-light);
+  border-color: var(--sahay-primary);
+  transform: translateY(-1px);
 }
 
-/* Category Filter Tabs Bar for Chat */
+.sahay-sync-svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Category Filter Bar */
 .sahay-category-bar {
   display: flex;
-  gap: 0.35rem;
-  padding: 0.45rem 0.85rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  background: var(--sahay-bg);
+  border-bottom: 1px solid var(--sahay-border);
   overflow-x: auto;
   white-space: nowrap;
   scrollbar-width: none;
   flex-shrink: 0;
+  transition: var(--sahay-transition);
 }
 
 .sahay-category-bar::-webkit-scrollbar {
@@ -5811,101 +5742,535 @@ body.dark-mode .btn-install-pwa:hover {
 }
 
 .sahay-cat-btn {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--sahay-card-bg);
+  border: 1px solid var(--sahay-border-subtle);
   border-radius: var(--radius-pill);
-  font-size: 0.72rem;
+  font-size: 0.73rem;
   font-weight: 600;
-  color: #334155;
-  padding: 0.25rem 0.6rem;
+  color: var(--sahay-text-secondary);
+  padding: 0.28rem 0.7rem;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--sahay-transition);
   flex-shrink: 0;
 }
 
 .sahay-cat-btn:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
+  background: var(--sahay-card-hover-bg);
+  border-color: var(--sahay-primary);
+  color: var(--sahay-text-primary);
+  transform: translateY(-1px);
 }
 
 .sahay-cat-btn.active {
-  background: #15803d;
+  background: var(--sahay-primary);
   color: #ffffff;
-  border-color: #15803d;
-  box-shadow: 0 2px 5px rgba(21, 128, 61, 0.25);
+  border-color: var(--sahay-primary);
+  box-shadow: 0 2px 8px rgba(45, 90, 39, 0.28);
+}
+
+body.dark-mode .sahay-cat-btn.active {
+  background: var(--sahay-primary);
+  color: #121212;
+  border-color: var(--sahay-primary);
+  box-shadow: 0 2px 10px rgba(183, 228, 199, 0.35);
+  font-weight: 700;
+}
+
+/* Message Stream */
+.sahay-message-stream {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: var(--sahay-bg);
+  scrollbar-width: thin;
+  transition: var(--sahay-transition);
+}
+
+/* Welcome Intro Card */
+.sahay-intro-card {
+  background: var(--sahay-card-bg);
+  border: 1px solid var(--sahay-card-border);
+  border-radius: 16px;
+  padding: 1.25rem 1.15rem;
+  text-align: center;
+  box-shadow: var(--sahay-card-shadow);
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
+  transition: var(--sahay-transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sahay-intro-icon-wrap {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sahay-intro-plant-svg {
+  width: 44px;
+  height: 44px;
+}
+
+.sahay-intro-title {
+  font-family: var(--sahay-font);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--sahay-text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.sahay-intro-text {
+  font-size: 0.84rem;
+  color: var(--sahay-text-secondary);
+  margin-top: 0.45rem;
+  margin-bottom: 0;
+  line-height: 1.6;
+  max-width: 340px;
+}
+
+/* Suggestion Chips: Interactive Cards */
+.sahay-prompt-chips-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.25rem;
+}
+
+.sahay-chips-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--sahay-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.2rem;
+}
+
+.sahay-title-sparkle {
+  width: 12px;
+  height: 12px;
+  color: var(--sahay-primary);
+}
+
+.sahay-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: var(--sahay-card-bg);
+  border: 1px solid var(--sahay-card-border);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  font-family: var(--sahay-font);
+  cursor: pointer;
+  box-shadow: var(--sahay-card-shadow);
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
+  transition: var(--sahay-transition);
+}
+
+.sahay-chip:hover {
+  background: var(--sahay-card-hover-bg);
+  border-color: var(--sahay-card-hover-border);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--sahay-card-shadow-hover);
+}
+
+.sahay-chip:active {
+  transform: translateY(0) scale(1);
+}
+
+.sahay-chip-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--sahay-primary-light);
+  color: var(--sahay-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--sahay-transition);
+}
+
+.sahay-chip:hover .sahay-chip-icon-box {
+  background: var(--sahay-primary);
+  color: #ffffff;
+}
+
+body.dark-mode .sahay-chip:hover .sahay-chip-icon-box {
+  background: var(--sahay-primary);
+  color: #121212;
+}
+
+.sahay-chip-icon-box svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+}
+
+.sahay-chip-text {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sahay-text-primary);
+  line-height: 1.35;
+}
+
+.sahay-chip-chevron {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sahay-text-muted);
+  opacity: 0.55;
+  transition: var(--sahay-transition);
+  flex-shrink: 0;
+}
+
+.sahay-chip-chevron svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+}
+
+.sahay-chip:hover .sahay-chip-chevron {
+  opacity: 1;
+  transform: translateX(3px);
+  color: var(--sahay-primary);
+}
+
+/* Chat Message Bubbles */
+.sahay-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 86%;
+  animation: msgFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes msgFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sahay-msg.user {
+  align-self: flex-end;
+}
+
+.sahay-msg.user .sahay-msg-content {
+  background: var(--sahay-user-msg-bg);
+  color: var(--sahay-user-msg-text);
+  border-radius: 16px 16px 4px 16px;
+  padding: 0.7rem 1rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  box-shadow: 0 3px 10px rgba(45, 90, 39, 0.22);
+}
+
+.sahay-msg.assistant {
+  align-self: flex-start;
+}
+
+.sahay-msg.assistant .sahay-msg-content {
+  background: var(--sahay-bot-msg-bg);
+  color: var(--sahay-bot-msg-text);
+  border: 1px solid var(--sahay-bot-msg-border);
+  border-radius: 16px 16px 16px 4px;
+  padding: 0.8rem 1.05rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  box-shadow: var(--sahay-card-shadow);
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
+}
+
+.sahay-msg.assistant .sahay-msg-content strong {
+  color: var(--sahay-primary);
+}
+
+/* Citations Pill */
+.sahay-citations-box {
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--sahay-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.sahay-citation-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--sahay-sage-light);
+  color: var(--sahay-primary);
+  border: 1px solid var(--sahay-border);
+  border-radius: var(--radius-pill);
+  padding: 0.22rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  width: fit-content;
+  transition: var(--sahay-transition);
+}
+
+.sahay-citation-pill:hover {
+  background: var(--sahay-primary-light);
+  border-color: var(--sahay-primary);
+  transform: translateY(-1px);
+}
+
+.sahay-citation-date {
+  color: var(--sahay-text-muted);
+  font-size: 0.68rem;
+}
+
+/* Speech status banner */
+.sahay-speech-status {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-top: 1px solid #fde68a;
+}
+
+body.dark-mode .sahay-speech-status {
+  background: #2d2412;
+  color: #fde68a;
+  border-color: #45371c;
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  background: #dc2626;
+  border-radius: 50%;
+  animation: recBlink 1s infinite;
+}
+
+@keyframes recBlink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Input Form & Pill-Shaped Input Box */
+.sahay-input-form {
+  background: var(--sahay-surface-glass);
+  border-top: 1px solid var(--sahay-border);
+  padding: 0.75rem 1rem 0.6rem 1rem;
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
+  transition: var(--sahay-transition);
+}
+
+.sahay-input-box {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--sahay-input-bg);
+  border: 1px solid var(--sahay-input-border);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.4rem 0.3rem 0.65rem;
+  box-shadow: var(--sahay-input-shadow);
+  transition: var(--sahay-transition);
+}
+
+.sahay-input-box:focus-within {
+  border-color: var(--sahay-input-focus-border);
+  box-shadow: var(--sahay-input-focus-glow);
+}
+
+.btn-sahay-mic {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 50%;
+  color: var(--sahay-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--sahay-transition);
+}
+
+.btn-sahay-mic:hover {
+  color: var(--sahay-primary);
+  background: var(--sahay-primary-light);
+}
+
+.btn-sahay-mic.active {
+  color: #dc2626;
+  animation: pulse 1s infinite;
+}
+
+.sahay-mic-svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+}
+
+.sahay-text-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.4rem;
+  font-family: var(--sahay-font);
+  font-size: 0.86rem;
+  color: var(--sahay-text-primary);
+  outline: none;
+}
+
+.sahay-text-input::placeholder {
+  color: var(--sahay-text-muted);
+  opacity: 0.85;
+}
+
+/* Circular Gradient Action Button for Send */
+.btn-sahay-send {
+  background: var(--sahay-send-btn-bg);
+  border: none;
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--sahay-transition);
+  box-shadow: 0 2px 8px rgba(45, 90, 39, 0.32);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.btn-sahay-send:hover {
+  background: var(--sahay-send-btn-hover);
+  transform: scale(1.06);
+  box-shadow: 0 4px 12px rgba(45, 90, 39, 0.42);
+}
+
+.btn-sahay-send:active {
+  transform: scale(0.96);
+}
+
+.sahay-send-svg {
+  width: 17px;
+  height: 17px;
+  stroke: #ffffff;
+  margin-left: -1px;
+}
+
+.sahay-disclaimer {
+  font-size: 0.67rem;
+  color: var(--sahay-text-muted);
+  text-align: center;
+  margin-top: 0.4rem;
+  line-height: 1.3;
 }
 
 /* Searchable 50-FAQ Drawer */
 .sahay-faq-drawer {
   position: absolute;
-  top: 54px;
+  top: 60px;
   left: 0;
   right: 0;
   bottom: 0;
-  background: #ffffff;
+  background: var(--sahay-surface-glass);
+  backdrop-filter: var(--sahay-glass-blur);
+  -webkit-backdrop-filter: var(--sahay-glass-blur);
   z-index: 50;
   display: flex;
   flex-direction: column;
   animation: fadeIn 0.2s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .sahay-faq-drawer-header {
-  padding: 0.65rem 0.9rem;
-  background: #f1f5f9;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  background: var(--sahay-sage-light);
+  border-bottom: 1px solid var(--sahay-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-weight: 700;
-  font-size: 0.84rem;
-  color: #1e293b;
+  font-size: 0.86rem;
+  color: var(--sahay-text-primary);
 }
 
 .btn-sahay-close-sub {
   background: transparent;
   border: none;
   font-size: 1rem;
-  color: #64748b;
+  color: var(--sahay-text-muted);
   cursor: pointer;
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
+  transition: var(--sahay-transition);
 }
 
 .btn-sahay-close-sub:hover {
-  color: #0f172a;
-  background: #e2e8f0;
+  color: var(--sahay-text-primary);
+  background: var(--sahay-border-subtle);
 }
 
 .sahay-faq-search-wrap {
-  padding: 0.5rem 0.85rem;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 0.55rem 0.95rem;
+  background: var(--sahay-surface);
+  border-bottom: 1px solid var(--sahay-border);
 }
 
 .sahay-faq-search-wrap input {
   width: 100%;
-  padding: 0.45rem 0.75rem;
-  border: 1px solid #cbd5e1;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--sahay-input-border);
   border-radius: var(--radius-pill);
   font-size: 0.8rem;
   outline: none;
   box-sizing: border-box;
+  background: var(--sahay-input-bg);
+  color: var(--sahay-text-primary);
+  box-shadow: var(--sahay-input-shadow);
+  transition: var(--sahay-transition);
 }
 
 .sahay-faq-search-wrap input:focus {
-  border-color: #15803d;
-  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.15);
+  border-color: var(--sahay-input-focus-border);
+  box-shadow: var(--sahay-input-focus-glow);
 }
 
 .sahay-faq-cat-filter {
   display: flex;
-  gap: 0.3rem;
-  padding: 0.4rem 0.85rem;
+  gap: 0.35rem;
+  padding: 0.45rem 0.95rem;
   overflow-x: auto;
   scrollbar-width: none;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--sahay-bg);
+  border-bottom: 1px solid var(--sahay-border);
   flex-shrink: 0;
 }
 
@@ -5914,92 +6279,106 @@ body.dark-mode .btn-install-pwa:hover {
 }
 
 .sahay-faq-tab {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--sahay-card-bg);
+  border: 1px solid var(--sahay-border-subtle);
   border-radius: var(--radius-pill);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #475569;
-  padding: 0.2rem 0.55rem;
+  color: var(--sahay-text-secondary);
+  padding: 0.25rem 0.65rem;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: var(--sahay-transition);
+}
+
+.sahay-faq-tab:hover {
+  border-color: var(--sahay-primary);
+  color: var(--sahay-text-primary);
 }
 
 .sahay-faq-tab.active {
-  background: #15803d;
+  background: var(--sahay-primary);
   color: #ffffff;
-  border-color: #15803d;
+  border-color: var(--sahay-primary);
+}
+
+body.dark-mode .sahay-faq-tab.active {
+  color: #121212;
 }
 
 .sahay-faq-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0.65rem 0.85rem;
+  padding: 0.75rem 0.95rem;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.5rem;
+  background: var(--sahay-bg);
 }
 
 .sahay-faq-item-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-sm);
-  padding: 0.55rem 0.75rem;
+  background: var(--sahay-card-bg);
+  border: 1px solid var(--sahay-card-border);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
   text-align: left;
   cursor: pointer;
-  transition: var(--transition);
+  box-shadow: var(--sahay-card-shadow);
+  transition: var(--sahay-transition);
 }
 
 .sahay-faq-item-card:hover {
-  background: #f0fdf4;
-  border-color: #86efac;
-  transform: translateX(2px);
+  background: var(--sahay-card-hover-bg);
+  border-color: var(--sahay-card-hover-border);
+  transform: translateX(3px);
+  box-shadow: var(--sahay-card-shadow-hover);
 }
 
 .sahay-faq-item-category {
-  font-size: 0.65rem;
+  font-size: 0.66rem;
   font-weight: 700;
-  color: #15803d;
+  color: var(--sahay-primary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.2rem;
 }
 
 .sahay-faq-item-question {
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--sahay-text-primary);
+  line-height: 1.35;
 }
 
 /* Assistant Bubble Action Toolbar */
 .sahay-msg-actions {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.45rem;
-  padding-top: 0.35rem;
-  border-top: 1px dashed #e2e8f0;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--sahay-border);
 }
 
 .sahay-action-btn {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: var(--sahay-sage-light);
+  border: 1px solid var(--sahay-border);
   border-radius: var(--radius-pill);
-  color: #475569;
-  font-size: 0.7rem;
+  color: var(--sahay-text-secondary);
+  font-size: 0.71rem;
   font-weight: 600;
-  padding: 0.15rem 0.5rem;
+  padding: 0.18rem 0.6rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  transition: var(--transition);
+  gap: 0.3rem;
+  transition: var(--sahay-transition);
 }
 
 .sahay-action-btn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--sahay-primary-light);
+  color: var(--sahay-primary);
+  border-color: var(--sahay-primary);
 }
 
 /* Responsive Overrides */

@@ -4454,7 +4454,11 @@ function setupSahayAI() {
   if (ttsToggle) {
     ttsToggle.addEventListener('click', () => {
       isTtsActive = !isTtsActive;
-      if (ttsIcon) ttsIcon.textContent = isTtsActive ? '🔊' : '🔇';
+      if (ttsIcon) {
+        ttsIcon.innerHTML = isTtsActive
+          ? `<svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`
+          : `<svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+      }
       showToast(`Voice read-aloud ${isTtsActive ? 'Enabled' : 'Muted'}`);
       if (!isTtsActive && window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -4468,25 +4472,84 @@ function setupSahayAI() {
       if (messageStream) {
         messageStream.innerHTML = `
           <div class="sahay-intro-card">
-            <div class="sahay-intro-icon">🌾</div>
-            <div class="sahay-intro-title">Namaste! I'm Sahay AI</div>
+            <div class="sahay-intro-icon-wrap">
+              <svg class="sahay-intro-plant-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="24" cy="24" r="22" fill="var(--sahay-sage-light)"/>
+                <path d="M24 38V20" stroke="var(--sahay-primary)" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M24 20C24 14 17 11 12 13C12 19 18 22 24 20Z" fill="var(--sahay-sage)" stroke="var(--sahay-primary)" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M24 26C24 20 31 17 36 19C36 25 30 28 24 26Z" fill="var(--sahay-primary)" fill-opacity="0.85" stroke="var(--sahay-primary)" stroke-width="2" stroke-linejoin="round"/>
+                <circle cx="24" cy="18" r="2" fill="#4ade80"/>
+              </svg>
+            </div>
+            <h3 class="sahay-intro-title">Namaste! I'm Sahay AI</h3>
             <p class="sahay-intro-text">
               Your official agricultural guide with 50 verified government scheme answers, prompt repayment interest calculation, and encrypted document vault memory!
             </p>
           </div>
           <div class="sahay-prompt-chips-container" id="sahay-prompt-chips">
-            <div class="sahay-chips-title">💡 Suggested Questions:</div>
+            <div class="sahay-chips-title">
+              <svg class="sahay-title-sparkle" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0L9.8 5.4L15.2 7.2L9.8 9L8 14.4L6.2 9L0.8 7.2L6.2 5.4L8 0Z"/>
+              </svg>
+              <span>Suggested Questions:</span>
+            </div>
             <button type="button" class="sahay-chip" data-query="Am I eligible for KCC?">
-              🌱 Am I eligible for KCC?
+              <span class="sahay-chip-icon-box leaf">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                  <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                </svg>
+              </span>
+              <span class="sahay-chip-text">Am I eligible for KCC?</span>
+              <span class="sahay-chip-chevron">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 12l4-4-4-4"/>
+                </svg>
+              </span>
             </button>
             <button type="button" class="sahay-chip" data-query="What is the interest rate on a KCC loan?">
-              💳 KCC 4% Subsidized Interest Rate
+              <span class="sahay-chip-icon-box rate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M15 9h-4.5a1.5 1.5 0 0 0 0 3h3a1.5 1.5 0 0 1 0 3H9"/>
+                  <path d="M12 6v2m0 8v2"/>
+                </svg>
+              </span>
+              <span class="sahay-chip-text">KCC 4% Subsidized Interest Rate</span>
+              <span class="sahay-chip-chevron">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 12l4-4-4-4"/>
+                </svg>
+              </span>
             </button>
             <button type="button" class="sahay-chip" data-query="What documents do I have?">
-              🔒 Check My Saved Vault Documents
+              <span class="sahay-chip-icon-box vault">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <span class="sahay-chip-text">Check My Saved Vault Documents</span>
+              <span class="sahay-chip-chevron">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 12l4-4-4-4"/>
+                </svg>
+              </span>
             </button>
             <button type="button" class="sahay-chip" data-query="How do I know if a loan offer is a scam?">
-              ⚠️ How to identify loan scams?
+              <span class="sahay-chip-icon-box scam">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </span>
+              <span class="sahay-chip-text">How to identify loan scams?</span>
+              <span class="sahay-chip-chevron">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 12l4-4-4-4"/>
+                </svg>
+              </span>
             </button>
           </div>
         `;
@@ -4593,6 +4656,25 @@ function setupSahayAI() {
     });
   }
 
+  function getCategorySvgIcon(cat) {
+    switch (cat) {
+      case 'kcc':
+      case 'loan_application':
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9h-4.5a1.5 1.5 0 0 0 0 3h3a1.5 1.5 0 0 1 0 3H9"/><path d="M12 6v2m0 8v2"/></svg>`;
+      case 'pm_kisan':
+      case 'land_soil_irrigation':
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`;
+      case 'crop_insurance':
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>`;
+      case 'debt_risk_safety':
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+      case 'equipment_mechanization':
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
+      default:
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`;
+    }
+  }
+
   function updatePromptChipsByCategory(category) {
     const chipsContainer = document.getElementById('sahay-prompt-chips');
     if (!chipsContainer) return;
@@ -4613,10 +4695,23 @@ function setupSahayAI() {
     }
 
     chipsContainer.innerHTML = `
-      <div class="sahay-chips-title">💡 ${isHindi ? 'सुझाए गए प्रश्न:' : 'Suggested Questions:'}</div>
+      <div class="sahay-chips-title">
+        <svg class="sahay-title-sparkle" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 0L9.8 5.4L15.2 7.2L9.8 9L8 14.4L6.2 9L0.8 7.2L6.2 5.4L8 0Z"/>
+        </svg>
+        <span>${isHindi ? 'सुझाए गए प्रश्न:' : 'Suggested Questions:'}</span>
+      </div>
       ${items.map(item => `
         <button type="button" class="sahay-chip" data-query="${escapeHtml(isHindi ? item.question_hi : item.question_en)}">
-          ${item.category_icon || '🌱'} ${escapeHtml(isHindi ? item.question_hi : item.question_en)}
+          <span class="sahay-chip-icon-box ${item.category || 'leaf'}">
+            ${getCategorySvgIcon(item.category)}
+          </span>
+          <span class="sahay-chip-text">${escapeHtml(isHindi ? item.question_hi : item.question_en)}</span>
+          <span class="sahay-chip-chevron">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 12l4-4-4-4"/>
+            </svg>
+          </span>
         </button>
       `).join('')}
     `;
@@ -4833,11 +4928,28 @@ function setupSahayAI() {
     `;
 
     const chipsHtml = (suggestedChips && suggestedChips.length > 0) ? `
-      <div class="sahay-prompt-chips-container" style="margin-top: 0.6rem;">
-        <div class="sahay-chips-title">💡 Next Questions:</div>
+      <div class="sahay-prompt-chips-container" style="margin-top: 0.65rem;">
+        <div class="sahay-chips-title">
+          <svg class="sahay-title-sparkle" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0L9.8 5.4L15.2 7.2L9.8 9L8 14.4L6.2 9L0.8 7.2L6.2 5.4L8 0Z"/>
+          </svg>
+          <span>${sahayLang === 'hi' ? 'अगले प्रश्न:' : 'Next Questions:'}</span>
+        </div>
         ${suggestedChips.map(chip => `
           <button type="button" class="sahay-chip dynamic-chip" data-query="${escapeHtml(chip)}">
-            ${escapeHtml(chip)}
+            <span class="sahay-chip-icon-box leaf">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </span>
+            <span class="sahay-chip-text">${escapeHtml(chip)}</span>
+            <span class="sahay-chip-chevron">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 12l4-4-4-4"/>
+              </svg>
+            </span>
           </button>
         `).join('')}
       </div>
