@@ -694,21 +694,21 @@ function renderLoansList() {
   let filtered = state.loans;
   if (state.currentLoanTab === 'active') {
     filtered = state.loans.filter(l => l.status === 'Active' && l.dueAmount > 0);
-    if (el.loanListStatusNote) el.loanListStatusNote.textContent = 'Showing currently running loans with due EMIs';
+    if (el.loanListStatusNote) el.loanListStatusNote.innerHTML = '<span class="status-note-dot">●</span> <span>Showing currently running loans with due EMIs</span>';
   } else if (state.currentLoanTab === 'ended') {
     filtered = state.loans.filter(l => l.status === 'Ended' || l.dueAmount === 0);
-    if (el.loanListStatusNote) el.loanListStatusNote.textContent = 'Showing fully paid and completed loans';
+    if (el.loanListStatusNote) el.loanListStatusNote.innerHTML = '<span class="status-note-dot">●</span> <span>Showing fully paid and completed loans</span>';
   } else {
-    if (el.loanListStatusNote) el.loanListStatusNote.textContent = 'Showing all loans and credit records';
+    if (el.loanListStatusNote) el.loanListStatusNote.innerHTML = '<span class="status-note-dot">●</span> <span>Showing all loans and credit records</span>';
   }
 
   if (filtered.length === 0) {
     const msg = state.currentLoanTab === 'ended' ? t('emptyEndedLoans') : t('emptyActiveLoans');
     el.loansCardsGrid.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: var(--radius-md); border: 1.5px dashed var(--border-color);">
+      <div class="loans-empty-card" style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; border-radius: var(--radius-md); border: 1.5px dashed var(--border-color);">
         <div style="font-size: 2.8rem; margin-bottom: 0.8rem;">💳</div>
-        <p style="color: #0f172a; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">${msg}</p>
-        <p style="color: #64748b; font-size: 0.95rem; max-width: 520px; margin: 0 auto 1.6rem auto; line-height: 1.5;">
+        <p class="empty-title" style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">${msg}</p>
+        <p class="empty-desc" style="font-size: 0.95rem; max-width: 520px; margin: 0 auto 1.6rem auto; line-height: 1.5;">
           ${state.currentLoanTab === 'ended' ? 'You have no completed or closed loans on record.' : 'No active running loans. Fill your farm details in Check Eligibility to choose a subsidized loan, or add a loan manually.'}
         </p>
         <div style="display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap;">
