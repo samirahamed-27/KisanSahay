@@ -1523,21 +1523,76 @@ const STANDARD_SCHEME_DOCS = [
   { name: 'Income Certificate / Self Declaration', desc: 'Annual family income certificate or self-attested revenue declaration.' }
 ];
 
-window.openChecklist = function(schemeId) {
+let currentChecklistRenderId = 0;
+
+window.openChecklist = async function(schemeId) {
   const scheme = state.schemes.find(s => s.id === schemeId);
   if (!scheme) return;
+
+  const renderId = ++currentChecklistRenderId;
+  const targetLang = (state && state.currentLang) || 'en';
 
   state.selectedScheme = scheme;
   state.checklistConfirmed = false;
 
-  if (el.checklistModalTitle) {
-    el.checklistModalTitle.textContent = `${scheme.name} — ${t('docChecklistTitle')}`;
-  }
-  if (!el.checklistItemsBox) return;
-
-  el.checklistItemsBox.innerHTML = '';
   const docsList = (scheme.documents && scheme.documents.length >= 3) ? scheme.documents : STANDARD_SCHEME_DOCS;
   const checkedSet = new Set();
+
+  // 1. Collect all translatable fields into one single object
+  const translatableFields = {
+    scheme_name: scheme.name
+  };
+
+  docsList.forEach((doc, idx) => {
+    const docKey = `doc_${idx}`;
+    if (doc.name) translatableFields[`${docKey}_name`] = doc.name;
+    if (doc.desc) translatableFields[`${docKey}_desc`] = doc.desc;
+  });
+
+  // 2. Open modal & display clean loading state if non-English
+  // This confirms NO English text appears before the translated version renders!
+  if (el.checklistModal) el.checklistModal.classList.add('active');
+
+  if (targetLang !== 'en') {
+    if (el.checklistModalTitle) {
+      el.checklistModalTitle.textContent = `... — ${t('docChecklistTitle')}`;
+    }
+    if (el.checklistItemsBox) {
+      el.checklistItemsBox.innerHTML = `
+        <div class="checklist-loading-spinner" style="display: flex; justify-content: center; align-items: center; padding: 3.5rem 1rem; min-height: 180px;">
+          <div style="width: 34px; height: 34px; border: 3px solid rgba(16, 185, 129, 0.2); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        </div>
+      `;
+    }
+    if (el.checklistCompletionStatus) {
+      el.checklistCompletionStatus.textContent = '';
+    }
+  } else {
+    if (el.checklistModalTitle) {
+      el.checklistModalTitle.textContent = `${scheme.name} — ${t('docChecklistTitle')}`;
+    }
+    if (el.checklistItemsBox) {
+      el.checklistItemsBox.innerHTML = '';
+    }
+  }
+
+  // 3. Call translateBatch() once on the collected object and wait for the result
+  let translatedMap = {};
+  if (targetLang !== 'en') {
+    translatedMap = await translateBatch(translatableFields, targetLang);
+  }
+
+  // Discard stale render if user closed or opened another modal
+  if (renderId !== currentChecklistRenderId) return;
+
+  const translatedSchemeName = (translatedMap && translatedMap.scheme_name) || scheme.name;
+
+  if (el.checklistModalTitle) {
+    el.checklistModalTitle.textContent = `${translatedSchemeName} — ${t('docChecklistTitle')}`;
+  }
+
+  if (!el.checklistItemsBox) return;
+  el.checklistItemsBox.innerHTML = '';
 
   function updateChecklistUI() {
     const total = docsList.length;
@@ -1546,9 +1601,15 @@ window.openChecklist = function(schemeId) {
     state.checklistConfirmed = isAllChecked;
 
     if (el.checklistCompletionStatus) {
-      el.checklistCompletionStatus.textContent = isAllChecked
-        ? `✅ All ${total} documents confirmed`
-        : `${count} of ${total} confirmed`;
+      if (targetLang === 'hi') {
+        el.checklistCompletionStatus.textContent = isAllChecked
+          ? `✅ सभी ${total} दस्तावेज़ पुष्ट किए गए`
+          : `${total} में से ${count} पुष्ट किए गए`;
+      } else {
+        el.checklistCompletionStatus.textContent = isAllChecked
+          ? `✅ All ${total} documents confirmed`
+          : `${count} of ${total} confirmed`;
+      }
       el.checklistCompletionStatus.style.color = isAllChecked ? '#15803d' : '#dc2626';
     }
 
@@ -1560,7 +1621,11 @@ window.openChecklist = function(schemeId) {
         const missingCount = total - count;
         const countText = document.getElementById('checklist-missing-count-text');
         if (countText) {
-          countText.textContent = `${missingCount} required document${missingCount > 1 ? 's' : ''} not yet confirmed. All are required to apply.`;
+          if (targetLang === 'hi') {
+            countText.textContent = `${missingCount} आवश्यक दस्तावेज़ अभी पुष्ट नहीं हुए हैं। आवेदन करने के लिए सभी आवश्यक हैं।`;
+          } else {
+            countText.textContent = `${missingCount} required document${missingCount > 1 ? 's' : ''} not yet confirmed. All are required to apply.`;
+          }
         }
       }
     }
@@ -1579,15 +1644,20 @@ window.openChecklist = function(schemeId) {
     }
   }
 
+  // 4. Build and inject the checklist items using the translated text
   docsList.forEach((doc, idx) => {
+    const docKey = `doc_${idx}`;
+    const docName = (translatedMap && translatedMap[`${docKey}_name`]) || doc.name;
+    const docDesc = (translatedMap && translatedMap[`${docKey}_desc`]) || doc.desc;
+
     const item = document.createElement('label');
     item.className = 'checklist-checkbox-item';
     item.htmlFor = `chk-doc-${idx}`;
     item.innerHTML = `
       <input type="checkbox" class="doc-check-input" id="chk-doc-${idx}" data-idx="${idx}">
       <div style="flex: 1;">
-        <div style="font-weight: 700; font-size: 0.92rem; color: #0f172a;" class="doc-title">${doc.name}</div>
-        <div style="font-size: 0.82rem; color: #64748b; margin-top: 0.15rem;">${doc.desc}</div>
+        <div style="font-weight: 700; font-size: 0.92rem; color: #0f172a;" class="doc-title">${docName}</div>
+        <div style="font-size: 0.82rem; color: #64748b; margin-top: 0.15rem;">${docDesc}</div>
       </div>
     `;
 
@@ -1611,16 +1681,19 @@ window.openChecklist = function(schemeId) {
   // Read checklist aloud button
   if (el.btnReadChecklistAloud) {
     el.btnReadChecklistAloud.onclick = () => {
-      const docNames = docsList.map((d, i) => `${i + 1}. ${d.name}`).join('. ');
-      const speech = state.currentLang === 'hi'
-        ? `इस योजना के लिए आवश्यक दस्तावेज़ हैं: ${docNames}. कृपया पुष्टि करें कि आपके पास यह सभी दस्तावेज़ हैं।`
+      const docNames = docsList.map((d, i) => {
+        const docKey = `doc_${i}`;
+        const dName = (translatedMap && translatedMap[`${docKey}_name`]) || d.name;
+        return `${i + 1}. ${dName}`;
+      }).join('. ');
+      const speech = targetLang === 'hi'
+        ? `${translatedSchemeName} के लिए आवश्यक दस्तावेज़ हैं: ${docNames}। कृपया पुष्टि करें कि आपके पास यह सभी दस्तावेज़ हैं।`
         : `Required documents for ${scheme.name} are: ${docNames}. Please confirm you have all these documents before applying.`;
-      speakKisanText(speech, state.currentLang);
+      speakKisanText(speech, targetLang);
     };
   }
 
   updateChecklistUI();
-  el.checklistModal.classList.add('active');
 };
 
 // ==========================================================================
