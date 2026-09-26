@@ -534,12 +534,108 @@ window.getCachedTranslation = getCachedTranslation;
 window.setCachedTranslation = setCachedTranslation;
 window.invalidateTranslationCache = invalidateTranslationCache;
 
+// ==========================================================================
+// In-Flight Translation Loading Indicators (Progress Bar & Floating Spinner)
+// ==========================================================================
+let activeTranslationsCount = 0;
+let translationLoadingTimeout = null;
+
+function ensureTranslationLoadingElements() {
+  let bar = document.getElementById('translation-progress-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'translation-progress-bar';
+    bar.className = 'translation-progress-bar';
+    bar.setAttribute('aria-hidden', 'true');
+    document.body.prepend(bar);
+  }
+
+  let pill = document.getElementById('translation-loading-pill');
+  if (!pill) {
+    pill = document.createElement('div');
+    pill.id = 'translation-loading-pill';
+    pill.className = 'translation-loading-pill';
+    pill.setAttribute('role', 'status');
+    pill.setAttribute('aria-live', 'polite');
+    pill.innerHTML = `
+      <span class="translation-spinner" aria-hidden="true"></span>
+      <span id="translation-loading-text">Translating content...</span>
+    `;
+    document.body.appendChild(pill);
+  }
+
+  return { bar, pill };
+}
+
+function showTranslationLoading(targetLang) {
+  activeTranslationsCount++;
+  const { bar, pill } = ensureTranslationLoadingElements();
+
+  let langLabel = '';
+  if (targetLang && window.INDIAN_LANGUAGES) {
+    const found = window.INDIAN_LANGUAGES.find(l => l.code === targetLang);
+    if (found) {
+      langLabel = found.native ? ` (${found.native})` : ` (${found.name})`;
+    }
+  }
+
+  const textEl = document.getElementById('translation-loading-text');
+  if (textEl) {
+    textEl.textContent = langLabel ? `Translating${langLabel}...` : 'Translating content...';
+  }
+
+  bar.classList.add('active');
+  pill.classList.add('visible');
+
+  // Also toggle shimmer on language selector button if available
+  const langBtn = document.getElementById('lang-toggle-btn');
+  if (langBtn) {
+    langBtn.classList.add('lang-loading-shimmer');
+  }
+
+  // Defensive fallback: auto-clear after 15 seconds if network request stalls
+  if (translationLoadingTimeout) clearTimeout(translationLoadingTimeout);
+  translationLoadingTimeout = setTimeout(() => {
+    if (activeTranslationsCount > 0) {
+      activeTranslationsCount = 0;
+      hideTranslationLoadingUI();
+    }
+  }, 15000);
+}
+
+function hideTranslationLoadingUI() {
+  const bar = document.getElementById('translation-progress-bar');
+  const pill = document.getElementById('translation-loading-pill');
+  if (bar) bar.classList.remove('active');
+  if (pill) pill.classList.remove('visible');
+  const langBtn = document.getElementById('lang-toggle-btn');
+  if (langBtn) {
+    langBtn.classList.remove('lang-loading-shimmer');
+  }
+}
+
+function hideTranslationLoading() {
+  activeTranslationsCount = Math.max(0, activeTranslationsCount - 1);
+  if (activeTranslationsCount === 0) {
+    if (translationLoadingTimeout) {
+      clearTimeout(translationLoadingTimeout);
+      translationLoadingTimeout = null;
+    }
+    hideTranslationLoadingUI();
+  }
+}
+
+// Expose indicator controls on window
+window.showTranslationLoading = showTranslationLoading;
+window.hideTranslationLoading = hideTranslationLoading;
+
 /**
  * Reusable frontend batch translation function with caching.
  * - Keyed by text + targetLang (in-memory + localStorage).
  * - Skips API call completely if all texts were already translated into targetLang.
  * - If source text for a key changes, invalidates the previous cache entry.
  * - Only sends cache misses to /api/translate.
+ * - Shows lightweight loading indicator (progress bar + floating spinner) while in flight.
  * - This is the ONLY function in the codebase that calls the translate API directly.
  *
  * @param {Object} fieldsObject - JSON object containing { key: text } pairs
@@ -580,12 +676,13 @@ async function translateBatch(fieldsObject, targetLang) {
     }
   }
 
-  // 3. Skip API call completely if all exact texts were already translated into targetLang
+  // 3. Skip API call completely if all exact texts were already translated into targetLang (zero network delay)
   if (Object.keys(misses).length === 0) {
     return result;
   }
 
-  // 4. Call /api/translate once with only the cache misses
+  // 4. Call /api/translate once with only the cache misses while showing lightweight loading indicator
+  showTranslationLoading(normLang);
   try {
     const payload = Object.assign({}, misses, {
       target_lang: normLang
@@ -624,6 +721,8 @@ async function translateBatch(fieldsObject, targetLang) {
       result[k] = orig;
     }
     return result;
+  } finally {
+    hideTranslationLoading();
   }
 }
 
