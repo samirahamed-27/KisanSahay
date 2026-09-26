@@ -4342,12 +4342,10 @@ function setupSahayAI() {
 
   const SAHAY_LANGS = [
     { code: 'en', label: 'EN', name: 'English', speech: 'en-IN' },
-    { code: 'hi', label: 'HI', name: 'Hindi (हिन्दी)', speech: 'hi-IN' },
-    { code: 'pa', label: 'PA', name: 'Punjabi (ਪੰਜਾਬੀ)', speech: 'pa-IN' },
-    { code: 'bn', label: 'BN', name: 'Bengali (বাংলা)', speech: 'bn-IN' }
+    { code: 'hi', label: 'HI', name: 'Hindi (हिन्दी)', speech: 'hi-IN' }
   ];
 
-  let sahayLang = 'en'; // 'en' | 'hi' | 'pa' | 'bn'
+  let sahayLang = 'en'; // 'en' | 'hi'
   let isFullscreen = false;
   let isTtsActive = true;
   let recognition = null;
@@ -4356,9 +4354,7 @@ function setupSahayAI() {
 
   const SAHAY_SPEECH_MAP = {
     'en': 'en-IN',
-    'hi': 'hi-IN',
-    'pa': 'pa-IN',
-    'bn': 'bn-IN'
+    'hi': 'hi-IN'
   };
 
   const SAHAY_INTRO_DATA = {
@@ -4382,28 +4378,6 @@ function setupSahayAI() {
         { query: "KCC ऋण पर ब्याज दर क्या है?", text: "KCC 4% रियायती ब्याज दर", category: "rate" },
         { query: "मेरे पास कौन से दस्तावेज़ हैं?", text: "मेरे सुरक्षित वॉल्ट दस्तावेज़ देखें", category: "vault" },
         { query: "ऋण धोखाधड़ी की पहचान कैसे करें?", text: "ऋण धोखाधड़ी की पहचान कैसे करें?", category: "scam" }
-      ]
-    },
-    pa: {
-      title: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਸਹਾਇ AI ਹਾਂ",
-      text: "ਤੁਹਾਡਾ ਅਧਿਕਾਰਤ ਖੇਤੀਬਾੜੀ ਸਹਾਇਕ, ਜਿਸ ਵਿੱਚ 50 ਪ੍ਰਮਾਣਿਤ ਸਰਕਾਰੀ ਸਕੀਮਾਂ ਦੇ ਜਵਾਬ, ਵਿਆਜ ਸਬਸਿਡੀ ਗਣਨਾ ਅਤੇ ਸੁਰੱਖਿਅਤ ਦਸਤਾਵੇਜ਼ ਵਾਲਟ ਮੈਮੋਰੀ ਸ਼ਾਮਲ ਹੈ!",
-      chipsTitle: "ਸੁਝਾਏ ਗਏ ਸਵਾਲ:",
-      chips: [
-        { query: "ਕੀ ਮੈਂ KCC ਲਈ ਯੋਗ ਹਾਂ?", text: "ਕੀ ਮੈਂ KCC ਲਈ ਯੋਗ ਹਾਂ?", category: "leaf" },
-        { query: "KCC ਕਰਜ਼ੇ 'ਤੇ ਵਿਆਜ ਦਰ ਕੀ ਹੈ?", text: "KCC 4% ਸਬਸਿਡੀ ਵਾਲੀ ਵਿਆਜ ਦਰ", category: "rate" },
-        { query: "ਮੇਰੇ ਕੋਲ ਕਿਹੜੇ ਦਸਤਾਵੇਜ਼ ਹਨ?", text: "ਮੇਰੇ ਵਾਲਟ ਦਸਤਾਵੇਜ਼ ਚੈੱਕ ਕਰੋ", category: "vault" },
-        { query: "ਕਰਜ਼ੇ ਦੀ ਧੋਖਾਧੜੀ ਤੋਂ ਕਿਵੇਂ ਬਚੀਏ?", text: "ਕਰਜ਼ੇ ਦੀ ਧੋਖਾਧੜੀ ਤੋਂ ਕਿਵੇਂ ਬਚੀਏ?", category: "scam" }
-      ]
-    },
-    bn: {
-      title: "নমস্কার! আমি সহায় AI",
-      text: "আপনার অফিসিয়াল কৃষি গাইড, যার মধ্যে রয়েছে ৫০টি যাচাইকৃত সরকারি স্কিমের উত্তর, দ্রুত পরিশোধে সুদের ভর্তুকি গণনা এবং সুরক্ষিত নথি ভল্ট মেমোরি!",
-      chipsTitle: "প্রস্তাবিত প্রশ্নাবলী:",
-      chips: [
-        { query: "আমি কি KCC ঋণের জন্য যোগ্য?", text: "আমি কি KCC ঋণের জন্য যোগ্য?", category: "leaf" },
-        { query: "KCC ঋণের সুদের হার কত?", text: "KCC ৪% ভর্তুকিযুক্ত সুদের হার", category: "rate" },
-        { query: "আমার কী কী নথি সংরক্ষিত আছে?", text: "আমার সংরক্ষিত ভল্ট নথি দেখুন", category: "vault" },
-        { query: "ভুয়ো ঋণ প্রতারণা কীভাবে চিনবেন?", text: "ভুয়ো ঋণ প্রতারণা কীভাবে চিনবেন?", category: "scam" }
       ]
     }
   };
@@ -4481,48 +4455,112 @@ function setupSahayAI() {
     });
   }
 
-  // Toggle Full Screen Mode
+  // Toggle Full Screen Mode (Dual mechanism: Inset styles + Fullscreen API)
   function toggleFullscreen(forceState) {
+    const chatWin = document.getElementById('sahay-chat-window') || chatWindow;
+    const fsBtn = document.getElementById('sahay-fullscreen-btn') || fullscreenBtn;
+    const fsIcon = document.getElementById('sahay-fullscreen-icon') || fullscreenIcon;
+    if (!chatWin) return;
+
     isFullscreen = typeof forceState === 'boolean' ? forceState : !isFullscreen;
+
     if (isFullscreen) {
-      chatWindow.classList.add('is-fullscreen');
-      if (fullscreenBtn) {
-        fullscreenBtn.setAttribute('title', 'Exit Full Screen Mode (Esc)');
-        fullscreenBtn.setAttribute('aria-label', 'Exit Full Screen Mode');
+      chatWin.classList.add('is-fullscreen');
+      chatWin.style.setProperty('position', 'fixed', 'important');
+      chatWin.style.setProperty('top', '0px', 'important');
+      chatWin.style.setProperty('left', '0px', 'important');
+      chatWin.style.setProperty('right', '0px', 'important');
+      chatWin.style.setProperty('bottom', '0px', 'important');
+      chatWin.style.setProperty('width', '100vw', 'important');
+      chatWin.style.setProperty('height', '100vh', 'important');
+      chatWin.style.setProperty('max-width', '100vw', 'important');
+      chatWin.style.setProperty('max-height', '100vh', 'important');
+      chatWin.style.setProperty('border-radius', '0px', 'important');
+      chatWin.style.setProperty('border', 'none', 'important');
+      chatWin.style.setProperty('z-index', '999999', 'important');
+      chatWin.style.setProperty('margin', '0px', 'important');
+      chatWin.style.setProperty('display', 'flex', 'important');
+
+      if (fsBtn) {
+        fsBtn.setAttribute('title', 'Exit Full Screen Mode (Esc)');
+        fsBtn.setAttribute('aria-label', 'Exit Full Screen Mode');
       }
-      if (fullscreenIcon) {
-        fullscreenIcon.innerHTML = `
-          <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      if (fsIcon) {
+        fsIcon.innerHTML = `
+          <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
             <path d="M4 14h6v6m10-10h-6V4m0 6 7-7M3 21l7-7"/>
           </svg>
         `;
       }
       document.body.style.overflow = 'hidden';
+
+      try {
+        if (chatWin.requestFullscreen && !document.fullscreenElement) {
+          chatWin.requestFullscreen().catch(() => {});
+        } else if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      } catch (err) {}
+
       showToast('⛶ Sahay AI Full Screen mode enabled');
     } else {
-      chatWindow.classList.remove('is-fullscreen');
-      if (fullscreenBtn) {
-        fullscreenBtn.setAttribute('title', 'Full Screen Mode');
-        fullscreenBtn.setAttribute('aria-label', 'Toggle Full Screen Mode');
+      chatWin.classList.remove('is-fullscreen');
+      chatWin.style.removeProperty('position');
+      chatWin.style.removeProperty('top');
+      chatWin.style.removeProperty('left');
+      chatWin.style.removeProperty('right');
+      chatWin.style.removeProperty('bottom');
+      chatWin.style.removeProperty('width');
+      chatWin.style.removeProperty('height');
+      chatWin.style.removeProperty('max-width');
+      chatWin.style.removeProperty('max-height');
+      chatWin.style.removeProperty('border-radius');
+      chatWin.style.removeProperty('border');
+      chatWin.style.removeProperty('z-index');
+      chatWin.style.removeProperty('margin');
+
+      if (fsBtn) {
+        fsBtn.setAttribute('title', 'Full Screen Mode');
+        fsBtn.setAttribute('aria-label', 'Toggle Full Screen Mode');
       }
-      if (fullscreenIcon) {
-        fullscreenIcon.innerHTML = `
-          <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      if (fsIcon) {
+        fsIcon.innerHTML = `
+          <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
           </svg>
         `;
       }
       document.body.style.overflow = '';
+
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } catch (err) {}
     }
   }
 
+  window.toggleSahayFullscreen = toggleFullscreen;
+
   if (fullscreenBtn) {
-    fullscreenBtn.addEventListener('click', () => toggleFullscreen());
+    fullscreenBtn.onclick = () => toggleFullscreen();
   }
 
   // Keyboard shortcut: Escape exits full screen
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isFullscreen && chatWindow.style.display !== 'none') {
+      toggleFullscreen(false);
+    }
+  });
+
+  // Native fullscreen change listeners
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && isFullscreen) {
+      toggleFullscreen(false);
+    }
+  });
+  document.addEventListener('webkitfullscreenchange', () => {
+    if (!document.webkitFullscreenElement && isFullscreen) {
       toggleFullscreen(false);
     }
   });
@@ -4545,15 +4583,12 @@ function setupSahayAI() {
     });
   }
 
-  // Language toggle (EN -> HI -> PA -> BN)
+  // Language toggle (English / Hindi only)
   if (langToggle) {
     langToggle.addEventListener('click', () => {
-      const curIdx = SAHAY_LANGS.findIndex(l => l.code === sahayLang);
-      const nextIdx = (curIdx + 1) % SAHAY_LANGS.length;
-      const nextLang = SAHAY_LANGS[nextIdx];
-      sahayLang = nextLang.code;
-      if (langIndicator) langIndicator.textContent = nextLang.label;
-      showToast(`Sahay AI language set to ${nextLang.name}`);
+      sahayLang = sahayLang === 'en' ? 'hi' : 'en';
+      if (langIndicator) langIndicator.textContent = sahayLang.toUpperCase();
+      showToast(`Sahay AI language set to ${sahayLang === 'hi' ? 'Hindi (हिंदी)' : 'English'}`);
 
       // Re-render intro card & chips if at greeting state
       const introCard = messageStream ? messageStream.querySelector('.sahay-intro-card') : null;
@@ -4952,9 +4987,9 @@ function setupSahayAI() {
       // 4. Display AI answer in Chat UI
       if (data && data.answer) {
         let answerText = data.answer;
-        if (sahayLang !== 'en' && typeof window.translateBatch === 'function') {
+        if (sahayLang === 'hi' && typeof window.translateBatch === 'function') {
           try {
-            const trans = await window.translateBatch({ answer: answerText }, sahayLang);
+            const trans = await window.translateBatch({ answer: answerText }, 'hi');
             if (trans && trans.answer) {
               answerText = trans.answer;
             }
@@ -4968,16 +5003,14 @@ function setupSahayAI() {
         if (isTtsActive && 'speechSynthesis' in window) {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(answerText.replace(/[•*#_`]/g, ' '));
-          utterance.lang = SAHAY_SPEECH_MAP[sahayLang] || 'en-IN';
+          utterance.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
           utterance.rate = 0.95;
           window.speechSynthesis.speak(utterance);
         }
       } else {
         const fallbackMsg = {
           en: "I'm sorry, but I couldn't find that information in the uploaded data.",
-          hi: "क्षमा करें, मुझे इस बारे में जानकारी नहीं मिली।",
-          pa: "ਮਾਫ਼ ਕਰਨਾ, ਮੈਨੂੰ ਅਪਲੋਡ ਕੀਤੇ ਡੇਟਾ ਵਿੱਚ ਇਹ ਜਾਣਕਾਰੀ ਨਹੀਂ ਮਿਲੀ।",
-          bn: "দুঃখিত, আপলোড করা তথ্যে এই বিষয়টি খুঁজে পাওয়া যায়নি।"
+          hi: "क्षमा करें, मुझे इस बारे में जानकारी नहीं मिली।"
         };
         appendMessage('assistant', fallbackMsg[sahayLang] || fallbackMsg.en);
       }
@@ -5031,21 +5064,7 @@ function setupSahayAI() {
 
   async function appendAssistantReply(answerData) {
     if (!messageStream) return;
-    let { reply, citations = [], suggestedChips = [] } = answerData;
-
-    if (sahayLang !== 'en' && sahayLang !== 'hi' && typeof window.translateBatch === 'function') {
-      try {
-        const transObj = { reply };
-        suggestedChips.forEach((chip, i) => { transObj['chip_' + i] = chip; });
-        const transRes = await window.translateBatch(transObj, sahayLang);
-        if (transRes) {
-          if (transRes.reply) reply = transRes.reply;
-          suggestedChips = suggestedChips.map((c, i) => transRes['chip_' + i] || c);
-        }
-      } catch (e) {
-        console.warn('Fallback reply translation notice:', e);
-      }
-    }
+    const { reply, citations = [], suggestedChips = [] } = answerData;
 
     const formattedReply = reply
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -5078,10 +5097,8 @@ function setupSahayAI() {
     `;
 
     const nextQMap = {
-      en: 'Next Questions:',
-      hi: 'अगले प्रश्न:',
-      pa: 'ਅਗਲੇ ਸਵਾਲ:',
-      bn: 'পরবর্তী প্রশ্ন:'
+      en: 'Suggested Questions:',
+      hi: 'अगले प्रश्न:'
     };
 
     const chipsHtml = (suggestedChips && suggestedChips.length > 0) ? `

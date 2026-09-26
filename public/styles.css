@@ -5518,10 +5518,20 @@ body.dark-mode {
   max-height: 100vh !important;
   border-radius: 0 !important;
   border: none !important;
-  z-index: 100000 !important;
+  z-index: 999999 !important;
   margin: 0 !important;
   box-shadow: none !important;
   animation: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#sahay-fullscreen-btn {
+  cursor: pointer !important;
+}
+
+#sahay-fullscreen-btn * {
+  pointer-events: none !important;
 }
 
 .sahay-chat-window.is-fullscreen .sahay-header {
@@ -6238,6 +6248,37 @@ body.dark-mode .sahay-speech-status {
 .btn-sahay-mic.active {
   color: #dc2626;
   animation: pulse 1s infinite;
+}
+
+/* In Dark Mode, the bottom microphone must be crisp white for maximum visibility */
+body.dark-mode .btn-sahay-mic,
+body.dark-mode #sahay-mic-btn,
+body.dark-mode .sahay-mic-svg,
+body.dark-mode #sahay-mic-btn svg,
+[data-theme="dark"] .btn-sahay-mic,
+[data-theme="dark"] #sahay-mic-btn,
+[data-theme="dark"] .sahay-mic-svg,
+[data-theme="dark"] #sahay-mic-btn svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  opacity: 1 !important;
+}
+
+body.dark-mode .btn-sahay-mic:hover,
+body.dark-mode #sahay-mic-btn:hover,
+[data-theme="dark"] .btn-sahay-mic:hover,
+[data-theme="dark"] #sahay-mic-btn:hover {
+  color: var(--sahay-primary, #B7E4C7) !important;
+  stroke: var(--sahay-primary, #B7E4C7) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark-mode .btn-sahay-mic.active,
+body.dark-mode #sahay-mic-btn.active,
+[data-theme="dark"] .btn-sahay-mic.active,
+[data-theme="dark"] #sahay-mic-btn.active {
+  color: #ef4444 !important;
+  stroke: #ef4444 !important;
 }
 
 .sahay-mic-svg {

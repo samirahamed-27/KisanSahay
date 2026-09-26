@@ -2311,8 +2311,8 @@
               </svg>
             </span>
           </button>
-          <!-- Multi-Language Switcher (EN / HI / PA / BN) -->
-          <button type="button" id="sahay-lang-toggle" class="btn-sahay-lang" title="Switch Language (English / हिन्दी / ਪੰਜਾਬੀ / বাংলা)" aria-label="Switch Language">
+          <!-- Language Switcher EN / HI -->
+          <button type="button" id="sahay-lang-toggle" class="btn-sahay-lang" title="Switch Language (English / हिन्दी)" aria-label="Switch Language">
             <svg class="sahay-action-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <line x1="2" y1="12" x2="22" y2="12"/>
@@ -2330,9 +2330,9 @@
             </svg>
           </button>
           <!-- Full Screen Mode Toggle -->
-          <button type="button" id="sahay-fullscreen-btn" class="btn-sahay-header-action" title="Full Screen Mode" aria-label="Toggle Full Screen Mode">
-            <span id="sahay-fullscreen-icon">
-              <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" id="sahay-fullscreen-btn" class="btn-sahay-header-action" title="Full Screen Mode" aria-label="Toggle Full Screen Mode" onclick="window.toggleSahayFullscreen &amp;&amp; window.toggleSahayFullscreen()">
+            <span id="sahay-fullscreen-icon" style="pointer-events: none; display: flex; align-items: center; justify-content: center;">
+              <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
               </svg>
             </span>
