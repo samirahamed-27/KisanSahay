@@ -5493,6 +5493,37 @@ body.dark-mode {
   transition: var(--sahay-transition);
 }
 
+/* Light Mode / White Mode: Add the scenic wheat field background image to Sahay AI */
+body:not(.dark-mode) .sahay-chat-window,
+[data-theme="light"] .sahay-chat-window {
+  background-color: #faf5ea;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.82), rgba(250, 245, 234, 0.88)),
+    url('./assets/wheat_field_bg.png') !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: cover !important;
+}
+
+body:not(.dark-mode) .sahay-message-stream,
+[data-theme="light"] .sahay-message-stream {
+  background: transparent !important;
+}
+
+/* Ensure Dark Mode strictly retains dark background without the wheat field image */
+body.dark-mode .sahay-chat-window,
+[data-theme="dark"] .sahay-chat-window {
+  background-color: #121212 !important;
+  background-image: none !important;
+  background: var(--sahay-surface-glass) !important;
+}
+
+body.dark-mode .sahay-message-stream,
+[data-theme="dark"] .sahay-message-stream {
+  background: var(--sahay-bg) !important;
+  background-image: none !important;
+}
+
 @keyframes sahaySlideUp {
   from {
     opacity: 0;

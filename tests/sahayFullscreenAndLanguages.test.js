@@ -51,3 +51,15 @@ test('Sahay AI — Dark Mode Microphone Styling is Crisp White', () => {
   assert.ok(css.includes('color: #ffffff !important'), 'Dark mode mic color must be #ffffff !important');
   assert.ok(css.includes('stroke: #ffffff !important'), 'Dark mode mic stroke must be #ffffff !important');
 });
+
+test('Sahay AI — Light / White Mode Background Image Styling', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
+
+  // 1. Light mode background image applied to sahay-chat-window
+  assert.ok(css.includes('body:not(.dark-mode) .sahay-chat-window'), 'Must target sahay-chat-window in non-dark/light mode');
+  assert.ok(css.includes("wheat_field_bg.png"), 'Must reference wheat_field_bg.png in styles.css');
+  assert.ok(css.includes('body:not(.dark-mode) .sahay-message-stream'), 'Must make sahay-message-stream transparent in light mode');
+
+  // 2. Dark mode overrides background image
+  assert.ok(css.includes('body.dark-mode .sahay-chat-window') && css.includes('background-image: none !important'), 'Dark mode must disable wheat field image on chat window');
+});
