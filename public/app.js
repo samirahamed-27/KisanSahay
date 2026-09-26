@@ -1316,18 +1316,21 @@ function getSchemeTier(scheme) {
   };
 }
 
-function renderSchemesGrid(schemes) {
+let currentSchemesGridRenderId = 0;
+
+async function renderSchemesGrid(schemes) {
   if (!el.schemesCardsContainer) return;
-  el.schemesCardsContainer.innerHTML = '';
+
+  const renderId = ++currentSchemesGridRenderId;
 
   if (!schemes || schemes.length === 0) {
     el.schemesCardsContainer.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: #fff; border-radius: var(--radius-md);">
-        <p style="color: #64748b;">No schemes matched your search query.</p>
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--bg-card, #fff); border-radius: var(--radius-md);">
+        <p style="color: #64748b;">${t('noSchemesFound', 'No schemes matched your search query.')}</p>
       </div>
     `;
     if (el.schemesCountText) {
-      el.schemesCountText.textContent = '0 schemes found';
+      el.schemesCountText.textContent = t('zeroSchemesFound', '0 schemes found');
     }
     return;
   }
@@ -1366,11 +1369,73 @@ function renderSchemesGrid(schemes) {
 
   // Slice batch for smooth rendering performance
   const batchToRender = sortedSchemes.slice(0, currentSchemesBatch);
+  const targetLang = (state && state.currentLang) || 'en';
+
+  // 1. Collect all translatable fields from the visible cards into one single object
+  const translatableFields = {};
+
+  batchToRender.forEach((scheme, index) => {
+    const schemeKey = scheme.id || `scheme_${index}`;
+    const tierInfo = getSchemeTier(scheme);
+
+    if (scheme.name) translatableFields[`${schemeKey}_name`] = scheme.name;
+    if (scheme.category) translatableFields[`${schemeKey}_category`] = scheme.category;
+    if (scheme.shortName) translatableFields[`${schemeKey}_shortName`] = scheme.shortName;
+    if (scheme.whatItIs || scheme.tagline) {
+      translatableFields[`${schemeKey}_whatItIs`] = scheme.whatItIs || scheme.tagline;
+    }
+    if (tierInfo && tierInfo.badgeText) {
+      translatableFields[`${schemeKey}_badgeText`] = tierInfo.badgeText;
+    }
+
+    const rawHighlights = Array.isArray(scheme.highlights) && scheme.highlights.length > 0
+      ? scheme.highlights
+      : (scheme.tagline ? [scheme.tagline] : []);
+
+    rawHighlights.forEach((hl, hlIdx) => {
+      if (hl && typeof hl === 'string') {
+        translatableFields[`${schemeKey}_hl_${hlIdx}`] = hl;
+      }
+    });
+  });
+
+  // 2. Clear container & display subtle loading spinner while waiting if non-English
+  // This guarantees that NO English text appears before the translated cards render
+  if (targetLang !== 'en') {
+    el.schemesCardsContainer.innerHTML = `
+      <div class="schemes-grid-loading" style="grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; padding: 4rem 1rem; min-height: 220px;">
+        <div style="width: 36px; height: 36px; border: 3px solid rgba(16, 185, 129, 0.2); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      </div>
+    `;
+    if (el.schemesCountText) {
+      el.schemesCountText.textContent = '...';
+    }
+  } else {
+    el.schemesCardsContainer.innerHTML = '';
+  }
+
+  // 3. Call translateBatch() on the single collected object and wait for the result
+  let translatedMap = {};
+  if (targetLang !== 'en') {
+    translatedMap = await translateBatch(translatableFields, targetLang);
+  }
+
+  // Prevent race conditions from rapid filtering / tab switches
+  if (renderId !== currentSchemesGridRenderId) return;
+
+  // Clear loading state
+  el.schemesCardsContainer.innerHTML = '';
 
   // Update dynamic count text
   if (el.schemesCountText) {
     const topCount = sortedSchemes.filter(s => getSchemeTier(s).tier === 1).length;
-    el.schemesCountText.textContent = `Showing ${batchToRender.length} of ${sortedSchemes.length} verified schemes (${topCount} Top Recommended on top)`;
+    if (targetLang === 'hi') {
+      el.schemesCountText.textContent = `${sortedSchemes.length} सत्यापित योजनाओं में से ${batchToRender.length} दिखाई जा रही हैं (${topCount} शीर्ष अनुशंसित)`;
+    } else if (targetLang !== 'en') {
+      el.schemesCountText.textContent = `${batchToRender.length} / ${sortedSchemes.length}`;
+    } else {
+      el.schemesCountText.textContent = `Showing ${batchToRender.length} of ${sortedSchemes.length} verified schemes (${topCount} Top Recommended on top)`;
+    }
   }
 
   if (loadMoreContainer) {
@@ -1383,32 +1448,46 @@ function renderSchemesGrid(schemes) {
     }
   }
 
-  batchToRender.forEach(scheme => {
+  // 4. Build and inject the HTML cards with the translated fields
+  batchToRender.forEach((scheme, index) => {
+    const schemeKey = scheme.id || `scheme_${index}`;
     const card = document.createElement('div');
     card.className = 'scheme-card-box';
 
     const tierInfo = getSchemeTier(scheme);
-    const highlightsHtml = (scheme.highlights || [scheme.tagline]).map(h => 
-      `<div class="scheme-tag-pill ${tierInfo.pillStyle}">${h}</div>`
-    ).join('');
+
+    const schemeName = (translatedMap && translatedMap[`${schemeKey}_name`]) || scheme.name;
+    const schemeCategory = (translatedMap && translatedMap[`${schemeKey}_category`]) || scheme.category;
+    const schemeShortName = (translatedMap && translatedMap[`${schemeKey}_shortName`]) || scheme.shortName;
+    const schemeDesc = (translatedMap && translatedMap[`${schemeKey}_whatItIs`]) || scheme.whatItIs || scheme.tagline;
+    const badgeText = (translatedMap && translatedMap[`${schemeKey}_badgeText`]) || tierInfo.badgeText;
+
+    const rawHighlights = Array.isArray(scheme.highlights) && scheme.highlights.length > 0
+      ? scheme.highlights
+      : (scheme.tagline ? [scheme.tagline] : []);
+
+    const highlightsHtml = rawHighlights.map((hl, hlIdx) => {
+      const translatedHl = (translatedMap && translatedMap[`${schemeKey}_hl_${hlIdx}`]) || hl;
+      return `<div class="scheme-tag-pill ${tierInfo.pillStyle}">${translatedHl}</div>`;
+    }).join('');
 
     card.innerHTML = `
       <!-- Scheme Tier Status Banner -->
       <div class="scheme-tier-badge ${tierInfo.badgeClass}">
-        ${tierInfo.badgeText}
+        ${badgeText}
       </div>
 
       <!-- Top Colored Banner with Smooth Gradient -->
       <div class="scheme-top-banner ${tierInfo.themeColor}">
-        <div class="scheme-category-tag">${scheme.category}</div>
-        <h3 class="scheme-banner-title">${scheme.name}</h3>
-        <div class="scheme-banner-short">${scheme.shortName}</div>
+        <div class="scheme-category-tag">${schemeCategory}</div>
+        <h3 class="scheme-banner-title">${schemeName}</h3>
+        <div class="scheme-banner-short">${schemeShortName}</div>
       </div>
 
       <!-- Body Matching Screenshot 3 -->
       <div class="scheme-card-inner">
         <p class="scheme-card-desc">
-          ${scheme.whatItIs || scheme.tagline}
+          ${schemeDesc}
         </p>
 
         <!-- Highlights & Subvention Badges -->
