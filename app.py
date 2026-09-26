@@ -24,10 +24,15 @@ import sys
 import ssl
 import time
 import logging
+import re
+import json
+import urllib.parse
+import asyncio
 from pathlib import Path
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 
-from fastapi import FastAPI, HTTPException, status
+import httpx
+from fastapi import FastAPI, HTTPException, status, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -223,6 +228,219 @@ class HealthResponse(BaseModel):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 3b. High-Performance Runtime Translation Engine (25 Indian Languages)
+# ─────────────────────────────────────────────────────────────────────────────
+
+TRANSLATIONS_DICT: Dict[str, Dict[str, str]] = {}
+TEXT_LOOKUP_DICT: Dict[str, Dict[str, str]] = {}
+RUNTIME_TRANSLATION_CACHE: Dict[Tuple[str, str], str] = {}
+
+CORE_OFFLINE_DICTIONARY: Dict[str, Dict[str, str]] = {
+    "hi": {
+        "Home": "होम",
+        "Check Eligibility": "पात्रता जांचें",
+        "Government Schemes": "सरकारी योजनाएं",
+        "My Loans & EMIs": "मेरे ऋण और किस्तें",
+        "Install App": "ऐप इंस्टॉल करें",
+        "Schemes": "योजनाएं",
+        "Active Loans": "सक्रिय ऋण",
+        "Ended Loans": "समाप्त ऋण",
+        "Document Vault": "दस्तावेज़ वॉल्ट",
+        "KisanSahay": "किसानसहाय",
+        "Empowering Indian Farmers": "भारतीय किसानों का सशक्तिकरण",
+        "Check My Eligibility": "मेरी पात्रता जांचें",
+        "Get Started": "शुरू करें",
+        "How It Works": "यह कैसे काम करता है",
+        "Apply Now": "अभी आवेदन करें",
+        "Type of Crop": "फसल का प्रकार",
+        "Annual Income": "वार्षिक आय",
+        "Locality / District": "स्थान / ज़िला",
+        "Land Ownership": "भूमि स्वामित्व",
+        "Main Activity Type": "मुख्य गतिविधि प्रकार"
+    }
+}
+
+def _init_translations():
+    """Initializes the multi-language translation dictionaries and reverse text lookup."""
+    global TRANSLATIONS_DICT, TEXT_LOOKUP_DICT
+    js_paths = [
+        BASE_DIR / "public" / "different_languages.js",
+        BASE_DIR / "public copy" / "different_languages.js"
+    ]
+    for p in js_paths:
+        if p.exists():
+            try:
+                content = p.read_text(encoding="utf-8")
+                m = re.search(r"const TRANSLATIONS = ({[\s\S]*?});\s*(\n|$|if)", content)
+                if m:
+                    clean_json = re.sub(r",\s*([\]}])", r"\1", m.group(1))
+                    TRANSLATIONS_DICT = json.loads(clean_json)
+                    en_map = TRANSLATIONS_DICT.get("en", {})
+                    for lang, kvs in TRANSLATIONS_DICT.items():
+                        if lang == "en":
+                            continue
+                        if lang not in TEXT_LOOKUP_DICT:
+                            TEXT_LOOKUP_DICT[lang] = {}
+                        for k, en_text in en_map.items():
+                            if k in kvs and isinstance(en_text, str) and en_text.strip():
+                                TEXT_LOOKUP_DICT[lang][en_text.strip().lower()] = kvs[k]
+                    logger.info("Loaded %d languages with %d keys from %s", len(TRANSLATIONS_DICT), len(en_map), p.name)
+                    break
+            except Exception as e:
+                logger.warning("Error parsing %s: %s", p, e)
+
+    # Merge core offline dictionary
+    for lang, kvs in CORE_OFFLINE_DICTIONARY.items():
+        if lang not in TEXT_LOOKUP_DICT:
+            TEXT_LOOKUP_DICT[lang] = {}
+        for en_word, trans_word in kvs.items():
+            TEXT_LOOKUP_DICT[lang][en_word.strip().lower()] = trans_word
+
+_init_translations()
+
+
+def extract_translation_request(body: Any, query_params: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    """
+    Flexibly extracts {key: text} pairs and target_lang from various JSON payloads or query params.
+    """
+    target_lang = ""
+    # 1. Query parameters
+    for q_key in ("target_lang", "targetLang", "target_language", "targetLanguage", "target", "to", "lang", "language", "code"):
+        val = query_params.get(q_key)
+        if val and isinstance(val, str) and val.strip():
+            target_lang = val.strip()
+            break
+
+    if not isinstance(body, dict):
+        return {}, (target_lang or "en").lower().strip()
+
+    # 2. Body-level language parameter
+    if not target_lang:
+        for b_key in ("target_lang", "targetLang", "target_language", "targetLanguage", "target", "to", "lang", "language", "target_code", "code"):
+            for k, v in body.items():
+                if k.lower() == b_key.lower() and isinstance(v, str) and v.strip():
+                    target_lang = v.strip()
+                    break
+            if target_lang:
+                break
+
+    # 3. Detect {key: text} fields container
+    fields: Dict[str, Any] = {}
+    for c_key in ("strings", "texts", "data", "fields", "payload", "items", "content", "dict", "translations"):
+        if c_key in body and isinstance(body[c_key], dict):
+            fields = body[c_key]
+            break
+
+    if not fields:
+        reserved_keys = {
+            "target_lang", "targetlang", "target_language", "targetlanguage",
+            "target", "to", "lang", "language", "target_code", "code",
+            "from", "source", "source_lang", "sourcelang", "isdynamic", "is_dynamic"
+        }
+        fields = {k: v for k, v in body.items() if k.lower() not in reserved_keys}
+
+    return fields, (target_lang or "en").lower().strip()
+
+
+async def _translate_single_text(client: httpx.AsyncClient, text: str, target_lang: str, sem: asyncio.Semaphore) -> str:
+    """Translates a single string with timeout and fallback to original English text."""
+    if not text or not isinstance(text, str) or not text.strip():
+        return text
+
+    clean_text = text.strip()
+    cache_key = (clean_text.lower(), target_lang)
+    if cache_key in RUNTIME_TRANSLATION_CACHE:
+        return RUNTIME_TRANSLATION_CACHE[cache_key]
+
+    async with sem:
+        try:
+            encoded_query = urllib.parse.quote(clean_text)
+            url = f"https://api.mymemory.translated.net/get?q={encoded_query}&langpair=en|{target_lang}"
+            resp = await client.get(url, timeout=3.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                t = data.get("responseData", {}).get("translatedText")
+                if t and isinstance(t, str) and t.strip():
+                    t_upper = t.strip().upper()
+                    if not t_upper.startswith("MYMEMORY WARNING:") and "INVALID TARGET LANGUAGE" not in t_upper and "NO QUERY" not in t_upper:
+                        result_text = t.strip()
+                        RUNTIME_TRANSLATION_CACHE[cache_key] = result_text
+                        return result_text
+        except Exception:
+            pass
+
+    # Graceful fallback: return original English text
+    return text
+
+
+async def translate_fields_batch(fields: Dict[str, Any], target_lang: str) -> Dict[str, Any]:
+    """
+    Translates a dictionary of {key: text} pairs into target_lang in the exact same shape.
+    Handles 50+ fields in a single call. If translation fails, returns original English text.
+    """
+    target = (target_lang or "en").lower().strip()
+    if target in ("en", "english", ""):
+        return dict(fields)
+
+    # Validate target language code format
+    if not re.match(r"^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,4})?$", target):
+        logger.info("Target language '%s' is invalid/unsupported. Returning original text.", target)
+        return dict(fields)
+
+    results: Dict[str, Any] = {}
+    misses: List[Tuple[str, str]] = []
+
+    for k, v in fields.items():
+        if not isinstance(v, str) or not v.strip():
+            results[k] = v
+            continue
+
+        # 1. Direct Key Match in Pre-compiled Dictionary
+        if target in TRANSLATIONS_DICT and k in TRANSLATIONS_DICT[target]:
+            results[k] = TRANSLATIONS_DICT[target][k]
+            continue
+
+        # 2. Text Match in Pre-compiled Dictionary
+        v_norm = v.strip().lower()
+        if target in TEXT_LOOKUP_DICT and v_norm in TEXT_LOOKUP_DICT[target]:
+            results[k] = TEXT_LOOKUP_DICT[target][v_norm]
+            continue
+
+        # 3. In-memory runtime cache
+        cache_key = (v_norm, target)
+        if cache_key in RUNTIME_TRANSLATION_CACHE:
+            results[k] = RUNTIME_TRANSLATION_CACHE[cache_key]
+            continue
+
+        misses.append((k, v))
+
+    # 4. Asynchronously translate any remaining misses in parallel with concurrency semaphore
+    if misses:
+        sem = asyncio.Semaphore(12)
+        try:
+            async with httpx.AsyncClient() as client:
+                tasks = [_translate_single_text(client, text, target, sem) for _, text in misses]
+                translated_list = await asyncio.gather(*tasks, return_exceptions=True)
+                for (k, original_val), res in zip(misses, translated_list):
+                    if isinstance(res, str) and res.strip():
+                        results[k] = res
+                    else:
+                        results[k] = original_val
+        except Exception as batch_err:
+            logger.warning("Batch translation error: %s. Preserving original English text.", batch_err)
+            for k, original_val in misses:
+                if k not in results:
+                    results[k] = original_val
+
+    # Guarantee every single input key is preserved in the output dictionary
+    for k, v in fields.items():
+        if k not in results:
+            results[k] = v
+
+    return results
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 4. API Endpoints
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -236,7 +454,65 @@ def root_info():
         "docs_url": "/docs",
         "endpoints": {
             "POST /chat": "Submit a question to the Hybrid RAG pipeline",
+            "POST /api/translate": "Batch translation endpoint for 50+ fields returning {key: translatedText}",
             "GET /health": "Verify Ollama, ChromaDB, and Web Search status"
+        }
+    }
+
+
+@app.post("/api/translate", tags=["Translation"])
+@app.post("/translate", tags=["Translation"])
+async def translate_endpoint(request: Request):
+    """
+    Runtime Batch Translation Endpoint:
+    - Accepts a JSON object of {key: text} pairs plus a target language code.
+    - Handles 50+ fields in a single call.
+    - Returns {key: translatedText} in the same shape.
+    - If translation fails, returns original English text for those keys without throwing an error.
+    """
+    fields: Dict[str, Any] = {}
+    target_lang = "en"
+
+    try:
+        query_params = dict(request.query_params)
+        body = {}
+        try:
+            body = await request.json()
+        except Exception:
+            raw_body = await request.body()
+            if raw_body:
+                body = json.loads(raw_body.decode("utf-8", errors="ignore"))
+
+        fields, target_lang = extract_translation_request(body, query_params)
+    except Exception as parse_err:
+        logger.warning("Parsing error on /api/translate: %s", parse_err)
+        return fields
+
+    try:
+        translated_map = await translate_fields_batch(fields, target_lang)
+        return translated_map
+    except Exception as e:
+        logger.warning("Translation processing notice: %s. Returning original English text.", e)
+        return fields
+
+
+@app.get("/api/translate", tags=["Translation"])
+@app.get("/translate", tags=["Translation"])
+def translate_info():
+    """Information on the /api/translate endpoint."""
+    return {
+        "endpoint": "/api/translate",
+        "method": "POST",
+        "description": "Batch translation endpoint supporting 50+ fields per call.",
+        "supported_languages": list(TRANSLATIONS_DICT.keys()) if TRANSLATIONS_DICT else ["en", "hi", "pa", "bn", "mr", "te", "ta", "gu", "kn", "ml", "or", "as", "ur"],
+        "example_request": {
+            "target_lang": "hi",
+            "navHome": "Home",
+            "navEligibility": "Check Eligibility"
+        },
+        "example_response": {
+            "navHome": "होम",
+            "navEligibility": "पात्रता जांचें"
         }
     }
 

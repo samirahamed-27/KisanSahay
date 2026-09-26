@@ -404,34 +404,19 @@ async function setLanguage(langCode) {
     return;
   }
 
-  // 3. Cache Miss: Fetch batch translation from backend API with subtle loading feedback
+  // 3. Cache Miss: Fetch batch translation via the centralized translateBatch function
   const baseStrings = window.TRANSLATIONS['en'] || window.BASE_STRINGS || {};
   const langBtn = el.langToggleBtn || document.getElementById('lang-toggle-btn');
 
   try {
     if (langBtn) langBtn.classList.add('lang-loading-shimmer');
 
-    const res = await fetch('/api/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        strings: baseStrings,
-        from: 'en',
-        to: langCode,
-        isDynamic: false
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error(`Translation API HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    if (data && data.success && data.translations) {
-      window.TRANSLATIONS[langCode] = data.translations;
+    const transMap = await translateBatch(baseStrings, langCode);
+    if (transMap && typeof transMap === 'object' && Object.keys(transMap).length > 0) {
+      window.TRANSLATIONS[langCode] = transMap;
       applyTranslationsToDOM();
     } else {
-      throw new Error('Invalid translation response');
+      applyTranslationsToDOM();
     }
   } catch (err) {
     console.warn(`[KisanSahay] Translation notice (${err.message}). Falling back gracefully to base language.`);
@@ -442,30 +427,56 @@ async function setLanguage(langCode) {
 }
 
 /**
- * On-the-fly Dynamic Translation helper (for scheme details / chat responses)
- * Bypasses static cache so dynamic information is never stale
+ * Reusable frontend batch translation function.
+ * - Returns the input unchanged if targetLang === 'en'.
+ * - Otherwise calls /api/translate once with the full object and returns the translated result in the same shape.
+ * - This is the ONLY function in the codebase that calls the translate API directly.
+ *
+ * @param {Object} fieldsObject - JSON object containing { key: text } pairs
+ * @param {string} targetLang - Target language code (e.g. 'hi', 'pa', 'mr', 'ta')
+ * @returns {Promise<Object>} - Translated { key: translatedText } object in the same shape
  */
-async function translateDynamic(texts, targetLang) {
-  if (!targetLang || targetLang === 'en' || !texts) return texts;
+async function translateBatch(fieldsObject, targetLang) {
+  // 1. Return input unchanged if target language is English or input is empty/falsy
+  if (!fieldsObject || typeof fieldsObject !== 'object' || targetLang === 'en' || !targetLang) {
+    return fieldsObject;
+  }
+
+  // 2. Call /api/translate once with the full object
   try {
-    const res = await fetch('/api/translate', {
+    const payload = Object.assign({}, fieldsObject, {
+      target_lang: targetLang
+    });
+
+    const res = await fetch(`/api/translate?target_lang=${encodeURIComponent(targetLang)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        texts,
-        from: 'en',
-        to: targetLang,
-        isDynamic: true
-      })
+      body: JSON.stringify(payload)
     });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success) return data.translations;
+
+    if (!res.ok) {
+      console.warn(`[KisanSahay] Translation API HTTP ${res.status}. Returning original fields.`);
+      return fieldsObject;
     }
+
+    const data = await res.json();
+    const result = (data && data.translations) ? data.translations : data;
+    return (result && typeof result === 'object') ? result : fieldsObject;
   } catch (err) {
-    console.warn('[KisanSahay] Dynamic translation warning:', err.message);
+    console.warn(`[KisanSahay] Translation network error (${err.message}). Returning original fields.`);
+    return fieldsObject;
   }
-  return texts;
+}
+
+// Expose globally on window so any script or UI component can reuse it
+window.translateBatch = translateBatch;
+
+/**
+ * On-the-fly Dynamic Translation helper (for scheme details / chat responses)
+ * Delegates to translateBatch
+ */
+async function translateDynamic(texts, targetLang) {
+  return await translateBatch(texts, targetLang);
 }
 
 
