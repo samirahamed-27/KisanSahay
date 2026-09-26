@@ -2344,15 +2344,15 @@
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
-        </div>
-      </div>
+        </div> <!-- /.sahay-header-actions -->
+      </div> <!-- /.sahay-header -->
 
       <!-- Farmer Profile & Vault Status Bar -->
       <div class="sahay-profile-status-bar" id="sahay-profile-status-bar">
         <div class="sahay-profile-pill-left">
           <span class="sahay-live-dot"></span>
           <span id="sahay-profile-summary-text">🌾 Farm: Ready • All-India | 🔒 Vault: Active</span>
-        </div>
+        </div> <!-- /.sahay-profile-pill-left -->
         <button type="button" id="sahay-profile-sync-btn" class="sahay-profile-pill-btn" title="Refresh My Data &amp; Documents">
           <svg class="sahay-sync-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 8A6 6 0 1 1 8 2c1.7 0 3.2.7 4.3 1.8L14 5"/>
@@ -2360,7 +2360,7 @@
           </svg>
           <span>Sync</span>
         </button>
-      </div>
+      </div> <!-- /.sahay-profile-status-bar -->
 
       <!-- Searchable 50-FAQ Drawer (Collapsible overlay) -->
       <div id="sahay-faq-drawer" class="sahay-faq-drawer" style="display: none;">
@@ -2763,9 +2763,11 @@
         </select>
       </div>
       <button type="button" class="btn-audio-close" id="audio-close-btn" title="Stop & Close Player">✕</button>
-    </div>
-    <!-- Unlogged-in Visitor Permission Request Modal -->
-    <div class="modal-overlay" id="visitor-permission-modal" style="display: none; z-index: 9999;">
+    </div> <!-- /.audio-player-inner -->
+  </div> <!-- /.kisan-audio-player-bar -->
+
+  <!-- Unlogged-in Visitor Permission Request Modal -->
+  <div class="modal-overlay" id="visitor-permission-modal" style="display: none; z-index: 9999;">
       <div class="modal-dialog permission-modal-dialog"
         style="max-width: 480px; text-align: center; padding: 2.2rem 1.85rem; border-radius: 20px;">
         <div class="permission-icon-badge"

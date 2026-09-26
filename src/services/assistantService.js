@@ -592,10 +592,11 @@ async function processAssistantQuery(query, options = {}) {
   const q = (query || '').toLowerCase();
   const isKnownIntent =
     q.includes('kcc') || q.includes('kisan credit') ||
-    q.includes('document') || q.includes('khasra') || q.includes('दस्तावेज') ||
+    q.includes('document') || q.includes('khasra') || q.includes('दस्तावेज') || q.includes('कागजात') ||
     q.includes('equipment') || q.includes('subsidy') || q.includes('tractor') || q.includes('सब्सिडी') || q.includes('यंत्र') ||
     q.includes('interest rate') || q.includes('ब्याज दर') ||
-    q.includes('eligib') || q.includes('पात्र');
+    q.includes('eligib') || q.includes('पात्र') ||
+    q.includes('profile') || q.includes('vault') || q.includes('detail') || q.includes('प्रोफाइल') || q.includes('वॉल्ट');
 
   if (isKnownIntent) {
     const retrieved = retrieveRelevantSchemes(query, effectiveProfile, 3);
