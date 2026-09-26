@@ -1,3 +1,18 @@
 node_modules/
 .DS_Store
 *.log
+*.keystore
+scratch/
+.venv/
+chroma_db/
+
+# RAG vector index (generated — run: node scripts/buildRagIndex.js)
+src/data/rag_index.json
+
+# iOS / Capacitor
+ios/App/Pods/
+ios/App/Podfile.lock
+ios/DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/

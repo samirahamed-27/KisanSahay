@@ -13,6 +13,7 @@ const { triggerIngestion } = require('../controllers/ingestController');
 
 const { handleAssistantChat } = require('../controllers/assistantController');
 const { getReviewQueue, processReviewAction } = require('../controllers/reviewController');
+const { getRagStatus } = require('../services/ragService');
 const {
   sendOtp,
   verifyOtp,
@@ -47,8 +48,14 @@ router.post('/vault/unlock', apiLimiter, unlockVault);
 router.post('/vault/reset', apiLimiter, resetVault);
 router.get('/vault/status', apiLimiter, getVaultInfo);
 
-// 7. Sahay AI Assistant (RAG Chatbot grounded in verified government data)
+// 7. Sahay AI Assistant (RAG Chatbot grounded in verified government data + Ollama llama3.2)
 router.post('/assistant/chat', apiLimiter, handleAssistantChat);
+
+// 7b. RAG Index Status (check if vector index is built and ready)
+router.get('/assistant/rag-status', apiLimiter, (req, res) => {
+  const status = getRagStatus();
+  res.json({ success: true, rag: status });
+});
 
 // 8. Multi-User Authentication & Profile Sandboxing
 router.post('/auth/send-otp', apiLimiter, sendOtp);
@@ -77,6 +84,19 @@ router.post('/notifications/push-subscription', apiLimiter, saveSubscription);
 // 11. Natural Neural Text-To-Speech (TTS) Synthesis
 const { handleSynthesize } = require('../controllers/ttsController');
 router.post('/tts/synthesize', apiLimiter, handleSynthesize);
+
+// 12. Runtime Translation API (Batching, Caching & Dynamic Scheme Translation)
+const {
+  handleTranslate,
+  handleGetLanguages,
+  handleGetCacheStats,
+  handleClearCache
+} = require('../controllers/translationController');
+
+router.post('/translate', apiLimiter, handleTranslate);
+router.get('/translate/languages', apiLimiter, handleGetLanguages);
+router.get('/translate/cache-stats', apiLimiter, handleGetCacheStats);
+router.post('/translate/cache-clear', apiLimiter, handleClearCache);
 
 module.exports = router;
 

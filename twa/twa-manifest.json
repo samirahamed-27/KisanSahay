@@ -1,0 +1,62 @@
+{
+  "packageId": "com.kisansahay.app",
+  "host": "kisansahay.vercel.app",
+  "name": "KisanSahay",
+  "launcherName": "KisanSahay",
+  "themeColor": "#16a34a",
+  "themeColorDark": "#0a0f1a",
+  "navigationColor": "#0a0f1a",
+  "navigationColorDark": "#0a0f1a",
+  "navigationDividerColor": "#16a34a",
+  "navigationDividerColorDark": "#16a34a",
+  "backgroundColor": "#0a0f1a",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://kisansahay.vercel.app/icons/icon-512.png",
+  "maskableIconUrl": "https://kisansahay.vercel.app/icons/icon-512.png",
+  "monochromeIconUrl": "https://kisansahay.vercel.app/icons/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "kisansahay"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Government Schemes",
+      "shortName": "Schemes",
+      "url": "https://kisansahay.vercel.app/#schemes",
+      "chosenIconUrl": "https://kisansahay.vercel.app/icons/icon-192.png"
+    },
+    {
+      "name": "Check Eligibility",
+      "shortName": "Eligibility",
+      "url": "https://kisansahay.vercel.app/#eligibility",
+      "chosenIconUrl": "https://kisansahay.vercel.app/icons/icon-192.png"
+    },
+    {
+      "name": "My Loans & EMIs",
+      "shortName": "Loans",
+      "url": "https://kisansahay.vercel.app/#loans",
+      "chosenIconUrl": "https://kisansahay.vercel.app/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://kisansahay.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    },
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false
+}

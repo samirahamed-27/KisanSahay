@@ -133,6 +133,22 @@
             <span class="dropdown-badge">${this.state.profiles.length} Profiles</span>
           </div>
 
+          <!-- Download KisanSahay App Bar inside Switch Profile Column (Removed from UI per user request) -->
+          <div class="dropdown-pwa-download-bar" id="dropdown-btn-download-app" role="button" tabindex="0" title="Download & Install KisanSahay App on your phone or PC" style="display: none !important;">
+            <div class="pwa-download-icon-wrap">
+              <img src="/icons/icon-192.png" alt="KisanSahay" class="pwa-bar-mini-icon">
+              <span class="pwa-pulse-dot"></span>
+            </div>
+            <div class="pwa-download-meta">
+              <div class="pwa-download-title-row">
+                <span class="pwa-download-title">Download App</span>
+                <span class="pwa-free-pill">PWA</span>
+              </div>
+              <span class="pwa-download-sub">Install on Mobile or PC • 0 MB Storage</span>
+            </div>
+            <span class="pwa-download-btn-pill">⬇️ Install</span>
+          </div>
+
           <div class="dropdown-profiles-list">
             ${this.state.profiles.map(p => `
               <div class="profile-list-item ${p.id === this.state.activeProfileId ? 'active' : ''}" data-profile-id="${p.id}">
@@ -195,6 +211,21 @@
           e.stopPropagation();
           if (menu) menu.style.display = 'none';
           this.openAddProfileModal();
+        });
+      }
+
+      // Wire Download App bar click inside Switch Profile dropdown
+      const btnDownloadApp = document.getElementById('dropdown-btn-download-app');
+      if (btnDownloadApp) {
+        btnDownloadApp.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (menu) menu.style.display = 'none';
+          if (typeof window.triggerPWAInstallOrModal === 'function') {
+            window.triggerPWAInstallOrModal();
+          } else {
+            const modal = document.getElementById('pwa-universal-download-modal');
+            if (modal) modal.style.display = 'flex';
+          }
         });
       }
     }

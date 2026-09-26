@@ -1,0 +1,163 @@
+[
+  {
+    "installment_period": "APR-JUL",
+    "financial_year": "2026-27",
+    "beneficiary_count": 94465646,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "DEC-MAR",
+    "financial_year": "2025-26",
+    "beneficiary_count": 94615309,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "AUG-NOV",
+    "financial_year": "2025-26",
+    "beneficiary_count": 93579869,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "APR-JUL",
+    "financial_year": "2025-26",
+    "beneficiary_count": 97141402,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "DEC-MAR",
+    "financial_year": "2024-25",
+    "beneficiary_count": 100685615,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "AUG-NOV",
+    "financial_year": "2024-25",
+    "beneficiary_count": 95928628,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "APR-JUL",
+    "financial_year": "2024-25",
+    "beneficiary_count": 93801580,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "DEC-MAR",
+    "financial_year": "2023-24",
+    "beneficiary_count": 90444694,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "AUG-NOV",
+    "financial_year": "2023-24",
+    "beneficiary_count": 81216697,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "APR-JUL",
+    "financial_year": "2023-24",
+    "beneficiary_count": 85679091,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "DEC-MAR",
+    "financial_year": "2022-23",
+    "beneficiary_count": 81238919,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "AUG-NOV",
+    "financial_year": "2022-23",
+    "beneficiary_count": 85740741,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "APR-JUL",
+    "financial_year": "2022-23",
+    "beneficiary_count": 104845164,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "DEC-MAR",
+    "financial_year": "2021-22",
+    "beneficiary_count": 104168513,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "AUG-NOV",
+    "financial_year": "2021-22",
+    "beneficiary_count": 103447290,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "APR-JUL",
+    "financial_year": "2021-22",
+    "beneficiary_count": 99917958,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "DEC-MAR",
+    "financial_year": "2020-21",
+    "beneficiary_count": 98476200,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "AUG-NOV",
+    "financial_year": "2020-21",
+    "beneficiary_count": 97227546,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "APR-JUL",
+    "financial_year": "2020-21",
+    "beneficiary_count": 92693999,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "DEC-MAR",
+    "financial_year": "2019-20",
+    "beneficiary_count": 82091667,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "AUG-NOV",
+    "financial_year": "2019-20",
+    "beneficiary_count": 76601029,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "APR-JUL",
+    "financial_year": "2019-20",
+    "beneficiary_count": 60034872,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  },
+  {
+    "installment_period": "DEC-MAR",
+    "financial_year": "2018-19",
+    "beneficiary_count": 31621743,
+    "source": "PM-KISAN",
+    "source_url": "https://www.pmkisan.gov.in/"
+  }
+]

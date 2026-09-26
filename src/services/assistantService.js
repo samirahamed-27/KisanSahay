@@ -8,12 +8,15 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
 const { getSoilFertilityForLocation } = require('./soilFertilityEngine');
+const { ragAnswer, getRagStatus } = require('./ragService');
 
 const SCHEMES_FILE = path.join(__dirname, '..', 'data', 'schemesDatabase.json');
+const KNOWLEDGE_FILE = path.join(__dirname, '..', 'data', 'sahayKnowledgeBase.json');
 
-// Cache of published schemes
+// Cache of published schemes and knowledge base
 let schemesCache = null;
 let lastCacheTime = 0;
+let knowledgeCache = null;
 
 function getPublishedSchemes() {
   const now = Date.now();
@@ -31,6 +34,63 @@ function getPublishedSchemes() {
     }
   }
   return [];
+}
+
+function getKnowledgeBase() {
+  if (knowledgeCache) return knowledgeCache;
+  if (fs.existsSync(KNOWLEDGE_FILE)) {
+    try {
+      knowledgeCache = JSON.parse(fs.readFileSync(KNOWLEDGE_FILE, 'utf8'));
+      return knowledgeCache;
+    } catch (e) {
+      logger.error('Error loading sahayKnowledgeBase:', e);
+    }
+  }
+  return [];
+}
+
+/**
+ * Find best matching FAQ from curated 50-item agricultural knowledge base
+ */
+function findBestKnowledgeMatch(query) {
+  const q = (query || '').toLowerCase().trim();
+  if (!q) return null;
+  const kb = getKnowledgeBase();
+  let best = null;
+  let maxScore = 0;
+
+  for (const item of kb) {
+    let score = 0;
+    const qEn = item.question_en.toLowerCase();
+    const qHi = item.question_hi.toLowerCase();
+
+    if (q === qEn || q === qHi) score += 120;
+    else if (q.includes(qEn) || qEn.includes(q)) score += 80;
+    else if (q.includes(qHi) || qHi.includes(q)) score += 80;
+
+    for (const kw of item.keywords) {
+      const lowerKw = kw.toLowerCase();
+      if (q === lowerKw) score += 60;
+      else if (q.includes(lowerKw)) score += 35;
+    }
+
+    const tokens = q.split(/\s+/).filter(t => t.length > 2);
+    for (const token of tokens) {
+      if (qEn.includes(token)) score += 8;
+      if (qHi.includes(token)) score += 8;
+      if (item.category.includes(token)) score += 6;
+    }
+
+    if (score > maxScore) {
+      maxScore = score;
+      best = item;
+    }
+  }
+
+  if (maxScore >= 35 && best) {
+    return { item: best, score: maxScore };
+  }
+  return null;
 }
 
 /**
@@ -108,6 +168,43 @@ function formatRupees(amount) {
 }
 
 /**
+ * Extract farmer profile attributes from chat query if mentioned
+ */
+function extractProfileAttributes(query) {
+  if (!query) return null;
+  const updates = {};
+  const lower = query.toLowerCase();
+
+  // Extract Land size
+  const landMatch = query.match(/(\d+(\.\d+)?)\s*(acres|acre|एकड़|एकड़|hectares|hectare|हेक्टेयर)/i);
+  if (landMatch) {
+    const val = parseFloat(landMatch[1]);
+    const isHectare = /hectare|हेक्टेयर/i.test(landMatch[3]);
+    updates.landSizeAcres = isHectare ? +(val * 2.471).toFixed(1) : val;
+  }
+
+  // Extract State
+  const states = ['Punjab', 'Haryana', 'Uttar Pradesh', 'Madhya Pradesh', 'Bihar', 'Maharashtra', 'Rajasthan', 'Gujarat', 'Karnataka', 'Tamil Nadu', 'Andhra Pradesh', 'Telangana', 'West Bengal', 'Odisha', 'Assam', 'Kerala', 'Jharkhand'];
+  for (const s of states) {
+    if (lower.includes(s.toLowerCase())) {
+      updates.state = s;
+      break;
+    }
+  }
+
+  // Extract Crop
+  const crops = ['Wheat', 'Rice', 'Paddy', 'Sugarcane', 'Cotton', 'Mustard', 'Maize', 'Soybean', 'Potato', 'Onion', 'Makhana', 'Barley', 'Bajra', 'Jowar', 'Gram', 'Lentil'];
+  for (const c of crops) {
+    if (lower.includes(c.toLowerCase())) {
+      updates.cropType = c;
+      break;
+    }
+  }
+
+  return Object.keys(updates).length > 0 ? updates : null;
+}
+
+/**
  * Generate grounded response in English or Hindi
  */
 function generateGroundedAnswer(userQuery, retrievedSchemes, farmerProfile = {}, lang = 'en') {
@@ -117,9 +214,175 @@ function generateGroundedAnswer(userQuery, retrievedSchemes, farmerProfile = {},
   const profileAcres = farmerProfile.landSizeAcres || '2.0';
 
   const primaryScheme = retrievedSchemes[0] || null;
-  const citations = [];
+  let citations = [];
+  let text = '';
+  let followUpChips = [];
 
-  // Collect citations
+  // Check if user is asking about their own stored documents or vault
+  const isVaultDocQuery = q.includes('my document') || q.includes('my vault') || q.includes('mere document') || q.includes('मेरे दस्तावेज') || q.includes('कागजात क्या हैं') || q.includes('what documents do i have') || q.includes('saved document') || (q.includes('document') && q.includes('have'));
+  const isProfileQuery = (q.includes('profile') && (q.includes('my') || q.includes('mera') || q.includes('मेरी'))) ||
+    (q.includes('detail') && (q.includes('my') || q.includes('mera') || q.includes('मेरी'))) ||
+    q.includes('my profile') || q.includes('my details') || q.includes('मेरी जानकारी') || q.includes('मेरी प्रोफाइल') || q.includes('mera data') || q.includes('stored profile');
+
+  if (isVaultDocQuery) {
+    const rawDocs = farmerProfile.documents;
+    const docNames = [];
+    if (Array.isArray(rawDocs)) {
+      rawDocs.forEach(d => docNames.push(typeof d === 'string' ? d : (d.name || d.type || 'Document')));
+    } else if (rawDocs && typeof rawDocs === 'object') {
+      if (rawDocs.aadhaar) docNames.push('Aadhaar Card');
+      if (rawDocs.landRecord) docNames.push('7/12 Land Record (Khasra)');
+      if (rawDocs.bankPassbook) docNames.push('Bank Passbook (IFSC Linked)');
+      if (rawDocs.cropDeclaration) docNames.push('Crop Sowing Self-Declaration');
+      if (rawDocs.categoryCert) docNames.push('Category / Caste Certificate');
+    }
+
+    if (isHindi) {
+      if (docNames.length > 0) {
+        text = `**🔒 आपके किसानसहाय सुरक्षित वॉल्ट में सहेजे गए दस्तावेज:**\n\n` +
+          docNames.map(d => `• ✅ **${d}:** सुरक्षित व सत्यापित`).join('\n') +
+          `\n\n💡 ये दस्तावेज आपके सभी ऋण और सब्सिडी आवेदनों में स्वतः उपयोग किए जाएंगे। आप वॉल्ट से इन्हें कभी भी देख या बदल सकते हैं।`;
+      } else {
+        text = `**🔒 आपका किसानसहाय वॉल्ट अभी खाली है।**\n\nआप ऊपर दिए गए **दस्तावेज वॉल्ट (Document Vault)** में अपने आधार कार्ड, 7/12 खतौनी, और बैंक पासबुक को पासवर्ड या पिन से सुरक्षित रूप से जमा कर सकते हैं, जिससे आवेदन करते समय बार-बार दस्तावेज नहीं ढूंढने पड़ेंगे।`;
+      }
+      followUpChips = [
+        "KCC के लिए कौन-से दस्तावेज चाहिए?",
+        "वॉल्ट में दस्तावेज कैसे सुरक्षित करें?",
+        "क्या मैं KCC के लिए पात्र हूँ?"
+      ];
+    } else {
+      if (docNames.length > 0) {
+        text = `**🔒 Your Saved Documents in KisanSahay Vault:**\n\n` +
+          docNames.map(d => `• ✅ **${d}:** Encrypted & Ready for Instant Application`).join('\n') +
+          `\n\n💡 These documents are automatically attached when you apply for government schemes or bank loans. You can manage them in your encrypted Document Vault.`;
+      } else {
+        text = `**🔒 Your KisanSahay Vault is currently empty.**\n\n` +
+          `You can store your Aadhaar Card, Land Record (7/12 Khasra/Khatauni), and Bank Passbook in the **Document Vault** with custom word/PIN/pattern protection for instant auto-attachment to schemes.`;
+      }
+      followUpChips = [
+        "What documents do I need for a crop loan?",
+        "How to save documents in Vault?",
+        "Am I eligible for KCC?"
+      ];
+    }
+
+    citations.push({
+      schemeName: 'KisanSahay Encrypted Document Vault System',
+      authority: 'Digital India & DigiLocker Standards',
+      url: 'https://digilocker.gov.in/',
+      lastVerifiedAt: '2026-09-15'
+    });
+
+    return {
+      reply: text,
+      language: isHindi ? 'hi' : 'en',
+      citations,
+      suggestedChips: followUpChips,
+      retrievedCount: 1,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  if (isProfileQuery) {
+    const crop = farmerProfile.cropType || 'Not set';
+    const acres = farmerProfile.landSizeAcres || 'Not set';
+    const stateName = farmerProfile.state || 'All-India';
+    const income = farmerProfile.annualIncome ? `₹${Number(farmerProfile.annualIncome).toLocaleString('en-IN')}` : 'Not set';
+
+    if (isHindi) {
+      text = `**👤 आपका किसान प्रोफाइल विवरण:**\n\n` +
+        `• **राज्य व क्षेत्र:** ${stateName}\n` +
+        `• **भूमि का आकार:** ${acres} एकड़\n` +
+        `• **प्रमुख फसल:** ${crop}\n` +
+        `• **वार्षिक आय:** ${income}\n\n` +
+        `💡 इस जानकारी के आधार पर मैं आपकी पात्रता और सबसे उपयुक्त सरकारी योजनाओं का सटीक मूल्यांकन कर सकता हूँ।`;
+      followUpChips = [
+        "क्या मैं KCC के लिए पात्र हूँ?",
+        "मेरे राज्य में ब्याज दरों की तुलना करें",
+        "फसल ऋण के लिए कौन-से दस्तावेज चाहिए?"
+      ];
+    } else {
+      text = `**👤 Your Stored Farmer Profile:**\n\n` +
+        `• **State / Region:** ${stateName}\n` +
+        `• **Land Holding:** ${acres} Acres\n` +
+        `• **Primary Crop:** ${crop}\n` +
+        `• **Annual Farm Income:** ${income}\n\n` +
+        `💡 Based on this data, I automatically filter government subsidies and calculate your maximum safe loan limits.`;
+      followUpChips = [
+        "Am I eligible for KCC?",
+        "Compare interest rates for my state",
+        "What documents do I need for a crop loan?"
+      ];
+    }
+
+    citations.push({
+      schemeName: 'National Agriculture Portal (Farmer Profile Registry)',
+      authority: 'Ministry of Agriculture & Farmers Welfare',
+      url: 'https://agricoop.nic.in/',
+      lastVerifiedAt: '2026-09-15'
+    });
+
+    return {
+      reply: text,
+      language: isHindi ? 'hi' : 'en',
+      citations,
+      suggestedChips: followUpChips,
+      retrievedCount: 1,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  // Check 50-FAQ Agricultural Knowledge Base
+  const kbMatch = findBestKnowledgeMatch(userQuery);
+  if (kbMatch && kbMatch.score >= 35) {
+    const item = kbMatch.item;
+    let answerText = isHindi ? item.answer_hi : item.answer_en;
+
+    // Append personalized farm context if farmer profile has specifics
+    if (farmerProfile.landSizeAcres || farmerProfile.state) {
+      if (isHindi) {
+        answerText += `\n\n🌾 *आपकी प्रोफाइल संदर्भ:* आपके ${farmerProfile.state || 'राज्य'} में ${farmerProfile.landSizeAcres || '2'} एकड़ जोत के आधार पर यह सीधे आपकी खेती पर लागू होता है।`;
+      } else {
+        answerText += `\n\n🌾 *Your Farm Context:* Based on your ${farmerProfile.state || 'state'} farm profile with ${farmerProfile.landSizeAcres || '2'} acres, this guidance is directly applicable to your agricultural operations.`;
+      }
+    }
+
+    citations = (item.citations || []).map(c => ({
+      schemeName: c.schemeName || c.title,
+      authority: c.authority || 'Ministry of Agriculture & Farmers Welfare',
+      url: c.url || 'https://agricoop.nic.in/',
+      lastVerifiedAt: c.lastVerifiedAt || '2026-09-15'
+    }));
+
+    if (citations.length === 0) {
+      citations.push({
+        schemeName: 'Department of Agriculture & Farmers Welfare Guidelines',
+        authority: 'Government of India',
+        url: 'https://agricoop.nic.in/',
+        lastVerifiedAt: '2026-09-15'
+      });
+    }
+
+    followUpChips = (item.suggestedChips && item.suggestedChips.length === 3)
+      ? item.suggestedChips
+      : [
+          "Am I eligible for KCC?",
+          "What documents do I need for a crop loan?",
+          "Compare interest rates for my state"
+        ];
+
+    return {
+      reply: answerText,
+      language: isHindi ? 'hi' : 'en',
+      citations,
+      suggestedChips: followUpChips,
+      retrievedCount: 1,
+      knowledgeBaseId: item.id,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  // Fallback to Scheme Grounded Retrieval
   for (const s of retrievedSchemes) {
     if (s.application?.applyUrl || s.officialPortalUrl) {
       citations.push({
@@ -131,7 +394,6 @@ function generateGroundedAnswer(userQuery, retrievedSchemes, farmerProfile = {},
     }
   }
 
-  // Ensure default RBI/NABARD citation if empty
   if (citations.length === 0) {
     citations.push({
       schemeName: 'Reserve Bank of India Agricultural Credit Directives & MISS Guidelines',
@@ -140,9 +402,6 @@ function generateGroundedAnswer(userQuery, retrievedSchemes, farmerProfile = {},
       lastVerifiedAt: '2026-09-15'
     });
   }
-
-  let text = '';
-  let followUpChips = [];
 
   // INTENT 1: KCC Eligibility
   if (q.includes('kcc') || q.includes('kisan credit card') || (q.includes('eligib') && q.includes('card')) || (q.includes('पात्र') && q.includes('केसीसी'))) {
@@ -299,11 +558,116 @@ function generateGroundedAnswer(userQuery, retrievedSchemes, farmerProfile = {},
 
 /**
  * Main chat handler for Sahay AI
+ * Pipeline:
+ *   1. Extract profile attributes from query
+ *   2. Try local 50-item knowledge base (fast, no LLM)
+ *   3. Try local scheme retrieval (fast, no LLM)
+ *   4. Fall through to RAG pipeline (Ollama llama3.2 + nomic-embed-text)
+ *   5. If RAG not available, return best-effort scheme answer
  */
 async function processAssistantQuery(query, options = {}) {
   const { language = 'en', farmerProfile = {} } = options;
-  const retrieved = retrieveRelevantSchemes(query, farmerProfile, 3);
-  return generateGroundedAnswer(query, retrieved, farmerProfile, language);
+  const extractedProfile = extractProfileAttributes(query);
+  const effectiveProfile = { ...farmerProfile, ...(extractedProfile || {}) };
+
+  // ── Step 1: Local Knowledge Base (50 curated FAQs) ──────────────────
+  // Threshold lowered to 35 to match the scoring logic in findBestKnowledgeMatch.
+  // The old threshold of 60 caused near-exact KB matches (score 35–59) to fall
+  // through to RAG and return unrelated cooperative-DB answers.
+  const kbMatch = findBestKnowledgeMatch(query);
+  if (kbMatch && kbMatch.score >= 35) {
+    // Good local match — answer immediately without LLM
+    const retrieved = retrieveRelevantSchemes(query, effectiveProfile, 3);
+    const result = generateGroundedAnswer(query, retrieved, effectiveProfile, language);
+    if (extractedProfile) result.extractedProfile = extractedProfile;
+    result.source = 'knowledge_base';
+    return result;
+  }
+
+  // ── Step 1b: Local Intent Detection ─────────────────────────────────
+  // For well-known agricultural intents (KCC, documents, subsidies, rates)
+  // prefer the curated local scheme answers over medium-confidence RAG results.
+  // This prevents the RAG pipeline from returning generic cooperative-DB answers
+  // for specific scheme/loan queries that the local engine handles perfectly.
+  const q = (query || '').toLowerCase();
+  const isKnownIntent =
+    q.includes('kcc') || q.includes('kisan credit') ||
+    q.includes('document') || q.includes('khasra') || q.includes('दस्तावेज') ||
+    q.includes('equipment') || q.includes('subsidy') || q.includes('tractor') || q.includes('सब्सिडी') || q.includes('यंत्र') ||
+    q.includes('interest rate') || q.includes('ब्याज दर') ||
+    q.includes('eligib') || q.includes('पात्र');
+
+  if (isKnownIntent) {
+    const retrieved = retrieveRelevantSchemes(query, effectiveProfile, 3);
+    const result = generateGroundedAnswer(query, retrieved, effectiveProfile, language);
+    if (extractedProfile) result.extractedProfile = extractedProfile;
+    result.source = 'local_retrieval';
+    return result;
+  }
+
+  // ── Step 2: RAG Pipeline (Ollama) ───────────────────────────────────
+  // Only used for open-ended questions not covered by local KB or known intents.
+  const ragStatus = getRagStatus();
+  if (ragStatus.ready) {
+    try {
+      const ragResult = await ragAnswer(query, {
+        topK: 5,
+        language,
+        farmerProfile: effectiveProfile
+      });
+
+      // Only use RAG answer if it has at least medium confidence
+      if (ragResult.ragUsed && ragResult.confidence !== 'none') {
+        // Format RAG citations to match the existing Sahay AI citation schema
+        const citations = ragResult.sources.slice(0, 3).map(s => ({
+          schemeName: s.title,
+          authority: s.category === 'scheme' ? 'Government of India' :
+                     s.category === 'act' ? 'Ministry of Cooperation / Govt. of India' :
+                     'Government of India — Official Document',
+          url: s.url || 'https://www.india.gov.in/',
+          lastVerifiedAt: '2026-09-23',
+          ragScore: s.score
+        }));
+
+        const isHindi = language === 'hi' || /[\u0900-\u097F]/.test(query);
+
+        // Generate suggested follow-up chips
+        const followUpChips = isHindi
+          ? ['PM-KISAN की पूरी जानकारी दें', 'KCC के लिए पात्रता क्या है?', 'सहकारी समितियाँ क्या हैं?']
+          : ['Tell me more about PM-KISAN', 'Am I eligible for KCC?', 'What are cooperative societies?'];
+
+        // Append confidence indicator to answer for transparency
+        const confidenceNote = ragResult.confidence === 'medium'
+          ? isHindi
+            ? '\n\n*📊 यह उत्तर आपकी डेटा फाइलों पर आधारित है। मध्यम-विश्वास स्तर।*'
+            : '\n\n*📊 Answer grounded in your data files. Medium confidence — verify with official sources.*'
+          : '';
+
+        return {
+          reply: ragResult.answer + confidenceNote,
+          language: isHindi ? 'hi' : 'en',
+          citations,
+          suggestedChips: followUpChips,
+          retrievedCount: ragResult.sources.length,
+          source: 'rag_pipeline',
+          ragConfidence: ragResult.confidence,
+          ragScore: ragResult.bestScore,
+          timestamp: new Date().toISOString(),
+          ...(extractedProfile ? { extractedProfile } : {})
+        };
+      }
+    } catch (ragErr) {
+      // RAG failed (e.g. Ollama not running) — log and gracefully fall through
+      logger.warn('[RAG] RAG pipeline unavailable, falling back to local retrieval:', ragErr.message);
+    }
+  }
+
+  // ── Step 3: Local Scheme Retrieval Fallback ─────────────────────────
+  const retrieved = retrieveRelevantSchemes(query, effectiveProfile, 3);
+  const result = generateGroundedAnswer(query, retrieved, effectiveProfile, language);
+  if (extractedProfile) result.extractedProfile = extractedProfile;
+  result.source = 'local_retrieval';
+  return result;
 }
 
 module.exports = {

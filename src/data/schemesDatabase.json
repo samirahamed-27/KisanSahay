@@ -76425,5 +76425,1620 @@
     },
     "lastVerifiedAt": "2026-09-15T10:30:00.000Z",
     "publishedAt": "2026-09-18T18:11:09.430Z"
+  },
+  {
+    "id": "pb-crop-01",
+    "name": "Punjab State Cooperative Bank 0% Crop Loan Scheme",
+    "shortName": "PSCADB 0% Crop Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Punjab State Cooperative Agricultural Development Bank (PSCADB)",
+    "state": "Punjab",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 250,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper",
+        "shg",
+        "jlg"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "wheat",
+        "paddy",
+        "cotton",
+        "mustard",
+        "sugarcane",
+        "maize"
+      ],
+      "statesApplicable": [
+        "Punjab"
+      ]
+    },
+    "whatItIs": "Punjab Government & PSCADB 100% interest subvention crop loan for timely repaying farmers with zero processing fees.",
+    "tagline": "0% Effective Interest Rate for prompt repaying farmers in Punjab",
+    "benefits": [
+      "0% net interest rate",
+      "Up to ₹3.00 Lakh credit limit",
+      "Subsidized crop insurance cover"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Fard/Jamabandi Land Record",
+      "Bank Passbook",
+      "Kisan Credit Card"
+    ],
+    "tags": [
+      "punjab",
+      "crop loan",
+      "0% interest",
+      "kcc",
+      "subsidized"
+    ]
+  },
+  {
+    "id": "pb-infra-02",
+    "name": "Punjab Subsidized Tractor & Crop Residue Management Credit Facility",
+    "shortName": "Punjab CRM Machinery Credit",
+    "category": "INFRASTRUCTURE LOAN",
+    "subCategory": "Farm Machinery",
+    "provider": "Punjab Department of Agriculture & Commercial Banks",
+    "state": "Punjab",
+    "district": null,
+    "baseInterestRate": 8.5,
+    "subsidizedInterestRate": 5.5,
+    "effectiveRate": 5.5,
+    "promptRepaymentIncentive": 2,
+    "subsidyPercentage": 50,
+    "maxLoanAmount": 1500000,
+    "maxLimit": 1500000,
+    "collateralFreeLimit": 160000,
+    "tenureMonthsRange": [
+      36,
+      84
+    ],
+    "defaultTenure": 60,
+    "hiddenCharges": {
+      "processingFeePercentage": 0.5,
+      "documentationCharges": 500,
+      "stampDutyPercentage": 0.1,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.8
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 1,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "shg",
+        "fpo"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 100000,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": false,
+      "cropsSupported": [
+        "wheat",
+        "paddy",
+        "all"
+      ],
+      "statesApplicable": [
+        "Punjab"
+      ]
+    },
+    "whatItIs": "Subsidized loan line up to 50% capital grant for Super SMS, Happy Seeder, and Straw Management machinery.",
+    "tagline": "Up to 50% capital subsidy for sustainable harvesting machinery",
+    "benefits": [
+      "50% government machinery grant",
+      "Up to ₹15 Lakh funding",
+      "Easy 7-year repayment"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Land Jamabandi",
+      "Bank Account Passbook",
+      "Quotation from Authorized Dealer"
+    ],
+    "tags": [
+      "punjab",
+      "machinery",
+      "tractor",
+      "happy seeder",
+      "subsidy"
+    ]
+  },
+  {
+    "id": "hr-crop-01",
+    "name": "Haryana Pashu Kisan Credit Card & 0% Crop Loan Scheme",
+    "shortName": "Haryana Pashu KCC & Crop Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop & Animal Husbandry",
+    "provider": "Haryana State Cooperative Apex Bank (HARCO Bank)",
+    "state": "Haryana",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 160000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper",
+        "shg"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "wheat",
+        "mustard",
+        "paddy",
+        "cotton",
+        "bajra",
+        "dairy"
+      ],
+      "statesApplicable": [
+        "Haryana"
+      ]
+    },
+    "whatItIs": "HARCO Bank interest subvention scheme giving 0% interest on timely repayment of agricultural and dairy credit.",
+    "tagline": "0% interest crop & livestock loan through Haryana PACS",
+    "benefits": [
+      "0% effective interest rate",
+      "Up to ₹3.00 Lakh for crops & cattle",
+      "No collateral up to ₹1.60 Lakh"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Haryana Parivar Pehchan Patra (PPP)",
+      "Bank Passbook",
+      "Land Record"
+    ],
+    "tags": [
+      "haryana",
+      "harco bank",
+      "0% interest",
+      "pashu kcc",
+      "subsidized"
+    ]
+  },
+  {
+    "id": "hr-infra-02",
+    "name": "Haryana Micro-Irrigation & Solar Water Pump Subsidy Credit",
+    "shortName": "Haryana Solar & Drip Loan",
+    "category": "INFRASTRUCTURE LOAN",
+    "subCategory": "Irrigation & Solar",
+    "provider": "Haryana Agriculture & New Renewable Energy Department",
+    "state": "Haryana",
+    "district": null,
+    "baseInterestRate": 8,
+    "subsidizedInterestRate": 4,
+    "effectiveRate": 4,
+    "promptRepaymentIncentive": 2,
+    "subsidyPercentage": 75,
+    "maxLoanAmount": 500000,
+    "maxLimit": 500000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      36,
+      60
+    ],
+    "defaultTenure": 48,
+    "hiddenCharges": {
+      "processingFeePercentage": 0.25,
+      "documentationCharges": 300,
+      "stampDutyPercentage": 0.1,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.6
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0.5,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 50000,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": false,
+      "cropsSupported": [
+        "all"
+      ],
+      "statesApplicable": [
+        "Haryana"
+      ]
+    },
+    "whatItIs": "Up to 75% financial grant and low-interest credit for 3HP to 10HP solar agriculture pumps and drip irrigation.",
+    "tagline": "75% government grant for solar tubewells & drip lines",
+    "benefits": [
+      "75% solar pump grant",
+      "Subsidized 4% interest rate",
+      "Reliable daytime irrigation"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "PPP Family ID",
+      "Electricity Discom NOC",
+      "Land Jamabandi"
+    ],
+    "tags": [
+      "haryana",
+      "solar pump",
+      "drip irrigation",
+      "75% subsidy"
+    ]
+  },
+  {
+    "id": "rj-crop-01",
+    "name": "Rajasthan Sahakar Fasal Rin Yojana (0% Net Interest Crop Loan)",
+    "shortName": "Rajasthan 0% Sahakar Rin",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Rajasthan Cooperative Banks & Apex Bank",
+    "state": "Rajasthan",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      24
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "mustard",
+        "wheat",
+        "bajra",
+        "pulses",
+        "guar",
+        "cumin",
+        "isabgol"
+      ],
+      "statesApplicable": [
+        "Rajasthan"
+      ]
+    },
+    "whatItIs": "Interest-free short-term crop loan disbursed via biometric Jan Aadhaar verification through Rajasthan GSS/PACS.",
+    "tagline": "100% interest-free agricultural credit across Rajasthan",
+    "benefits": [
+      "0% effective rate on timely return",
+      "Disbursed via Jan Aadhaar",
+      "Up to ₹3.00 Lakh ceiling"
+    ],
+    "documentsRequired": [
+      "Jan Aadhaar Card",
+      "Aadhaar Card",
+      "Revenue Land Jamabandi",
+      "Bank Account Details"
+    ],
+    "tags": [
+      "rajasthan",
+      "0% interest",
+      "sahakar fasal rin",
+      "jan aadhaar",
+      "subsidized"
+    ]
+  },
+  {
+    "id": "mh-crop-01",
+    "name": "Dr. Punjabrao Deshmukh 0% Interest Crop Loan Scheme",
+    "shortName": "Dr. Punjabrao Deshmukh 0% Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Maharashtra State Cooperative Bank (MSCB) & District Central Co-op Banks",
+    "state": "Maharashtra",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 250,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "soybean",
+        "cotton",
+        "sugarcane",
+        "paddy",
+        "jowar",
+        "onion",
+        "pomegranate"
+      ],
+      "statesApplicable": [
+        "Maharashtra"
+      ]
+    },
+    "whatItIs": "Government of Maharashtra 100% interest subvention for farmers repaying crop loans up to ₹3 Lakh on schedule.",
+    "tagline": "0% interest crop credit across all Maharashtra districts",
+    "benefits": [
+      "Full 0% interest waiver on prompt return",
+      "Up to ₹3 Lakh limit",
+      "Covers drought-prone Vidarbha & Marathwada"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "7/12 Extract",
+      "8-A Extract",
+      "Bank Passbook",
+      "Crop Sowing Declaration"
+    ],
+    "tags": [
+      "maharashtra",
+      "punjabrao deshmukh",
+      "0% interest",
+      "7/12 extract",
+      "subsidized"
+    ]
+  },
+  {
+    "id": "gj-crop-01",
+    "name": "Gujarat Mukhyamantri Kisan Sahay Rin Yojana (0% Crop Loan)",
+    "shortName": "Gujarat 0% Kisan Sahay Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Gujarat State Cooperative Bank (GSC Bank) & DCCBs",
+    "state": "Gujarat",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      24
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "groundnut",
+        "cotton",
+        "wheat",
+        "castor",
+        "cumin",
+        "dairy"
+      ],
+      "statesApplicable": [
+        "Gujarat"
+      ]
+    },
+    "whatItIs": "State government 4% additional interest rebate combining with Central 3% subvention for net 0% crop credit.",
+    "tagline": "Zero percent interest agricultural credit in Gujarat",
+    "benefits": [
+      "0% effective rate",
+      "Combined State + Central subvention",
+      "Covers Groundnut, Cotton & Dairy"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "7/12 & 8-A Revenue Record",
+      "Bank Passbook",
+      "Kisan Credit Card"
+    ],
+    "tags": [
+      "gujarat",
+      "kisan sahay",
+      "0% interest",
+      "cotton",
+      "groundnut"
+    ]
+  },
+  {
+    "id": "ka-crop-01",
+    "name": "Karnataka Zero Percent Interest Karshaka Crop Loan Scheme",
+    "shortName": "Karnataka 0% Karshaka Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Karnataka State Apex Bank & Primary Agriculture Credit Societies",
+    "state": "Karnataka",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "ragi",
+        "paddy",
+        "sugarcane",
+        "coffee",
+        "arecanut",
+        "maize"
+      ],
+      "statesApplicable": [
+        "Karnataka"
+      ]
+    },
+    "whatItIs": "Zero percent interest short-term credit up to ₹3 Lakh and 3% medium-term loan up to ₹10 Lakh via cooperative PACS.",
+    "tagline": "0% interest crop credit up to ₹3 Lakh in Karnataka",
+    "benefits": [
+      "0% net interest",
+      "3% concessional rate up to ₹10 Lakh for medium-term",
+      "Quick PACS disbursement"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Bhoomi RTC Land Record",
+      "Bank Account Passbook",
+      "Kisan Credit Card"
+    ],
+    "tags": [
+      "karnataka",
+      "0% interest",
+      "bhoomi rtc",
+      "karshaka loan"
+    ]
+  },
+  {
+    "id": "tn-crop-01",
+    "name": "Tamil Nadu Cooperative Societies 0% Crop Loan Scheme",
+    "shortName": "Tamil Nadu 0% Cooperative Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Tamil Nadu State Apex Cooperative Bank (TNSC Bank) & PACCS",
+    "state": "Tamil Nadu",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "paddy",
+        "banana",
+        "sugarcane",
+        "coconut",
+        "cotton",
+        "millets"
+      ],
+      "statesApplicable": [
+        "Tamil Nadu"
+      ]
+    },
+    "whatItIs": "Interest-free crop loan provided through primary agricultural cooperative credit societies with full state subvention.",
+    "tagline": "0% interest crop loan for Cauvery delta & all TN districts",
+    "benefits": [
+      "0% interest on prompt repayment",
+      "Up to ₹3.00 Lakh limit",
+      "Direct PACCS village disbursement"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Patta/Chitta Land Document",
+      "Bank Passbook",
+      "Crop Cultivation Certificate"
+    ],
+    "tags": [
+      "tamil nadu",
+      "tnsc bank",
+      "0% interest",
+      "patta chitta"
+    ]
+  },
+  {
+    "id": "ap-crop-01",
+    "name": "Andhra Pradesh YSR Sunna Vaddi Panta Runalu (Zero-Interest Crop Loan)",
+    "shortName": "YSR Sunna Vaddi Crop Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Andhra Pradesh State Cooperative Bank (APCOB) & Commercial Banks",
+    "state": "Andhra Pradesh",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "paddy",
+        "chillies",
+        "cotton",
+        "tobacco",
+        "groundnut",
+        "maize"
+      ],
+      "statesApplicable": [
+        "Andhra Pradesh"
+      ]
+    },
+    "whatItIs": "Zero-interest credit for farmers repaying crop loans up to ₹1 Lakh within one year, with direct DBT interest credit to farmer account.",
+    "tagline": "Zero-interest crop credit under YSR Sunna Vaddi Panta Runalu",
+    "benefits": [
+      "100% interest reimbursement via DBT",
+      "Up to ₹3 Lakh facility",
+      "Covers both owner and CCRC tenant farmers"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Webland 1-B Adangal Extract",
+      "Bank Passbook",
+      "CCRC Card for Tenants"
+    ],
+    "tags": [
+      "andhra pradesh",
+      "ysr sunna vaddi",
+      "0% interest",
+      "adangal",
+      "tenant support"
+    ]
+  },
+  {
+    "id": "tg-crop-01",
+    "name": "Telangana Vaddi Leni Runalu (Interest-Free Agriculture Loan Scheme)",
+    "shortName": "Telangana Vaddi Leni Runalu",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Telangana State Cooperative Apex Bank (TSCAB) & DCCBs",
+    "state": "Telangana",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "cotton",
+        "paddy",
+        "red gram",
+        "soybean",
+        "maize"
+      ],
+      "statesApplicable": [
+        "Telangana"
+      ]
+    },
+    "whatItIs": "State interest subvention reimbursing full interest on timely repaid crop loans up to ₹1,00,000 and 3% interest for loans up to ₹3,00,000.",
+    "tagline": "Zero-percent interest credit via Rythu Vedika & TSCAB",
+    "benefits": [
+      "0% net rate on loans up to ₹1 Lakh",
+      "Pava Vaddi 3% rate up to ₹3 Lakh",
+      "Seamless Dharani portal integration"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Dharani Passbook",
+      "Bank Account Details",
+      "Crop Declaration"
+    ],
+    "tags": [
+      "telangana",
+      "vaddi leni runalu",
+      "0% interest",
+      "dharani",
+      "cotton"
+    ]
+  },
+  {
+    "id": "wb-crop-01",
+    "name": "West Bengal Krishak Bandhu Financial & Subsidized Crop Credit",
+    "shortName": "WB Krishak Bandhu Credit",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "West Bengal State Cooperative Bank (WBSCB) & DCCBs",
+    "state": "West Bengal",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 2,
+    "effectiveRate": 2,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 250,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper",
+        "bargadar"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "paddy",
+        "jute",
+        "potato",
+        "tea",
+        "vegetables",
+        "mustard"
+      ],
+      "statesApplicable": [
+        "West Bengal"
+      ]
+    },
+    "whatItIs": "Concessional 2% effective rate crop loan combined with ₹10,000 annual Krishak Bandhu grant and ₹2 Lakh life protection.",
+    "tagline": "2% low-interest crop loan with Bargadar rights protection",
+    "benefits": [
+      "Ultra-low 2% interest rate",
+      "Covers sharecroppers & Bargadars",
+      "₹2 Lakh accidental security included"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Krishak Bandhu Smart Card",
+      "ROR / Khatian Land Record",
+      "Bank Passbook"
+    ],
+    "tags": [
+      "west bengal",
+      "krishak bandhu",
+      "bargadar",
+      "2% interest",
+      "jute",
+      "potato"
+    ]
+  },
+  {
+    "id": "od-crop-01",
+    "name": "Odisha Balaram & Kalia Subsidized 0% Crop Loan Scheme",
+    "shortName": "Odisha Balaram 0% Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Odisha State Cooperative Bank (OSCB) & PACS",
+    "state": "Odisha",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 100000,
+    "maxLimit": 100000,
+    "collateralFreeLimit": 100000,
+    "tenureMonthsRange": [
+      12,
+      24
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 150,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper",
+        "landless",
+        "jlg"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": false,
+      "cropsSupported": [
+        "paddy",
+        "pulses",
+        "oilseeds",
+        "cotton",
+        "vegetables"
+      ],
+      "statesApplicable": [
+        "Odisha"
+      ]
+    },
+    "whatItIs": "Collateral-free zero-percent interest crop loan provided to landless sharecroppers and small cultivators formed into Joint Liability Groups (JLGs).",
+    "tagline": "0% interest collateral-free credit for landless farmers & JLGs",
+    "benefits": [
+      "0% net interest up to ₹1 Lakh",
+      "100% collateral-free for landless cultivators",
+      "Disbursed through JLG peer guarantee"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Kalia / Balaram Registration",
+      "Bank Passbook",
+      "JLG Group Resolution"
+    ],
+    "tags": [
+      "odisha",
+      "balaram",
+      "kalia",
+      "0% interest",
+      "landless",
+      "jlg"
+    ]
+  },
+  {
+    "id": "kl-crop-01",
+    "name": "Kerala Subhiksha Keralam 0% Interest Agricultural Loan",
+    "shortName": "Kerala 0% Subhiksha Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop & Horticulture",
+    "provider": "Kerala State Cooperative Bank (Kerala Bank) & Primary Societies",
+    "state": "Kerala",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "shg",
+        "kudumbashree"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "paddy",
+        "spices",
+        "coconut",
+        "rubber",
+        "banana",
+        "vegetables"
+      ],
+      "statesApplicable": [
+        "Kerala"
+      ]
+    },
+    "whatItIs": "Interest-free crop credit facilitated through Kerala Bank and Kudumbashree JLG farming units for self-sufficiency.",
+    "tagline": "0% interest agricultural credit via Kerala Bank & Kudumbashree",
+    "benefits": [
+      "0% net interest",
+      "Kudumbashree women farmer prioritized support",
+      "Covers high-value spices & plantation crops"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Thandapper/Tax Receipt",
+      "Bank Passbook",
+      "Kudumbashree / Krishi Bhavan Certificate"
+    ],
+    "tags": [
+      "kerala",
+      "kerala bank",
+      "subhiksha keralam",
+      "kudumbashree",
+      "0% interest"
+    ]
+  },
+  {
+    "id": "as-crop-01",
+    "name": "Assam Chief Minister Krishi Sa-Sajuli & 0% Crop Loan Scheme",
+    "shortName": "Assam 0% Crop Credit",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Assam Apex Cooperative Bank & Assam Gramin Vikash Bank",
+    "state": "Assam",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 160000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "paddy",
+        "tea",
+        "mustard",
+        "jute",
+        "vegetables"
+      ],
+      "statesApplicable": [
+        "Assam"
+      ]
+    },
+    "whatItIs": "Interest subvention scheme covering 100% interest on prompt repayment for small tea growers and paddy cultivators in Assam.",
+    "tagline": "Zero percent interest agricultural credit across Brahmaputra valley",
+    "benefits": [
+      "0% net interest on prompt repayment",
+      "Small tea grower & paddy priority",
+      "₹5,000 farm tool cash incentive"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Jamabandi/Land Document",
+      "Bank Passbook",
+      "KCC Card"
+    ],
+    "tags": [
+      "assam",
+      "0% interest",
+      "tea growers",
+      "paddy",
+      "subsidized"
+    ]
+  },
+  {
+    "id": "hp-crop-01",
+    "name": "Himachal Pradesh Mukhyamantri Kisan Kheti Sanrakshan & 0% Crop Loan",
+    "shortName": "Himachal 0% Apple & Crop Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Horticulture & Crop",
+    "provider": "HP State Cooperative Bank (HPSCB) & Kangra Central Co-op Bank",
+    "state": "Himachal Pradesh",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "apple",
+        "maize",
+        "wheat",
+        "ginger",
+        "garlic",
+        "vegetables"
+      ],
+      "statesApplicable": [
+        "Himachal Pradesh"
+      ]
+    },
+    "whatItIs": "Zero percent interest credit for apple orchards, anti-hail net installations, and seasonal hill agriculture.",
+    "tagline": "0% interest credit for apple orchards & hill farming",
+    "benefits": [
+      "0% net interest",
+      "Anti-hail net & cold storage integration",
+      "Easy hilly area cooperative access"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Revenue Tatima / Jamabandi",
+      "Bank Passbook",
+      "Kisan Credit Card"
+    ],
+    "tags": [
+      "himachal pradesh",
+      "apple loan",
+      "0% interest",
+      "anti-hail",
+      "hpscb"
+    ]
+  },
+  {
+    "id": "uk-crop-01",
+    "name": "Uttarakhand Deendayal Upadhyay Sahakarita Kissan Kalyan Yojana (0% Loan)",
+    "shortName": "Uttarakhand 0% Kisan Kalyan Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop & Allied",
+    "provider": "Uttarakhand State Cooperative Bank & District Cooperative Banks",
+    "state": "Uttarakhand",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 300000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 36,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "shg",
+        "jlg"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "paddy",
+        "wheat",
+        "mandua",
+        "jhangora",
+        "soybean",
+        "herbs"
+      ],
+      "statesApplicable": [
+        "Uttarakhand"
+      ]
+    },
+    "whatItIs": "Zero-percent interest loan up to ₹3 Lakh for individual farmers and up to ₹5 Lakh for women SHGs with 100% state interest waiver.",
+    "tagline": "0% interest loan up to ₹3 Lakh in Uttarakhand hills & plains",
+    "benefits": [
+      "0% interest with zero interest burden",
+      "Up to ₹5 Lakh at 0% for women SHGs",
+      "Covers aromatic & medicinal herbs"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Khatauni Land Record",
+      "Bank Passbook",
+      "Kisan Credit Card"
+    ],
+    "tags": [
+      "uttarakhand",
+      "0% interest",
+      "kisan kalyan",
+      "deendayal upadhyay"
+    ]
+  },
+  {
+    "id": "jh-crop-01",
+    "name": "Jharkhand Krishi Rin Mafi & 0% Crop Credit Scheme",
+    "shortName": "Jharkhand 0% Crop Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Jharkhand State Cooperative Bank (JSCB) & Gramin Banks",
+    "state": "Jharkhand",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 200000,
+    "maxLimit": 200000,
+    "collateralFreeLimit": 160000,
+    "tenureMonthsRange": [
+      12,
+      36
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "paddy",
+        "maize",
+        "pulses",
+        "oilseeds",
+        "vegetables"
+      ],
+      "statesApplicable": [
+        "Jharkhand"
+      ]
+    },
+    "whatItIs": "State sponsored interest rebate ensuring zero interest rate for tribal and smallholder farmers cultivating Kharif & Rabi crops.",
+    "tagline": "0% interest agricultural credit for Jharkhand farmers",
+    "benefits": [
+      "0% net interest",
+      "Priority tribal & women cultivator quotas",
+      "Up to ₹2 Lakh limit"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "LPC Land Possession Certificate",
+      "Bank Passbook",
+      "Ration Card"
+    ],
+    "tags": [
+      "jharkhand",
+      "krishi rin",
+      "0% interest",
+      "tribal priority"
+    ]
+  },
+  {
+    "id": "cg-crop-01",
+    "name": "Chhattisgarh 0% Byaaj Kisan Fasal Rin Yojana",
+    "shortName": "Chhattisgarh 0% Fasal Rin",
+    "category": "CROP LOAN",
+    "subCategory": "Crop Loan",
+    "provider": "Chhattisgarh State Cooperative Bank (Apex Bank) & PACS",
+    "state": "Chhattisgarh",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 0,
+    "effectiveRate": 0,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 0,
+    "maxLoanAmount": 300000,
+    "maxLimit": 300000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      24
+    ],
+    "defaultTenure": 12,
+    "hiddenCharges": {
+      "processingFeePercentage": 0,
+      "documentationCharges": 200,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.5
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "paddy",
+        "kodo-kutki",
+        "ragi",
+        "soybean",
+        "pulses",
+        "sugarcane"
+      ],
+      "statesApplicable": [
+        "Chhattisgarh"
+      ]
+    },
+    "whatItIs": "Chhattisgarh Government 0% interest crop loan disbursement through cooperative societies paired with Rajiv Gandhi / Krishi Unnati inputs.",
+    "tagline": "0% interest crop loans for paddy and millets in Chhattisgarh",
+    "benefits": [
+      "0% interest rate via PACS",
+      "Up to ₹3.00 Lakh credit limit",
+      "Covers paddy, kodo-kutki, and ragi millets"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Bhu-Naksha / Khasra Document",
+      "Bank Passbook",
+      "Kisan Credit Card"
+    ],
+    "tags": [
+      "chhattisgarh",
+      "0% interest",
+      "apex bank",
+      "paddy",
+      "kodo kutki"
+    ]
+  },
+  {
+    "id": "jk-crop-01",
+    "name": "Jammu & Kashmir Kisan Credit Card & High-Density Orchard Credit Line",
+    "shortName": "J&K KCC & Apple Orchard Loan",
+    "category": "CROP LOAN",
+    "subCategory": "Horticulture & Saffron",
+    "provider": "J&K Bank & J&K State Cooperative Bank",
+    "state": "Jammu and Kashmir",
+    "district": null,
+    "baseInterestRate": 7,
+    "subsidizedInterestRate": 3,
+    "effectiveRate": 3,
+    "promptRepaymentIncentive": 3,
+    "subsidyPercentage": 50,
+    "maxLoanAmount": 500000,
+    "maxLimit": 500000,
+    "collateralFreeLimit": 200000,
+    "tenureMonthsRange": [
+      12,
+      60
+    ],
+    "defaultTenure": 36,
+    "hiddenCharges": {
+      "processingFeePercentage": 0.2,
+      "documentationCharges": 300,
+      "stampDutyPercentage": 0,
+      "insuranceRequired": true,
+      "insuranceRatePercentage": 0.7
+    },
+    "eligibilityCriteria": {
+      "minLandAcres": 0,
+      "maxLandAcres": null,
+      "farmerTypes": [
+        "owner",
+        "tenant",
+        "sharecropper"
+      ],
+      "allowedCategories": [
+        "general",
+        "sc",
+        "st",
+        "obc",
+        "women"
+      ],
+      "minAnnualIncome": 0,
+      "maxAnnualIncome": null,
+      "requiresAadhaar": true,
+      "requiresKcc": true,
+      "cropsSupported": [
+        "apple",
+        "saffron",
+        "walnut",
+        "almond",
+        "paddy",
+        "cherry"
+      ],
+      "statesApplicable": [
+        "Jammu and Kashmir"
+      ]
+    },
+    "whatItIs": "Concessional 3% interest rate and 50% capital subsidy credit line for high-density apple plantation, saffron, and walnut orchards.",
+    "tagline": "Concessional 3% rate for apple, saffron & walnut growers in J&K",
+    "benefits": [
+      "3% net interest rate",
+      "50% high-density orchard subsidy",
+      "Subsidized weather-based insurance"
+    ],
+    "documentsRequired": [
+      "Aadhaar Card",
+      "Revenue Intikhab Land Record",
+      "Bank Passbook",
+      "Horticulture Department Certificate"
+    ],
+    "tags": [
+      "jammu and kashmir",
+      "apple",
+      "saffron",
+      "walnut",
+      "3% interest"
+    ]
   }
 ]
