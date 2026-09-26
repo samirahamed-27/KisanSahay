@@ -4316,6 +4316,8 @@ function setupSahayAI() {
   const chatWindow = document.getElementById('sahay-chat-window');
   const closeBtn = document.getElementById('sahay-close-btn');
   const resetBtn = document.getElementById('sahay-reset-btn');
+  const fullscreenBtn = document.getElementById('sahay-fullscreen-btn');
+  const fullscreenIcon = document.getElementById('sahay-fullscreen-icon');
   const langToggle = document.getElementById('sahay-lang-toggle');
   const langIndicator = document.getElementById('sahay-lang-indicator');
   const ttsToggle = document.getElementById('sahay-tts-toggle');
@@ -4338,11 +4340,76 @@ function setupSahayAI() {
 
   if (!launcher || !chatWindow) return;
 
-  let sahayLang = 'en'; // 'en' | 'hi'
+  const SAHAY_LANGS = [
+    { code: 'en', label: 'EN', name: 'English', speech: 'en-IN' },
+    { code: 'hi', label: 'HI', name: 'Hindi (हिन्दी)', speech: 'hi-IN' },
+    { code: 'pa', label: 'PA', name: 'Punjabi (ਪੰਜਾਬੀ)', speech: 'pa-IN' },
+    { code: 'bn', label: 'BN', name: 'Bengali (বাংলা)', speech: 'bn-IN' }
+  ];
+
+  let sahayLang = 'en'; // 'en' | 'hi' | 'pa' | 'bn'
+  let isFullscreen = false;
   let isTtsActive = true;
   let recognition = null;
   let isListening = false;
   let activeFaqCat = 'all';
+
+  const SAHAY_SPEECH_MAP = {
+    'en': 'en-IN',
+    'hi': 'hi-IN',
+    'pa': 'pa-IN',
+    'bn': 'bn-IN'
+  };
+
+  const SAHAY_INTRO_DATA = {
+    en: {
+      title: "Namaste! I'm Sahay AI",
+      text: "Your official agricultural guide with 50 verified government scheme answers, prompt repayment interest calculation, and encrypted document vault memory!",
+      chipsTitle: "Suggested Questions:",
+      chips: [
+        { query: "Am I eligible for KCC?", text: "Am I eligible for KCC?", category: "leaf" },
+        { query: "What is the interest rate on a KCC loan?", text: "KCC 4% Subsidized Interest Rate", category: "rate" },
+        { query: "What documents do I have?", text: "Check My Saved Vault Documents", category: "vault" },
+        { query: "How do I know if a loan offer is a scam?", text: "How to identify loan scams?", category: "scam" }
+      ]
+    },
+    hi: {
+      title: "नमस्ते! मैं सहाय AI हूँ",
+      text: "आपका आधिकारिक कृषि मार्गदर्शक, जिसमें 50 सत्यापित सरकारी योजनाओं के उत्तर, शीघ्र पुनर्भुगतान ब्याज गणना और सुरक्षित दस्तावेज़ वॉल्ट मेमोरी उपलब्ध है!",
+      chipsTitle: "सुझाए गए प्रश्न:",
+      chips: [
+        { query: "क्या मैं KCC के लिए पात्र हूँ?", text: "क्या मैं KCC के लिए पात्र हूँ?", category: "leaf" },
+        { query: "KCC ऋण पर ब्याज दर क्या है?", text: "KCC 4% रियायती ब्याज दर", category: "rate" },
+        { query: "मेरे पास कौन से दस्तावेज़ हैं?", text: "मेरे सुरक्षित वॉल्ट दस्तावेज़ देखें", category: "vault" },
+        { query: "ऋण धोखाधड़ी की पहचान कैसे करें?", text: "ऋण धोखाधड़ी की पहचान कैसे करें?", category: "scam" }
+      ]
+    },
+    pa: {
+      title: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਸਹਾਇ AI ਹਾਂ",
+      text: "ਤੁਹਾਡਾ ਅਧਿਕਾਰਤ ਖੇਤੀਬਾੜੀ ਸਹਾਇਕ, ਜਿਸ ਵਿੱਚ 50 ਪ੍ਰਮਾਣਿਤ ਸਰਕਾਰੀ ਸਕੀਮਾਂ ਦੇ ਜਵਾਬ, ਵਿਆਜ ਸਬਸਿਡੀ ਗਣਨਾ ਅਤੇ ਸੁਰੱਖਿਅਤ ਦਸਤਾਵੇਜ਼ ਵਾਲਟ ਮੈਮੋਰੀ ਸ਼ਾਮਲ ਹੈ!",
+      chipsTitle: "ਸੁਝਾਏ ਗਏ ਸਵਾਲ:",
+      chips: [
+        { query: "ਕੀ ਮੈਂ KCC ਲਈ ਯੋਗ ਹਾਂ?", text: "ਕੀ ਮੈਂ KCC ਲਈ ਯੋਗ ਹਾਂ?", category: "leaf" },
+        { query: "KCC ਕਰਜ਼ੇ 'ਤੇ ਵਿਆਜ ਦਰ ਕੀ ਹੈ?", text: "KCC 4% ਸਬਸਿਡੀ ਵਾਲੀ ਵਿਆਜ ਦਰ", category: "rate" },
+        { query: "ਮੇਰੇ ਕੋਲ ਕਿਹੜੇ ਦਸਤਾਵੇਜ਼ ਹਨ?", text: "ਮੇਰੇ ਵਾਲਟ ਦਸਤਾਵੇਜ਼ ਚੈੱਕ ਕਰੋ", category: "vault" },
+        { query: "ਕਰਜ਼ੇ ਦੀ ਧੋਖਾਧੜੀ ਤੋਂ ਕਿਵੇਂ ਬਚੀਏ?", text: "ਕਰਜ਼ੇ ਦੀ ਧੋਖਾਧੜੀ ਤੋਂ ਕਿਵੇਂ ਬਚੀਏ?", category: "scam" }
+      ]
+    },
+    bn: {
+      title: "নমস্কার! আমি সহায় AI",
+      text: "আপনার অফিসিয়াল কৃষি গাইড, যার মধ্যে রয়েছে ৫০টি যাচাইকৃত সরকারি স্কিমের উত্তর, দ্রুত পরিশোধে সুদের ভর্তুকি গণনা এবং সুরক্ষিত নথি ভল্ট মেমোরি!",
+      chipsTitle: "প্রস্তাবিত প্রশ্নাবলী:",
+      chips: [
+        { query: "আমি কি KCC ঋণের জন্য যোগ্য?", text: "আমি কি KCC ঋণের জন্য যোগ্য?", category: "leaf" },
+        { query: "KCC ঋণের সুদের হার কত?", text: "KCC ৪% ভর্তুকিযুক্ত সুদের হার", category: "rate" },
+        { query: "আমার কী কী নথি সংরক্ষিত আছে?", text: "আমার সংরক্ষিত ভল্ট নথি দেখুন", category: "vault" },
+        { query: "ভুয়ো ঋণ প্রতারণা কীভাবে চিনবেন?", text: "ভুয়ো ঋণ প্রতারণা কীভাবে চিনবেন?", category: "scam" }
+      ]
+    }
+  };
+
+  // Ensure language indicator is set
+  if (langIndicator) langIndicator.textContent = sahayLang.toUpperCase();
 
   // Helper: Aggregate comprehensive user farm profile and document vault metadata
   function getComprehensiveFarmerProfile() {
@@ -4414,6 +4481,52 @@ function setupSahayAI() {
     });
   }
 
+  // Toggle Full Screen Mode
+  function toggleFullscreen(forceState) {
+    isFullscreen = typeof forceState === 'boolean' ? forceState : !isFullscreen;
+    if (isFullscreen) {
+      chatWindow.classList.add('is-fullscreen');
+      if (fullscreenBtn) {
+        fullscreenBtn.setAttribute('title', 'Exit Full Screen Mode (Esc)');
+        fullscreenBtn.setAttribute('aria-label', 'Exit Full Screen Mode');
+      }
+      if (fullscreenIcon) {
+        fullscreenIcon.innerHTML = `
+          <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 14h6v6m10-10h-6V4m0 6 7-7M3 21l7-7"/>
+          </svg>
+        `;
+      }
+      document.body.style.overflow = 'hidden';
+      showToast('⛶ Sahay AI Full Screen mode enabled');
+    } else {
+      chatWindow.classList.remove('is-fullscreen');
+      if (fullscreenBtn) {
+        fullscreenBtn.setAttribute('title', 'Full Screen Mode');
+        fullscreenBtn.setAttribute('aria-label', 'Toggle Full Screen Mode');
+      }
+      if (fullscreenIcon) {
+        fullscreenIcon.innerHTML = `
+          <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        `;
+      }
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', () => toggleFullscreen());
+  }
+
+  // Keyboard shortcut: Escape exits full screen
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isFullscreen && chatWindow.style.display !== 'none') {
+      toggleFullscreen(false);
+    }
+  });
+
   // Toggle open/close
   launcher.addEventListener('click', () => {
     const isHidden = chatWindow.style.display === 'none' || !chatWindow.style.display;
@@ -4426,22 +4539,32 @@ function setupSahayAI() {
 
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
+      if (isFullscreen) toggleFullscreen(false);
       chatWindow.style.display = 'none';
       if (faqDrawer) faqDrawer.style.display = 'none';
     });
   }
 
-  // Language toggle (EN / HI)
+  // Language toggle (EN -> HI -> PA -> BN)
   if (langToggle) {
     langToggle.addEventListener('click', () => {
-      sahayLang = sahayLang === 'en' ? 'hi' : 'en';
-      if (langIndicator) langIndicator.textContent = sahayLang.toUpperCase();
-      showToast(`Sahay AI language set to ${sahayLang === 'hi' ? 'Hindi (हिंदी)' : 'English'}`);
+      const curIdx = SAHAY_LANGS.findIndex(l => l.code === sahayLang);
+      const nextIdx = (curIdx + 1) % SAHAY_LANGS.length;
+      const nextLang = SAHAY_LANGS[nextIdx];
+      sahayLang = nextLang.code;
+      if (langIndicator) langIndicator.textContent = nextLang.label;
+      showToast(`Sahay AI language set to ${nextLang.name}`);
 
-      // Update prompt chips based on active category
-      const activeCatBtn = document.querySelector('#sahay-category-bar .sahay-cat-btn.active');
-      const curCat = activeCatBtn ? activeCatBtn.getAttribute('data-cat') : 'all';
-      updatePromptChipsByCategory(curCat);
+      // Re-render intro card & chips if at greeting state
+      const introCard = messageStream ? messageStream.querySelector('.sahay-intro-card') : null;
+      const msgCount = messageStream ? messageStream.querySelectorAll('.sahay-msg').length : 0;
+      if (introCard || msgCount === 0) {
+        renderIntroAndChips(sahayLang);
+      } else {
+        const activeCatBtn = document.querySelector('#sahay-category-bar .sahay-cat-btn.active');
+        const curCat = activeCatBtn ? activeCatBtn.getAttribute('data-cat') : 'all';
+        updatePromptChipsByCategory(curCat);
+      }
 
       // Re-render FAQ drawer if open
       if (faqDrawer && faqDrawer.style.display === 'flex') {
@@ -4466,95 +4589,66 @@ function setupSahayAI() {
     });
   }
 
+  function getChipIconSvg(category) {
+    switch (category) {
+      case 'rate':
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9h-4.5a1.5 1.5 0 0 0 0 3h3a1.5 1.5 0 0 1 0 3H9"/><path d="M12 6v2m0 8v2"/></svg>`;
+      case 'vault':
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+      case 'scam':
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+      case 'leaf':
+      default:
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`;
+    }
+  }
+
+  function renderIntroAndChips(lang = sahayLang) {
+    if (!messageStream) return;
+    const content = SAHAY_INTRO_DATA[lang] || SAHAY_INTRO_DATA.en;
+    messageStream.innerHTML = `
+      <div class="sahay-intro-card">
+        <div class="sahay-intro-icon-wrap">
+          <svg class="sahay-intro-plant-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="22" fill="var(--sahay-sage-light)"/>
+            <path d="M24 38V20" stroke="var(--sahay-primary)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M24 20C24 14 17 11 12 13C12 19 18 22 24 20Z" fill="var(--sahay-sage)" stroke="var(--sahay-primary)" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M24 26C24 20 31 17 36 19C36 25 30 28 24 26Z" fill="var(--sahay-primary)" fill-opacity="0.85" stroke="var(--sahay-primary)" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="24" cy="18" r="2" fill="#4ade80"/>
+          </svg>
+        </div>
+        <h3 class="sahay-intro-title">${content.title}</h3>
+        <p class="sahay-intro-text">${content.text}</p>
+      </div>
+      <div class="sahay-prompt-chips-container" id="sahay-prompt-chips">
+        <div class="sahay-chips-title">
+          <svg class="sahay-title-sparkle" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0L9.8 5.4L15.2 7.2L9.8 9L8 14.4L6.2 9L0.8 7.2L6.2 5.4L8 0Z"/>
+          </svg>
+          <span>${content.chipsTitle}</span>
+        </div>
+        ${content.chips.map(chip => `
+          <button type="button" class="sahay-chip" data-query="${escapeHtml(chip.query)}">
+            <span class="sahay-chip-icon-box ${chip.category}">
+              ${getChipIconSvg(chip.category)}
+            </span>
+            <span class="sahay-chip-text">${escapeHtml(chip.text)}</span>
+            <span class="sahay-chip-chevron">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 12l4-4-4-4"/>
+              </svg>
+            </span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+    wirePromptChips();
+  }
+
   // Reset conversation
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      if (messageStream) {
-        messageStream.innerHTML = `
-          <div class="sahay-intro-card">
-            <div class="sahay-intro-icon-wrap">
-              <svg class="sahay-intro-plant-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="24" cy="24" r="22" fill="var(--sahay-sage-light)"/>
-                <path d="M24 38V20" stroke="var(--sahay-primary)" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M24 20C24 14 17 11 12 13C12 19 18 22 24 20Z" fill="var(--sahay-sage)" stroke="var(--sahay-primary)" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M24 26C24 20 31 17 36 19C36 25 30 28 24 26Z" fill="var(--sahay-primary)" fill-opacity="0.85" stroke="var(--sahay-primary)" stroke-width="2" stroke-linejoin="round"/>
-                <circle cx="24" cy="18" r="2" fill="#4ade80"/>
-              </svg>
-            </div>
-            <h3 class="sahay-intro-title">Namaste! I'm Sahay AI</h3>
-            <p class="sahay-intro-text">
-              Your official agricultural guide with 50 verified government scheme answers, prompt repayment interest calculation, and encrypted document vault memory!
-            </p>
-          </div>
-          <div class="sahay-prompt-chips-container" id="sahay-prompt-chips">
-            <div class="sahay-chips-title">
-              <svg class="sahay-title-sparkle" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 0L9.8 5.4L15.2 7.2L9.8 9L8 14.4L6.2 9L0.8 7.2L6.2 5.4L8 0Z"/>
-              </svg>
-              <span>Suggested Questions:</span>
-            </div>
-            <button type="button" class="sahay-chip" data-query="Am I eligible for KCC?">
-              <span class="sahay-chip-icon-box leaf">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                  <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-                </svg>
-              </span>
-              <span class="sahay-chip-text">Am I eligible for KCC?</span>
-              <span class="sahay-chip-chevron">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 12l4-4-4-4"/>
-                </svg>
-              </span>
-            </button>
-            <button type="button" class="sahay-chip" data-query="What is the interest rate on a KCC loan?">
-              <span class="sahay-chip-icon-box rate">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M15 9h-4.5a1.5 1.5 0 0 0 0 3h3a1.5 1.5 0 0 1 0 3H9"/>
-                  <path d="M12 6v2m0 8v2"/>
-                </svg>
-              </span>
-              <span class="sahay-chip-text">KCC 4% Subsidized Interest Rate</span>
-              <span class="sahay-chip-chevron">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 12l4-4-4-4"/>
-                </svg>
-              </span>
-            </button>
-            <button type="button" class="sahay-chip" data-query="What documents do I have?">
-              <span class="sahay-chip-icon-box vault">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </span>
-              <span class="sahay-chip-text">Check My Saved Vault Documents</span>
-              <span class="sahay-chip-chevron">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 12l4-4-4-4"/>
-                </svg>
-              </span>
-            </button>
-            <button type="button" class="sahay-chip" data-query="How do I know if a loan offer is a scam?">
-              <span class="sahay-chip-icon-box scam">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              </span>
-              <span class="sahay-chip-text">How to identify loan scams?</span>
-              <span class="sahay-chip-chevron">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 12l4-4-4-4"/>
-                </svg>
-              </span>
-            </button>
-          </div>
-        `;
-        wirePromptChips();
-      }
+      renderIntroAndChips(sahayLang);
       updateSahayProfileStatusBar();
       showToast('Conversation reset. Ready for a new query.');
     });
@@ -4675,11 +4769,11 @@ function setupSahayAI() {
     }
   }
 
-  function updatePromptChipsByCategory(category) {
+  async function updatePromptChipsByCategory(category) {
     const chipsContainer = document.getElementById('sahay-prompt-chips');
     if (!chipsContainer) return;
     const kb = window.SAHAY_KNOWLEDGE_BASE || [];
-    const isHindi = sahayLang === 'hi';
+    const currentLang = sahayLang;
 
     let items = [];
     if (category === 'all') {
@@ -4694,19 +4788,44 @@ function setupSahayAI() {
       if (items.length === 0) items = kb.slice(0, 4);
     }
 
+    const titleMap = {
+      en: 'Suggested Questions:',
+      hi: 'सुझाए गए प्रश्न:',
+      pa: 'ਸੁਝਾਏ ਗਏ ਸਵਾਲ:',
+      bn: 'প্রস্তাবিত প্রশ্নাবলী:'
+    };
+
+    let questions = items.map(item => {
+      if (currentLang === 'hi') return item.question_hi || item.question_en;
+      return item.question_en;
+    });
+
+    if ((currentLang === 'pa' || currentLang === 'bn') && typeof window.translateBatch === 'function') {
+      try {
+        const qObj = {};
+        questions.forEach((q, idx) => { qObj['q_' + idx] = q; });
+        const trans = await window.translateBatch(qObj, currentLang);
+        if (trans) {
+          questions = questions.map((q, idx) => trans['q_' + idx] || q);
+        }
+      } catch (e) {
+        console.warn('Chips translation notice:', e);
+      }
+    }
+
     chipsContainer.innerHTML = `
       <div class="sahay-chips-title">
         <svg class="sahay-title-sparkle" viewBox="0 0 16 16" fill="currentColor">
           <path d="M8 0L9.8 5.4L15.2 7.2L9.8 9L8 14.4L6.2 9L0.8 7.2L6.2 5.4L8 0Z"/>
         </svg>
-        <span>${isHindi ? 'सुझाए गए प्रश्न:' : 'Suggested Questions:'}</span>
+        <span>${titleMap[currentLang] || titleMap.en}</span>
       </div>
-      ${items.map(item => `
-        <button type="button" class="sahay-chip" data-query="${escapeHtml(isHindi ? item.question_hi : item.question_en)}">
+      ${items.map((item, idx) => `
+        <button type="button" class="sahay-chip" data-query="${escapeHtml(questions[idx])}">
           <span class="sahay-chip-icon-box ${item.category || 'leaf'}">
             ${getCategorySvgIcon(item.category)}
           </span>
-          <span class="sahay-chip-text">${escapeHtml(isHindi ? item.question_hi : item.question_en)}</span>
+          <span class="sahay-chip-text">${escapeHtml(questions[idx])}</span>
           <span class="sahay-chip-chevron">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 12l4-4-4-4"/>
@@ -4766,7 +4885,7 @@ function setupSahayAI() {
       if (isListening) {
         recognition.stop();
       } else {
-        recognition.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
+        recognition.lang = SAHAY_SPEECH_MAP[sahayLang] || 'en-IN';
         try {
           recognition.start();
         } catch (e) {
@@ -4832,18 +4951,35 @@ function setupSahayAI() {
 
       // 4. Display AI answer in Chat UI
       if (data && data.answer) {
-        appendMessage('assistant', data.answer);
+        let answerText = data.answer;
+        if (sahayLang !== 'en' && typeof window.translateBatch === 'function') {
+          try {
+            const trans = await window.translateBatch({ answer: answerText }, sahayLang);
+            if (trans && trans.answer) {
+              answerText = trans.answer;
+            }
+          } catch (tErr) {
+            console.warn('Answer translation notice:', tErr);
+          }
+        }
+        appendMessage('assistant', answerText);
 
         // TTS Read Aloud if active
         if (isTtsActive && 'speechSynthesis' in window) {
           window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(data.answer.replace(/[•*#_`]/g, ' '));
-          utterance.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
+          const utterance = new SpeechSynthesisUtterance(answerText.replace(/[•*#_`]/g, ' '));
+          utterance.lang = SAHAY_SPEECH_MAP[sahayLang] || 'en-IN';
           utterance.rate = 0.95;
           window.speechSynthesis.speak(utterance);
         }
       } else {
-        appendMessage('assistant', "I'm sorry, but I couldn't find that information in the uploaded data.");
+        const fallbackMsg = {
+          en: "I'm sorry, but I couldn't find that information in the uploaded data.",
+          hi: "क्षमा करें, मुझे इस बारे में जानकारी नहीं मिली।",
+          pa: "ਮਾਫ਼ ਕਰਨਾ, ਮੈਨੂੰ ਅਪਲੋਡ ਕੀਤੇ ਡੇਟਾ ਵਿੱਚ ਇਹ ਜਾਣਕਾਰੀ ਨਹੀਂ ਮਿਲੀ।",
+          bn: "দুঃখিত, আপলোড করা তথ্যে এই বিষয়টি খুঁজে পাওয়া যায়নি।"
+        };
+        appendMessage('assistant', fallbackMsg[sahayLang] || fallbackMsg.en);
       }
 
     } catch (err) {
@@ -4893,9 +5029,23 @@ function setupSahayAI() {
     messageStream.scrollTop = messageStream.scrollHeight;
   }
 
-  function appendAssistantReply(answerData) {
+  async function appendAssistantReply(answerData) {
     if (!messageStream) return;
-    const { reply, citations = [], suggestedChips = [] } = answerData;
+    let { reply, citations = [], suggestedChips = [] } = answerData;
+
+    if (sahayLang !== 'en' && sahayLang !== 'hi' && typeof window.translateBatch === 'function') {
+      try {
+        const transObj = { reply };
+        suggestedChips.forEach((chip, i) => { transObj['chip_' + i] = chip; });
+        const transRes = await window.translateBatch(transObj, sahayLang);
+        if (transRes) {
+          if (transRes.reply) reply = transRes.reply;
+          suggestedChips = suggestedChips.map((c, i) => transRes['chip_' + i] || c);
+        }
+      } catch (e) {
+        console.warn('Fallback reply translation notice:', e);
+      }
+    }
 
     const formattedReply = reply
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -4927,13 +5077,20 @@ function setupSahayAI() {
       </div>
     `;
 
+    const nextQMap = {
+      en: 'Next Questions:',
+      hi: 'अगले प्रश्न:',
+      pa: 'ਅਗਲੇ ਸਵਾਲ:',
+      bn: 'পরবর্তী প্রশ্ন:'
+    };
+
     const chipsHtml = (suggestedChips && suggestedChips.length > 0) ? `
       <div class="sahay-prompt-chips-container" style="margin-top: 0.65rem;">
         <div class="sahay-chips-title">
           <svg class="sahay-title-sparkle" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0L9.8 5.4L15.2 7.2L9.8 9L8 14.4L6.2 9L0.8 7.2L6.2 5.4L8 0Z"/>
           </svg>
-          <span>${sahayLang === 'hi' ? 'अगले प्रश्न:' : 'Next Questions:'}</span>
+          <span>${nextQMap[sahayLang] || nextQMap.en}</span>
         </div>
         ${suggestedChips.map(chip => `
           <button type="button" class="sahay-chip dynamic-chip" data-query="${escapeHtml(chip)}">
@@ -4984,7 +5141,7 @@ function setupSahayAI() {
         if (!window.speechSynthesis) return;
         const cleanSpeakText = reply.replace(/\*\*/g, '').replace(/•/g, '').replace(/\n+/g, '. ');
         const utterance = new SpeechSynthesisUtterance(cleanSpeakText);
-        utterance.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
+        utterance.lang = SAHAY_SPEECH_MAP[sahayLang] || 'en-IN';
         utterance.rate = 0.95;
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
@@ -5014,7 +5171,7 @@ function setupSahayAI() {
     if (isTtsActive && window.speechSynthesis) {
       const cleanSpeakText = reply.replace(/\*\*/g, '').replace(/•/g, '').replace(/\n+/g, '. ');
       const utterance = new SpeechSynthesisUtterance(cleanSpeakText);
-      utterance.lang = sahayLang === 'hi' ? 'hi-IN' : 'en-IN';
+      utterance.lang = SAHAY_SPEECH_MAP[sahayLang] || 'en-IN';
       utterance.rate = 0.95;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);

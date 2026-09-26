@@ -2299,7 +2299,7 @@
             <div class="sahay-header-sub">Farm Loans &amp; Schemes Assistant</div>
           </div>
         </div>
-        <!-- Right Utility Icons (Audio, Lang, Reset, Close) with Consistent Spacing & Hover -->
+        <!-- Right Utility Icons (Audio, Lang, Reset, Full Screen, Close) with Consistent Spacing & Hover -->
         <div class="sahay-header-actions">
           <!-- Audio Read Aloud Toggle -->
           <button type="button" id="sahay-tts-toggle" class="btn-sahay-header-action" title="Toggle Voice Read Aloud" aria-label="Toggle Voice Read Aloud">
@@ -2311,14 +2311,14 @@
               </svg>
             </span>
           </button>
-          <!-- Language Switcher EN / HI -->
-          <button type="button" id="sahay-lang-toggle" class="btn-sahay-lang" title="Switch Language" aria-label="Switch Language">
+          <!-- Multi-Language Switcher (EN / HI / PA / BN) -->
+          <button type="button" id="sahay-lang-toggle" class="btn-sahay-lang" title="Switch Language (English / हिन्दी / ਪੰਜਾਬੀ / বাংলা)" aria-label="Switch Language">
             <svg class="sahay-action-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <line x1="2" y1="12" x2="22" y2="12"/>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             </svg>
-            <span id="sahay-lang-indicator">HI</span>
+            <span id="sahay-lang-indicator">EN</span>
           </button>
           <!-- Reset Chat -->
           <button type="button" id="sahay-reset-btn" class="btn-sahay-header-action" title="Reset Conversation" aria-label="Reset Conversation">
@@ -2328,6 +2328,14 @@
               <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
               <path d="M16 16h5v5"/>
             </svg>
+          </button>
+          <!-- Full Screen Mode Toggle -->
+          <button type="button" id="sahay-fullscreen-btn" class="btn-sahay-header-action" title="Full Screen Mode" aria-label="Toggle Full Screen Mode">
+            <span id="sahay-fullscreen-icon">
+              <svg class="sahay-action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </span>
           </button>
           <!-- Close Window -->
           <button type="button" id="sahay-close-btn" class="btn-sahay-header-action" title="Close Assistant" aria-label="Close Window">
