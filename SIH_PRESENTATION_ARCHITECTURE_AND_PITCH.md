@@ -252,3 +252,4 @@ The app knows soil types, crop suitability, and land prices district-by-district
 > *We do not just show information — we protect farmers from debt, speak their language, and guide them from confusion to confidence.*
 >
 > *That is KisanSahay — Empowering every Indian farmer, one scheme at a time. Thank you."*
+ 
