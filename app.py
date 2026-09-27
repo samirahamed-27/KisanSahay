@@ -122,7 +122,8 @@ Answer the user query accurately, clearly, and concisely based ONLY on the provi
 Instructions:
 1. Synthesize a direct, factual answer using the web results.
 2. Present relevant scheme names, eligibility rules, subsidy amounts, or farming advice if present in the results.
-3. If the web search results are completely unrelated or do not contain enough facts to answer the question, state that clearly."""
+3. If the web search results are completely unrelated or do not contain enough facts to answer the question, state that clearly.
+4. LANGUAGE RULE — THIS IS MANDATORY: Detect the language of the user's query and respond EXCLUSIVELY in that same language. If the user asks in English, respond in English. If the user asks in Hindi, respond in Hindi. If the user asks in Punjabi, respond in Punjabi. Never switch languages mid-response. If the language is ambiguous, default to English."""
 
 WEB_HUMAN_PROMPT = """Web Search Results:
 {context}

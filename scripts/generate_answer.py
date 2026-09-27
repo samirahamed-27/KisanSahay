@@ -75,7 +75,8 @@ CRITICAL INSTRUCTIONS:
 2. Do NOT extrapolate, assume, speculate, or bring in any outside knowledge.
 3. If the answer cannot be directly and completely found in the provided context, you MUST respond with EXACTLY:
 "{FALLBACK_MESSAGE}"
-4. Do not offer partial guesses, apologies, or explanations beyond this exact sentence if the answer is missing."""
+4. Do not offer partial guesses, apologies, or explanations beyond this exact sentence if the answer is missing.
+5. LANGUAGE RULE — THIS IS MANDATORY: Detect the language of the user's query and respond EXCLUSIVELY in that same language. If the user asks in English, respond in English. If the user asks in Hindi, respond in Hindi. If the user asks in Punjabi, respond in Punjabi. Never switch languages mid-response. If the language is ambiguous, default to English."""
 
 HUMAN_PROMPT = """Context:
 {context}

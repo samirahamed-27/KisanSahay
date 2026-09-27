@@ -4987,7 +4987,12 @@ function setupSahayAI() {
       // 4. Display AI answer in Chat UI
       if (data && data.answer) {
         let answerText = data.answer;
-        if (sahayLang === 'hi' && typeof window.translateBatch === 'function') {
+
+        // Language detection: Check if the user's message contains Devanagari (Hindi) characters.
+        // Only translate the response if the user actually typed in Hindi.
+        // If the user typed in English, keep the response in English regardless of the UI toggle.
+        const userTypedInHindi = /[\u0900-\u097F]/.test(messageText);
+        if (userTypedInHindi && typeof window.translateBatch === 'function') {
           try {
             const trans = await window.translateBatch({ answer: answerText }, 'hi');
             if (trans && trans.answer) {
