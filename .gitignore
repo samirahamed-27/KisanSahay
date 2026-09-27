@@ -16,3 +16,7 @@ ios/DerivedData/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Local reference docs (not pushed to GitHub)
+MYGOGO
+MYGOGO.md

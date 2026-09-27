@@ -51,17 +51,211 @@ function sanitize(text) {
     .trim();
 }
 
-/** Chunk a long text into overlapping windows */
-function chunkText(text, size = CHUNK_SIZE, overlap = CHUNK_OVERLAP) {
+// ─── Two-Tier Structural Chunking Engine ──────────────────────────────
+
+/**
+ * Split text by Markdown headers (# through ####).
+ * Preserves structural hierarchy, section levels, and complete breadcrumb paths.
+ */
+function splitMarkdownSections(text) {
+  const lines = text.split('\n');
+  const sections = [];
+  let currentHeader = '';
+  let currentLevel = 0;
+  let currentHeaders = [];
+  let currentLines = [];
+
+  for (const line of lines) {
+    const match = line.match(/^(#{1,4})\s+(.+)$/);
+    if (match) {
+      if (currentLines.length > 0 || currentHeader) {
+        sections.push({
+          header: currentHeader,
+          level: currentLevel,
+          headers: [...currentHeaders],
+          content: currentLines.join('\n').trim()
+        });
+      }
+      currentLevel = match[1].length;
+      currentHeader = match[2].trim();
+      currentHeaders = currentHeaders.slice(0, currentLevel - 1);
+      currentHeaders[currentLevel - 1] = currentHeader;
+      currentLines = [line];
+    } else {
+      currentLines.push(line);
+    }
+  }
+
+  if (currentLines.length > 0 || currentHeader) {
+    sections.push({
+      header: currentHeader,
+      level: currentLevel,
+      headers: [...currentHeaders],
+      content: currentLines.join('\n').trim()
+    });
+  }
+
+  return sections.filter(s => s.content.length > 0);
+}
+
+/**
+ * Recursive character splitter for Tier 2 overflow handling.
+ * Safely breaks on paragraph (\n\n), newline (\n), sentence (. ), or space ( )
+ * so clauses and words are never severed abruptly.
+ */
+function recursiveSubSplit(text, maxSize = 1800, overlap = 200) {
   const chunks = [];
   let start = 0;
   while (start < text.length) {
-    const end = Math.min(start + size, text.length);
-    chunks.push(text.slice(start, end).trim());
-    if (end === text.length) break;
-    start += size - overlap;
+    let end = Math.min(start + maxSize, text.length);
+    if (end < text.length) {
+      // Find nearest boundary before end: paragraph > newline > sentence
+      const lastParagraph = text.lastIndexOf('\n\n', end);
+      const lastNewline = text.lastIndexOf('\n', end);
+      const lastPeriod = text.lastIndexOf('. ', end);
+      const candidateBreak = Math.max(lastParagraph, lastNewline, lastPeriod > 0 ? lastPeriod + 1 : -1);
+
+      if (candidateBreak > start + (maxSize * 0.4)) {
+        end = candidateBreak;
+      }
+    }
+    const chunk = text.slice(start, end).trim();
+    if (chunk.length >= MIN_TEXT_LEN) {
+      chunks.push(chunk);
+    }
+    if (end >= text.length) break;
+    start = Math.max(start + 1, end - overlap);
   }
-  return chunks.filter(c => c.length >= MIN_TEXT_LEN);
+  return chunks;
+}
+
+/**
+ * Two-Tier Structural Decomposition with Enhanced Metadata:
+ * - Tier 1: Markdown header sections (#, ##, ###) kept atomic.
+ * - Tier 2: Overflow sections (> maxSize) split recursively with Contextual Anchor prepended.
+ * - Metadata: breadcrumb_path, depth_level, parent_id, child_id, is_overflow.
+ */
+function chunkTextStructural(text, baseMetadata = {}, maxSize = 3500, overlap = 200) {
+  if (!text || typeof text !== 'string') return [];
+  const cleanText = text.trim();
+  if (cleanText.length < MIN_TEXT_LEN) return [];
+
+  const sections = splitMarkdownSections(cleanText);
+  const docCategory = baseMetadata.category || 'General';
+  const docTitle = baseMetadata.title || 'Directives';
+  const docBaseId = (baseMetadata.source || 'doc').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 32);
+
+  const results = [];
+  let chunkCounter = 0;
+
+  if (sections.length === 0 || (sections.length === 1 && sections[0].level === 0)) {
+    // Document without markdown headers
+    if (cleanText.length <= maxSize) {
+      // Atomic structural chunk
+      results.push({
+        text: cleanText,
+        metadata: {
+          ...baseMetadata,
+          chunk_id: `${docBaseId}_s01_c00`,
+          parent_id: `${docBaseId}_s01`,
+          child_id: 0,
+          depth_level: 0,
+          breadcrumb_path: `${docCategory} > ${docTitle}`,
+          header_text: '',
+          is_overflow: false,
+          total_sub_chunks: 1,
+          chunkIndex: 0,
+          totalChunks: 1
+        }
+      });
+      return results;
+    } else {
+      // Tier 2 Safety Net overflow handling
+      const subChunks = recursiveSubSplit(cleanText, CHUNK_SIZE, overlap);
+      const anchor = `[Context: ${docTitle}]\n\n`;
+      return subChunks.map((sub, i) => ({
+        text: sub.startsWith('[Context:') ? sub : anchor + sub,
+        metadata: {
+          ...baseMetadata,
+          chunk_id: `${docBaseId}_s01_c0${i + 1}`,
+          parent_id: `${docBaseId}_s01`,
+          child_id: i + 1,
+          depth_level: 0,
+          breadcrumb_path: `${docCategory} > ${docTitle}`,
+          header_text: '',
+          is_overflow: true,
+          total_sub_chunks: subChunks.length,
+          chunkIndex: i,
+          totalChunks: subChunks.length
+        }
+      }));
+    }
+  }
+
+  // Multi-section Markdown document
+  for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+    const sec = sections[sIdx];
+    const sectionId = `${docBaseId}_s${String(sIdx + 1).padStart(2, '0')}`;
+    const headerPath = sec.headers.filter(Boolean);
+    const breadcrumb = [docCategory, docTitle, ...headerPath].join(' > ');
+    const anchor = headerPath.length > 0 ? `[Context: ${headerPath.join(' > ')}]\n\n` : '';
+
+    if (sec.content.length <= maxSize) {
+      // Atomic Section (zero fragmentation)
+      results.push({
+        text: sec.content,
+        metadata: {
+          ...baseMetadata,
+          chunk_id: `${sectionId}_c00`,
+          parent_id: sectionId,
+          child_id: 0,
+          depth_level: sec.level,
+          breadcrumb_path: breadcrumb,
+          header_text: sec.header,
+          is_overflow: false,
+          total_sub_chunks: 1,
+          chunkIndex: chunkCounter++,
+          totalChunks: 0
+        }
+      });
+    } else {
+      // Tier 2: Overflow handling with Contextual Anchor
+      const subs = recursiveSubSplit(sec.content, CHUNK_SIZE, overlap);
+      for (let cIdx = 0; cIdx < subs.length; cIdx++) {
+        const sub = subs[cIdx];
+        const subText = (sub.startsWith('#') || sub.startsWith('[Context:')) ? sub : anchor + sub;
+        results.push({
+          text: subText,
+          metadata: {
+            ...baseMetadata,
+            chunk_id: `${sectionId}_c0${cIdx + 1}`,
+            parent_id: sectionId,
+            child_id: cIdx + 1,
+            depth_level: sec.level,
+            breadcrumb_path: breadcrumb,
+            header_text: sec.header,
+            is_overflow: true,
+            total_sub_chunks: subs.length,
+            chunkIndex: chunkCounter++,
+            totalChunks: 0
+          }
+        });
+      }
+    }
+  }
+
+  // Update totalChunks across all items
+  results.forEach(r => { r.metadata.totalChunks = results.length; });
+  return results;
+}
+
+/**
+ * Backward-compatible chunkText: returns Array<string>.
+ * Preserves exact public API contract while upgrading internal splitting logic.
+ */
+function chunkText(text, size = CHUNK_SIZE, overlap = CHUNK_OVERLAP) {
+  const structuralDocs = chunkTextStructural(text, {}, size * 2, overlap);
+  return structuralDocs.map(d => d.text);
 }
 
 /** Parse a JSONL file — returns array of valid parsed objects */
@@ -120,9 +314,9 @@ function ingestDataJsonl() {
       contentHash: entry.content_hash || null
     };
 
-    const chunks = chunkText(text);
-    chunks.forEach((chunk, i) => {
-      documents.push({ text: chunk, metadata: { ...metadata, chunkIndex: i, totalChunks: chunks.length } });
+    const structuralChunks = chunkTextStructural(text, metadata);
+    structuralChunks.forEach((chunk) => {
+      documents.push(chunk);
     });
   }
 
@@ -150,9 +344,9 @@ function ingestPdfJsonl() {
       localPdf: entry.local_pdf || null
     };
 
-    const chunks = chunkText(text);
-    chunks.forEach((chunk, i) => {
-      documents.push({ text: chunk, metadata: { ...metadata, chunkIndex: i, totalChunks: chunks.length } });
+    const structuralChunks = chunkTextStructural(text, metadata);
+    structuralChunks.forEach((chunk) => {
+      documents.push(chunk);
     });
   }
 

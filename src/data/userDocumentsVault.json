@@ -2,35 +2,35 @@
   "test-farmer-word": {
     "userId": "test-farmer-word",
     "passwordType": "word",
-    "salt": "e35a576f9a43b4cdfd999fd2f6879b85",
-    "iv": "cfaed9f868c82f959f3db52b",
-    "authTag": "a2563c8f056b22373ea92ccf23bb9105",
-    "encryptedData": "8566df9f0657eab63b71e8849f14d45147f267367e22a9676c62f6d12b753d0a7be9130ee73b4c09ed3cc7ceef4193c274f5a70791585498425991894db8fcccc778adf341add65ffecb79e3a3bb225d1a1fa25c64f4496410ae7e07f042005a5a147080c864a6095c34576b60d1d8bc831aea494aca33f592295105a142ad1607a7971bb0349e39bbd171ac9306b4235dfa995a6f78ff3a0db3a4deb4f3794c234b9f5f05fad6177026132f5118698aadcc506bf6f21d4adbfcd3ec",
-    "verifierHash": "7a17dc673e6ee468a2cd6cefba83d160",
+    "salt": "c9f7318bc7d3c3c71b95537757b35570",
+    "iv": "fd7066aca1c73a24a52b4a09",
+    "authTag": "a9bd6d657b15d695337a539bc4a7012b",
+    "encryptedData": "61375bdfc7cf15f5e8bf932af32e327548dc3c725f21188d89ccf1c3402c9a3e4f04ea3429da1911a999ec860a57cc71d4c03e29c1ddd94caaccb06e92c791e9745991d5db02548e980ef11aaf6d613db77d51b3d7e4678f1d133a149cc8ffdd12b0ea11dc0afc70d40df8f275dbe0dd96ea9e81cf74df2d6105ad917a3ad9bd3aa2eff532690d8b41de2767ab1c22a9fb969a433ec6da89b871c50dc9ed950f3bc9e99ef2fc0741e4d257e20820ee0f28fe5574ede16e1c197dbb71",
+    "verifierHash": "b9699017d2bfb44ad093d5beba451d41",
     "documentCount": 4,
-    "updatedAt": "2026-09-27T13:00:57.969Z"
+    "updatedAt": "2026-09-27T14:45:31.105Z"
   },
   "test-farmer-pin": {
     "userId": "test-farmer-pin",
     "passwordType": "number",
-    "salt": "0f9a8fe073f8d0d8ac21ee23d6613a8f",
-    "iv": "a669c92eecd9cd9a5b5f3548",
-    "authTag": "3e4ff8f7035146904bd59faefa461855",
-    "encryptedData": "0c34cf8c0e91940f405603bff3e94adbd8442e8007998a2a10866ef2ac42018c296e1ac101684c81fe3810b4d7ff9000bde2af6129780217a54de7c776660d7a283dcaadd973c134db966ca5a9b44db7a7e1f6daeb91341e438cf375b4ef6f90000851b5484520bdd5fb4301e157462aef11",
-    "verifierHash": "6eeea73a27d2ab2705546492af98c10c",
+    "salt": "e5149e97806070a06b9688a0552434a8",
+    "iv": "e925128d02ed37f0aaff8cd5",
+    "authTag": "53ec15a20a0d62ac9a29821310e201f6",
+    "encryptedData": "a12b28e6ab8384d7e51be0983553df8cd468361ac7fe487f3c3b28ec89c25737ac5576777618ddb74e04020b62557b2882bdffcdcccedf8d50750bae757ce1eda3ede8c6b80a69ac83032d99c6d3990382805a4bf66a69c0888014f0e0a6217f08c81ab6c1f96e41ea8f7618bd7d79120b22",
+    "verifierHash": "7fe836d865453885177a419685766a28",
     "documentCount": 2,
-    "updatedAt": "2026-09-27T13:00:58.014Z"
+    "updatedAt": "2026-09-27T14:45:31.153Z"
   },
   "test-farmer-pattern": {
     "userId": "test-farmer-pattern",
     "passwordType": "pattern",
-    "salt": "556587e47c65f2e5551d43d092ab230e",
-    "iv": "44fde3d86a6047d1add7c53d",
-    "authTag": "6338688d5250f032cdd0babad0f766d2",
-    "encryptedData": "de13fd0d81ce272f38d8b8628ca7910243a805e03587839d9c7cad285f363daefb0e72b038fa5b02023260c588619ca66e21cc7ab550ea22646330b35601088b7bff9e7c3bf52c347540c9e09a67d132e7808a600b5e581bdf752518a2726ee935441f090f2611384b79e494f0b071f8e4c3",
-    "verifierHash": "a95ac0721b7be58c40352156f3dbe14e",
+    "salt": "9b87ad42171130bc8b7f466e1db83cd1",
+    "iv": "b85e680b77ec3edb23667a37",
+    "authTag": "22fec349b045c7dbbce5c4736d58163e",
+    "encryptedData": "330477a6a18f59add401987f295c8dfd667c1d15c442c523f4c1222ab870edcd8bcf2f62b3ae33d2f57cc9ef623960d98df1f9068250e757134db916ec17d65d66c54ce7a968ad57768f945dc048c338c52a35a245652be5536cb131f469fe6a8452243b20ed932fbdf34c316f26c98f4329",
+    "verifierHash": "dca8fdaae41d99b8ea0035f4200f6a16",
     "documentCount": 2,
-    "updatedAt": "2026-09-27T13:00:58.058Z"
+    "updatedAt": "2026-09-27T14:45:31.198Z"
   },
   "farmer_test": {
     "userId": "farmer_test",
@@ -46,24 +46,24 @@
   "farmer-strict-exclusive-test": {
     "userId": "farmer-strict-exclusive-test",
     "passwordType": "word",
-    "salt": "9c557e52cd13f5d2e4fc85fa47cfaadf",
-    "iv": "79c87001671b6b638a2c6e5d",
-    "authTag": "b0f55329be39c5ad4c154bf186d99a27",
-    "encryptedData": "f3305b131c61e21468841f17b9fd04cba5b4c41a7185f7ff6ba2b5415f241deb23d6fef118bfdbc62e3ac565f9aabaff736d4bf74a2ea35a8bfa2a27674223d03233105f982273e92a604863718d994bbeed491dc207f521e3dea89c0cb786ddb32af875f9f383041146f661325e1af3bc92028788345eeb45871c3ce2eaac1b1346093843e2b5459f298204dd6ad5b83c54e9457baaf4dd9d14a4f14788f9dc",
-    "verifierHash": "e19412f31c9414693ba4d1e5673dec73",
+    "salt": "af7efc8f505bf5bc4fed4ec7426efb48",
+    "iv": "4713b9edac809fbbc9e20c89",
+    "authTag": "ac39ec20546abf4f084c24ef8648c6f9",
+    "encryptedData": "3d1330f58b406ac3e16c2e4e10fd2a619cc1e8ba0f920525108cb80a1c7f1ae780b903b866bca870f5297debf3128bb4e9154deaf50c12e3e6b428a084c7b40b5d8faee890a1609678d0f27ed69a36eba6f7dbd6ca3ed165bba29f69917a3e59d7a240dd9a73b2124aec7422a2331d4fdddd2aca4af0297a794bb47dc73ec30fcdb889ecb80f367b519dc632b2c322c057de847fdb115f6a8acbf9744c58cf39",
+    "verifierHash": "d0b7ffd5fee36fe8ba95886809d5a201",
     "documentCount": 3,
-    "updatedAt": "2026-09-27T13:00:58.100Z"
+    "updatedAt": "2026-09-27T14:45:31.243Z"
   },
   "farmer-reset-test": {
     "userId": "farmer-reset-test",
     "passwordType": "number",
-    "salt": "e263698ad9661754b005c5d01054b16e",
-    "iv": "d81ac5a2acedd0e2177647ca",
-    "authTag": "4a100a331aed7e4dc076d0057c86c56b",
-    "encryptedData": "738b1a95a27060f1eb5766a20b23083df05937ecb41e33c939d16c4734298f6494d97e247e4fe5a5a2290d5cc3db246252895f03e37a9e768d08ec1bc19e4cbbf76aaeb1506423ce50b5811772de144cd18c0644b8a80fe99a6676f0668e866d2f05c58cef9715ad1b76caaf2fd56cb4563a",
-    "verifierHash": "9e099c1dcd3b95bb2d0bd0006d93957c",
+    "salt": "79c6c49602576edbf0792ecae6858c54",
+    "iv": "bbb2a933b50cad679562df3d",
+    "authTag": "afe9eb7f5add35caa0ab7ccc26ff5808",
+    "encryptedData": "62f236f91f58fce28362ca51e851c80755a196dfb693f7329c752fec355f24e2b96c7c4d38313d98ff5206b45cfa8bfef812adfbb5e3c32f39dc863dd500dc20d23026116c5ee6cb0637cb06a05b8bc21c39fe37dac1b9e96cec9927e9849477ca18fd44872a11c0676fbff2ca717df94f80",
+    "verifierHash": "d796117a4611cf44baf51225d431ec0c",
     "documentCount": 4,
-    "updatedAt": "2026-09-27T13:00:58.247Z"
+    "updatedAt": "2026-09-27T14:45:31.391Z"
   },
   "test-curl-reset": {
     "userId": "test-curl-reset",

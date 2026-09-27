@@ -50,13 +50,28 @@ except ImportError:
         sys.exit(1)
 
 try:
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
 except ImportError:
     try:
-        from langchain.text_splitter import RecursiveCharacterTextSplitter
+        from langchain.text_splitter import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
     except ImportError:
         print("Error: 'langchain-text-splitters' is required. Install via: pip install langchain-text-splitters")
         sys.exit(1)
+
+try:
+    import tiktoken
+    _TIKTOKEN_ENCODER = tiktoken.get_encoding("cl100k_base")
+except Exception:
+    _TIKTOKEN_ENCODER = None
+
+def count_tokens(text: str) -> int:
+    """Accurately calculates token count via cl100k_base or fallback estimation."""
+    if _TIKTOKEN_ENCODER and text:
+        try:
+            return len(_TIKTOKEN_ENCODER.encode(text))
+        except Exception:
+            pass
+    return max(1, len(text) // 4) if text else 0
 
 try:
     from langchain_ollama import OllamaEmbeddings
@@ -650,30 +665,159 @@ def create_token_text_splitter(chunk_size: int = 500, chunk_overlap: int = 50) -
         )
 
 
-def chunk_documents(documents: List[Document], splitter: RecursiveCharacterTextSplitter) -> List[Document]:
-    """Splits input documents into token-bounded chunks and enriches chunk metadata."""
-    logger.info("Splitting %d document(s) into chunks...", len(documents))
-    raw_chunks = splitter.split_documents(documents)
+def chunk_documents(
+    documents: List[Document],
+    splitter: Optional[RecursiveCharacterTextSplitter] = None,
+    max_section_tokens: int = 1000
+) -> List[Document]:
+    """
+    Two-Tier Hybrid Chunking Engine for Absolute Contextual Integrity:
+    - Tier 1: Structural Decomposition via MarkdownHeaderTextSplitter (#, ##, ###, ####).
+              Preserves financial clauses, eligibility criteria, and tables as unbroken atomic units.
+    - Tier 2: Recursive Overflow Handling (Safety Net).
+              If a structural section exceeds max_section_tokens (default: 1000 tokens),
+              splits via RecursiveCharacterTextSplitter while prepending the parent header
+              breadcrumb as a Contextual Anchor to every sub-chunk.
+    - Enhanced Metadata:
+              Adds breadcrumb_path, depth_level, parent_id, child_id, is_overflow,
+              total_sub_chunks, and ensures strict ChromaDB primitive scalar type safety.
+    """
+    if splitter is None:
+        splitter = create_token_text_splitter(chunk_size=500, chunk_overlap=50)
 
+    headers_to_split_on = [
+        ("#", "header_1"),
+        ("##", "header_2"),
+        ("###", "header_3"),
+        ("####", "header_4"),
+    ]
+    md_splitter = MarkdownHeaderTextSplitter(
+        headers_to_split_on=headers_to_split_on,
+        strip_headers=False
+    )
+
+    logger.info("Decomposing %d document(s) via Two-Tier Hybrid Structural Engine...", len(documents))
     enriched_chunks: List[Document] = []
     chunk_counter_by_source: Dict[str, int] = {}
+    structural_count = 0
+    overflow_count = 0
 
-    for idx, chunk in enumerate(raw_chunks):
-        content = sanitize_text(chunk.page_content)
-        if len(content) < 30:
+    for doc_idx, doc in enumerate(documents):
+        raw_text = doc.page_content or ""
+        clean_text = sanitize_text(raw_text)
+        if len(clean_text) < 30:
             continue
 
-        src = chunk.metadata.get("source", "unknown")
-        chunk_num = chunk_counter_by_source.get(src, 0)
-        chunk_counter_by_source[src] = chunk_num + 1
+        src = str(doc.metadata.get("source", f"doc_{doc_idx}"))
+        doc_category = str(doc.metadata.get("category", "") or "General").title()
+        doc_title = str(doc.metadata.get("title", "") or doc.metadata.get("filename", "") or Path(src).stem)
 
-        meta = dict(chunk.metadata)
-        meta["chunk_index"] = chunk_num
-        meta["content_hash"] = compute_content_hash(content)
+        # Tier 1: Structural Decomposition by Markdown hierarchy
+        try:
+            sections = md_splitter.split_text(clean_text)
+        except Exception as split_err:
+            logger.debug("[%s] Markdown header splitter fallback: %s", Path(src).name, split_err)
+            sections = []
 
-        enriched_chunks.append(Document(page_content=content, metadata=meta))
+        if not sections:
+            sections = [Document(page_content=clean_text, metadata={})]
 
-    logger.info("Generated %d valid chunk(s) from %d original document(s).", len(enriched_chunks), len(documents))
+        doc_base_id = Path(src).stem.replace(" ", "_").replace("-", "_")[:32]
+
+        for sec_idx, section in enumerate(sections, start=1):
+            sec_content = sanitize_text(section.page_content)
+            if len(sec_content) < 30:
+                continue
+
+            h1 = str(section.metadata.get("header_1", ""))
+            h2 = str(section.metadata.get("header_2", ""))
+            h3 = str(section.metadata.get("header_3", ""))
+            h4 = str(section.metadata.get("header_4", ""))
+            headers = [h for h in [h1, h2, h3, h4] if h]
+
+            if h4: depth_level = 4
+            elif h3: depth_level = 3
+            elif h2: depth_level = 2
+            elif h1: depth_level = 1
+            else: depth_level = 0
+
+            header_text = headers[-1] if headers else ""
+            lineage_parts = [doc_category, doc_title] + headers
+            breadcrumb_path = " > ".join([p for p in lineage_parts if p])
+
+            if headers:
+                contextual_anchor = f"[Context: {' > '.join(headers)}]\n\n"
+            elif doc_title and doc_title != "General":
+                contextual_anchor = f"[Context: {doc_title}]\n\n"
+            else:
+                contextual_anchor = ""
+
+            section_id = f"{doc_base_id}_s{sec_idx:02d}"
+            sec_tokens = count_tokens(sec_content)
+
+            # Tier 2: Check for overflow exceeding model token limit
+            if sec_tokens > max_section_tokens:
+                overflow_count += 1
+                sub_chunks = splitter.split_text(sec_content)
+                total_subs = len(sub_chunks)
+
+                for sub_idx, sub_text in enumerate(sub_chunks, start=1):
+                    sub_content = sub_text.strip()
+                    if contextual_anchor and not sub_content.startswith("[Context:"):
+                        sub_content = contextual_anchor + sub_content
+
+                    chunk_num = chunk_counter_by_source.get(src, 0)
+                    chunk_counter_by_source[src] = chunk_num + 1
+
+                    # Sanitize to primitive scalars strictly for ChromaDB compatibility
+                    chunk_meta = {
+                        k: v for k, v in doc.metadata.items()
+                        if isinstance(v, (str, int, float, bool))
+                    }
+                    chunk_meta.update({
+                        "chunk_id": f"{section_id}_c{sub_idx:02d}",
+                        "parent_id": section_id,
+                        "child_id": sub_idx,
+                        "depth_level": depth_level,
+                        "breadcrumb_path": breadcrumb_path,
+                        "header_text": header_text,
+                        "is_overflow": True,
+                        "total_sub_chunks": total_subs,
+                        "chunk_index": chunk_num,
+                        "content_hash": compute_content_hash(sub_content),
+                    })
+                    enriched_chunks.append(Document(page_content=sub_content, metadata=chunk_meta))
+            else:
+                structural_count += 1
+                atomic_content = sec_content
+                if contextual_anchor and not atomic_content.startswith("#") and not atomic_content.startswith("[Context:"):
+                    atomic_content = contextual_anchor + atomic_content
+
+                chunk_num = chunk_counter_by_source.get(src, 0)
+                chunk_counter_by_source[src] = chunk_num + 1
+
+                chunk_meta = {
+                    k: v for k, v in doc.metadata.items()
+                    if isinstance(v, (str, int, float, bool))
+                }
+                chunk_meta.update({
+                    "chunk_id": f"{section_id}_c00",
+                    "parent_id": section_id,
+                    "child_id": 0,
+                    "depth_level": depth_level,
+                    "breadcrumb_path": breadcrumb_path,
+                    "header_text": header_text,
+                    "is_overflow": False,
+                    "total_sub_chunks": 1,
+                    "chunk_index": chunk_num,
+                    "content_hash": compute_content_hash(atomic_content),
+                })
+                enriched_chunks.append(Document(page_content=atomic_content, metadata=chunk_meta))
+
+    logger.info(
+        "Two-Tier Chunking Complete: %d total chunk(s) (%d atomic structural, %d overflow sub-chunks).",
+        len(enriched_chunks), structural_count, overflow_count
+    )
     return enriched_chunks
 
 
