@@ -2347,46 +2347,6 @@
         </div> <!-- /.sahay-header-actions -->
       </div> <!-- /.sahay-header -->
 
-      <!-- Farmer Profile & Vault Status Bar -->
-      <div class="sahay-profile-status-bar" id="sahay-profile-status-bar">
-        <div class="sahay-profile-pill-left">
-          <span class="sahay-live-dot"></span>
-          <span id="sahay-profile-summary-text">🌾 Farm: Ready • All-India | 🔒 Vault: Active</span>
-        </div> <!-- /.sahay-profile-pill-left -->
-        <button type="button" id="sahay-profile-sync-btn" class="sahay-profile-pill-btn" title="Refresh My Data &amp; Documents">
-          <svg class="sahay-sync-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 8A6 6 0 1 1 8 2c1.7 0 3.2.7 4.3 1.8L14 5"/>
-            <path d="M14 2v3h-3"/>
-          </svg>
-          <span>Sync</span>
-        </button>
-      </div> <!-- /.sahay-profile-status-bar -->
-
-      <!-- Searchable 50-FAQ Drawer (Collapsible overlay) -->
-      <div id="sahay-faq-drawer" class="sahay-faq-drawer" style="display: none;">
-        <div class="sahay-faq-drawer-header">
-          <span>📚 50 Official Farmer FAQs</span>
-          <button type="button" id="sahay-faq-drawer-close" class="btn-sahay-close-sub">✕</button>
-        </div>
-        <div class="sahay-faq-search-wrap">
-          <input type="text" id="sahay-faq-search-input" placeholder="Search 50 farmer questions (KCC, Subsidy, PMFBY)..." autocomplete="off">
-        </div>
-        <div class="sahay-faq-cat-filter" id="sahay-faq-cat-filter">
-          <button type="button" class="sahay-faq-tab active" data-cat="all">All (50)</button>
-          <button type="button" class="sahay-faq-tab" data-cat="kcc">💳 KCC</button>
-          <button type="button" class="sahay-faq-tab" data-cat="pm_kisan">🌾 PM-KISAN</button>
-          <button type="button" class="sahay-faq-tab" data-cat="crop_insurance">🛡️ Insurance</button>
-          <button type="button" class="sahay-faq-tab" data-cat="land_soil_irrigation">🧪 Soil &amp; Land</button>
-          <button type="button" class="sahay-faq-tab" data-cat="equipment_mechanization">🚜 Equipment</button>
-          <button type="button" class="sahay-faq-tab" data-cat="warehousing_marketing">🏪 Storage</button>
-          <button type="button" class="sahay-faq-tab" data-cat="loan_application">📝 Loans</button>
-          <button type="button" class="sahay-faq-tab" data-cat="debt_risk_safety">⚠️ Debt Safety</button>
-        </div>
-        <div class="sahay-faq-list" id="sahay-faq-list">
-          <!-- Dynamically populated from window.SAHAY_KNOWLEDGE_BASE -->
-        </div>
-      </div>
-
       <!-- Category Filter Tabs Bar for Chat Stream -->
       <div class="sahay-category-bar" id="sahay-category-bar">
         <button type="button" class="sahay-cat-btn active" data-cat="all">⭐ Popular</button>
@@ -2766,8 +2726,8 @@
     </div> <!-- /.audio-player-inner -->
   </div> <!-- /.kisan-audio-player-bar -->
 
-  <!-- Unlogged-in Visitor Permission Request Modal -->
-  <div class="modal-overlay" id="visitor-permission-modal" style="display: none; z-index: 9999;">
+    <!-- Unlogged-in Visitor Permission Request Modal -->
+    <div class="modal-overlay" id="visitor-permission-modal" style="display: none; z-index: 9999;">
       <div class="modal-dialog permission-modal-dialog"
         style="max-width: 480px; text-align: center; padding: 2.2rem 1.85rem; border-radius: 20px;">
         <div class="permission-icon-badge"
