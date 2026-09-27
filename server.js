@@ -381,11 +381,26 @@ app.use((req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🌾 KisanSahay Server running on http://localhost:${PORT}`);
   console.log(`📚 Interactive OpenAPI / Swagger Docs at: http://localhost:${PORT}/api/docs`);
   startScheduledIngestion();
   startScheduledReminders();
+});
+
+// Friendly error when the port is already in use (e.g. npm start is already running)
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n❌ ERROR: Port ${PORT} is already in use!`);
+    console.error(`   This usually means 'npm start' is already running in another terminal.`);
+    console.error(`   To fix this, either:`);
+    console.error(`     1. Stop the other server first (Ctrl+C in that terminal), then re-run 'npm run dev'`);
+    console.error(`     2. Or run on a different port: PORT=3001 npm run dev`);
+    console.error(`\n   App URL (if already running): http://localhost:${PORT}\n`);
+    process.exit(1);
+  } else {
+    throw err;
+  }
 });
 
 
