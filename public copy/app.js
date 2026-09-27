@@ -5014,8 +5014,8 @@ function setupSahayAI() {
         }
       } else {
         const fallbackMsg = {
-          en: "I'm sorry, but I couldn't find that information in the uploaded data.",
-          hi: "क्षमा करें, मुझे इस बारे में जानकारी नहीं मिली।"
+          en: "I cannot find the specific answer to this in the official directives. Please verify this detail with your local bank branch or Krishi Vigyan Kendra.",
+          hi: "मुझे आधिकारिक निर्देशों में इसका विशिष्ट उत्तर नहीं मिल सका। कृपया इस विवरण को अपनी स्थानीय बैंक शाखा या कृषि विज्ञान केंद्र से सत्यापित करें।"
         };
         appendMessage('assistant', fallbackMsg[sahayLang] || fallbackMsg.en);
       }
