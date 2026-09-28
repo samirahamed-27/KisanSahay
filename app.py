@@ -224,6 +224,10 @@ class ChatRequest(BaseModel):
         default=False,
         description="Optionally force a web search bypass of local documents."
     )
+    language: Optional[str] = Field(
+        default="en",
+        description="UI language selected by the user ('en' for English, 'hi' for Hindi). The answer will be returned in this language."
+    )
 
 
 class ChatResponse(BaseModel):
@@ -587,8 +591,18 @@ def chat_endpoint(request: ChatRequest):
     """
     start_time = time.time()
     query = request.user_query.strip()
+
+    # Enforce the UI-selected language: prepend a hard instruction so the LLM always
+    # responds in the language the user toggled, regardless of the RAG context language.
+    lang = (request.language or "en").strip().lower()
+    if lang == "hi":
+        lang_instruction = "[STRICT INSTRUCTION: You MUST respond ONLY in Hindi (हिंदी). Do NOT use English in your answer.] "
+    else:
+        lang_instruction = "[STRICT INSTRUCTION: You MUST respond ONLY in English. Do NOT use Hindi or any other language.] "
+    query_for_llm = lang_instruction + query
+
     logger.info("═" * 60)
-    logger.info("📥 Incoming /chat query: '%s' (top_k=%d, force_web=%s)", query, request.top_k, request.force_web_search)
+    logger.info("📥 Incoming /chat query: '%s' (top_k=%d, force_web=%s, lang=%s)", query, request.top_k, request.force_web_search, lang)
 
     source_type = None
     final_answer = None
@@ -621,7 +635,7 @@ def chat_endpoint(request: ChatRequest):
 
                     logger.info("   Testing local context with Llama 3.2...")
                     raw_local_answer = generate_answer_langchain(
-                        query=query,
+                        query=query_for_llm,
                         context=local_context,
                         model=LLM_MODEL,
                         ollama_url=OLLAMA_URL,
@@ -661,7 +675,7 @@ def chat_endpoint(request: ChatRequest):
             if web_results and web_results.strip():
                 logger.info("   Web search returned %d characters. Synthesizing answer with Llama 3.2...", len(web_results))
                 raw_web_answer = generate_answer_from_web(
-                    query=query,
+                    query=query_for_llm,
                     web_context=web_results,
                     model=LLM_MODEL,
                     ollama_url=OLLAMA_URL
