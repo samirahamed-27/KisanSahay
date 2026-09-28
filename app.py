@@ -200,7 +200,123 @@ def is_missing_information(answer: str) -> bool:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 3. Pydantic Schemas
+# 2b. Domain Guard — keep Sahay AI strictly on-topic
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Keywords that confirm the query is about agriculture / KisanSahay domain
+_DOMAIN_KEYWORDS = [
+    # App identity
+    "kisansahay", "sahay ai", "sahay", "kisan sahay",
+    "about this app", "about this website", "about this portal",
+    "about yourself", "who are you", "what are you", "what can you do",
+    "introduce yourself", "tell me about", "apne bare mein",
+    "aap kaun", "aap kya", "tum kaun", "yaha kya hota", "yahan kya",
+    "is app", "iss app", "help me", "kya kar sakte",
+    # Agriculture / Farming
+    "kisan", "farmer", "farming", "agriculture", "krishi", "fasal",
+    "crop", "kharif", "rabi", "wheat", "rice", "paddy", "sugarcane",
+    "soil", "irrigation", "fertilizer", "seeds", "harvest",
+    # Loans & Finance
+    "loan", "rin", "karz", "credit", "borrow", "lending", "emi",
+    "interest", "byaj", "rate", "repay", "debt",
+    # Schemes & Subsidies
+    "scheme", "yojana", "subsidy", "sabsidi", "grant", "benefit",
+    "pm-kisan", "pmkisan", "kcc", "kisan credit card",
+    "pmfby", "fasal bima", "insurance", "bima",
+    "smam", "aif", "nabard", "rkvy", "pkvy",
+    "pm kusum", "solar pump", "tractor", "equipment", "yantra",
+    # Documents & Eligibility
+    "aadhaar", "khasra", "khatauni", "7/12", "land record",
+    "document", "dastevez", "kagaz", "eligible", "patr", "patrata",
+    "apply", "avedan", "bank", "passbook",
+    # Money amounts
+    "rupee", "rupees", "rs.", "lakh", "crore",
+]
+
+
+def is_identity_query(query: str) -> bool:
+    """Returns True if the user is asking about Sahay AI / KisanSahay itself."""
+    q = query.lower().strip()
+    identity_phrases = [
+        "tell me about yourself", "who are you", "what are you",
+        "what is kisansahay", "what is sahay", "what can you do",
+        "how do you work", "about this app", "about this website",
+        "about this portal", "about kisansahay", "what is this app",
+        "what is this website", "tell me about this app",
+        "tell me about this site", "apne bare mein", "aap kaun hain",
+        "aap kya hain", "tum kaun ho", "yaha kya hota hai",
+        "yahan kya hota hai", "apka parichay", "introduce yourself",
+        "help me", "how can you help", "what can you help",
+        "kya kar sakte ho", "kis tarah madad", "i what way",
+        "in what way", "kaise madad", "help kar sakte",
+    ]
+    return any(phrase in q for phrase in identity_phrases)
+
+
+def get_identity_response(lang: str = "en") -> str:
+    """Returns a hardcoded KisanSahay introduction — no LLM, no web search."""
+    if lang == "hi":
+        return (
+            "🌱 **नमस्ते! मैं Sahay AI हूँ — KisanSahay का आधिकारिक कृषि सहायक।**\n\n"
+            "मैं विशेष रूप से भारत के किसानों की मदद के लिए बनाया गया हूँ:\n\n"
+            "• 🏦 **कृषि ऋण की जानकारी** — KCC, फसल ऋण, पशुपालन ऋण की पात्रता और ब्याज दरें\n"
+            "• 📋 **सरकारी योजनाएं** — PM-KISAN, SMAM, AIF, फसल बीमा, सब्सिडी योजनाएं\n"
+            "• 📄 **दस्तावेज जांच** — किस योजना के लिए कौन-से कागज चाहिए\n"
+            "• 🔒 **वॉल्ट सेवा** — आपके दस्तावेज पासवर्ड से सुरक्षित रखना\n"
+            "• 💰 **ब्याज दर तुलना** — बैंकों में सर्वोत्तम दर ढूंढना\n"
+            "• ⚠️ **लोन धोखाधड़ी पहचान** — नकली लोन ऑफर की पहचान करना\n\n"
+            "मैं सिर्फ कृषि ऋण और सरकारी योजनाओं के बारे में जानकारी देता हूँ।\n"
+            "हिंदी या अंग्रेजी में कुछ भी पूछें! 🌾"
+        )
+    return (
+        "🌱 **Hello! I'm Sahay AI — the official agricultural assistant for KisanSahay.**\n\n"
+        "I'm built specifically to help Indian farmers with:\n\n"
+        "• 🏦 **Loan Guidance** — Eligibility, interest rates & limits for KCC, crop loans, dairy/equipment loans\n"
+        "• 📋 **Government Schemes** — PM-KISAN, SMAM, AIF, Crop Insurance, PMFBY and state schemes\n"
+        "• 📄 **Document Checklists** — Exact papers needed for every loan or scheme\n"
+        "• 🔒 **Secure Document Vault** — Store Aadhaar, land records & passbook safely\n"
+        "• 💰 **Interest Rate Comparisons** — Best rates across banks and schemes for your state\n"
+        "• ⚠️ **Loan Scam Detection** — Identify fraudulent loan offers\n\n"
+        "I only answer questions about agricultural loans, government schemes, and the KisanSahay app.\n"
+        "Ask me anything in English or Hindi! 🌾"
+    )
+
+
+def is_on_topic(query: str) -> bool:
+    """
+    Returns True if the query is related to agriculture, farm loans,
+    government schemes, or KisanSahay — i.e. the allowed domain.
+    Returns False for completely off-topic queries (jobs, movies, sports, etc.).
+    """
+    q = query.lower()
+    # Always on-topic if it matches a domain keyword
+    if any(kw in q for kw in _DOMAIN_KEYWORDS):
+        return True
+    # Very short queries are often greetings — let them through
+    if len(q.split()) <= 3:
+        return True
+    return False
+
+
+def get_off_topic_response(lang: str = "en") -> str:
+    """Politely declines to answer off-topic queries."""
+    if lang == "hi":
+        return (
+            "मैं केवल कृषि ऋण, सरकारी योजनाओं और KisanSahay ऐप के बारे में जानकारी दे सकता हूँ।\n\n"
+            "उदाहरण के लिए आप पूछ सकते हैं:\n"
+            "• KCC के लिए पात्रता क्या है?\n"
+            "• PM-KISAN के लिए कैसे आवेदन करें?\n"
+            "• फसल ऋण के लिए कौन-से दस्तावेज चाहिए?"
+        )
+    return (
+        "I can only help with **agricultural loans, government schemes, and the KisanSahay app**.\n\n"
+        "Try asking:\n"
+        "• Am I eligible for a KCC loan?\n"
+        "• How do I apply for PM-KISAN?\n"
+        "• What documents do I need for a crop loan?"
+    )
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
@@ -604,10 +720,39 @@ def chat_endpoint(request: ChatRequest):
     logger.info("═" * 60)
     logger.info("📥 Incoming /chat query: '%s' (top_k=%d, force_web=%s, lang=%s)", query, request.top_k, request.force_web_search, lang)
 
+    # ── Guard 1: Identity queries — answer immediately, no LLM needed ──────
+    if is_identity_query(query):
+        logger.info("🤖 Identity query detected — returning hardcoded KisanSahay intro.")
+        elapsed = (time.time() - start_time) * 1000
+        return ChatResponse(
+            answer=get_identity_response(lang),
+            user_query=query,
+            source_type="KisanSahay App Info",
+            confidence_score=1.0,
+            context=None,
+            duration_ms=round(elapsed, 2),
+            status="success"
+        )
+
+    # ── Guard 2: Off-topic queries — block before web search runs ───────────
+    if not is_on_topic(query):
+        logger.info("🚫 Off-topic query blocked: '%s'", query)
+        elapsed = (time.time() - start_time) * 1000
+        return ChatResponse(
+            answer=get_off_topic_response(lang),
+            user_query=query,
+            source_type="Domain Restriction",
+            confidence_score=0.0,
+            context=None,
+            duration_ms=round(elapsed, 2),
+            status="success"
+        )
+
     source_type = None
     final_answer = None
     context_used = None
     best_distance = None
+
 
     try:
         vector_store = get_vector_store(
