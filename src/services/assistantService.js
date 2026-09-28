@@ -218,7 +218,77 @@ function generateGroundedAnswer(userQuery, retrievedSchemes, farmerProfile = {},
   let text = '';
   let followUpChips = [];
 
+  // Check if user is asking about Sahay AI / KisanSahay itself (identity / about-me queries)
+  const isIdentityQuery =
+    q.includes('tell me about yourself') || q.includes('who are you') ||
+    q.includes('what are you') || q.includes('what is kisansahay') ||
+    q.includes('what is sahay') || q.includes('what can you do') ||
+    q.includes('how do you work') || q.includes('about this website') ||
+    q.includes('about this app') || q.includes('about this portal') ||
+    q.includes('about kisansahay') || q.includes('what is this app') ||
+    q.includes('what is this website') || q.includes('tell me about this app') ||
+    q.includes('tell me about this site') || q.includes('apne bare mein') ||
+    q.includes('aap kaun hain') || q.includes('aap kya hain') ||
+    q.includes('tum kaun ho') || q.includes('यह ऐप क्या है') ||
+    q.includes('किसानसहाय क्या है') || q.includes('सहाय एआई') ||
+    q.includes('आप कौन हैं') || q.includes('आप क्या हैं') ||
+    q.includes('apka parichay') || q.includes('introduce yourself') ||
+    (q.includes('about') && (q.includes('yourself') || q.includes('you')));
+
+  if (isIdentityQuery) {
+    if (isHindi) {
+      text = `**🌱 नमस्ते! मैं Sahay AI हूँ — KisanSahay का आधिकारिक कृषि सहायक।**\n\n` +
+        `मैं विशेष रूप से भारत के किसानों की मदद के लिए बनाया गया हूँ। मैं आपको इन सेवाओं में सहायता कर सकता हूँ:\n\n` +
+        `• 🏦 **कृषि ऋण की जानकारी** — KCC, फसल ऋण, पशुपालन ऋण की पात्रता और ब्याज दरें\n` +
+        `• 📋 **सरकारी योजनाएं** — PM-KISAN, SMAM, AIF, फसल बीमा, सब्सिडी योजनाएं\n` +
+        `• 📄 **दस्तावेज जांच** — किस योजना के लिए कौन-से कागज चाहिए\n` +
+        `• 🔒 **वॉल्ट सेवा** — आपके दस्तावेज पासवर्ड से सुरक्षित रखना\n` +
+        `• 💰 **ब्याज दर तुलना** — बैंकों और योजनाओं में सर्वोत्तम दर ढूंढना\n` +
+        `• ⚠️ **लोन धोखाधड़ी पहचान** — नकली लोन ऑफर की पहचान करना\n\n` +
+        `मैं सिर्फ **आधिकारिक सरकारी दस्तावेज और RBI/NABARD दिशानिर्देशों** पर आधारित जानकारी देता हूँ — कोई अनुमान नहीं।\n\n` +
+        `आप मुझसे हिंदी, अंग्रेजी में कुछ भी पूछ सकते हैं! 🌾`;
+      followUpChips = [
+        'KCC के लिए पात्रता क्या है?',
+        'PM-KISAN के लिए कैसे आवेदन करें?',
+        'फसल ऋण के लिए कौन-से दस्तावेज चाहिए?'
+      ];
+    } else {
+      text = `**🌱 Hello! I'm Sahay AI — the official agricultural assistant for KisanSahay.**\n\n` +
+        `I'm built specifically to help Indian farmers navigate government schemes, agricultural loans, and subsidies. Here's what I can do:\n\n` +
+        `• 🏦 **Loan Guidance** — Eligibility, interest rates & limits for KCC, crop loans, dairy/equipment loans\n` +
+        `• 📋 **Government Schemes** — PM-KISAN, SMAM, AIF, Crop Insurance, PMFBY, and 500+ regional schemes\n` +
+        `• 📄 **Document Checklists** — Exact papers needed for every loan or scheme application\n` +
+        `• 🔒 **Secure Document Vault** — Store your Aadhaar, land records & passbook with password protection\n` +
+        `• 💰 **Interest Rate Comparisons** — Find the best rate across banks and schemes for your state\n` +
+        `• ⚠️ **Loan Scam Detection** — Identify and avoid fraudulent loan offers\n\n` +
+        `Every answer I give is strictly grounded in **official government documents and RBI/NABARD directives** — never guesses or generic advice.\n\n` +
+        `Ask me anything in English or Hindi! 🌾`;
+      followUpChips = [
+        'Am I eligible for a KCC loan?',
+        'What documents do I need for a crop loan?',
+        'How do I apply for PM-KISAN?'
+      ];
+    }
+
+    citations.push({
+      schemeName: 'KisanSahay — Official Agricultural Finance Assistant',
+      authority: 'Ministry of Agriculture & Farmers Welfare, RBI & NABARD',
+      url: 'https://agricoop.nic.in/',
+      lastVerifiedAt: '2026-09-28'
+    });
+
+    return {
+      reply: text,
+      language: isHindi ? 'hi' : 'en',
+      citations,
+      suggestedChips: followUpChips,
+      retrievedCount: 1,
+      timestamp: new Date().toISOString()
+    };
+  }
+
   // Check if user is asking about their own stored documents or vault
+
   const isVaultDocQuery = q.includes('my document') || q.includes('my vault') || q.includes('mere document') || q.includes('मेरे दस्तावेज') || q.includes('कागजात क्या हैं') || q.includes('what documents do i have') || q.includes('saved document') || (q.includes('document') && q.includes('have'));
   const isProfileQuery = (q.includes('profile') && (q.includes('my') || q.includes('mera') || q.includes('मेरी'))) ||
     (q.includes('detail') && (q.includes('my') || q.includes('mera') || q.includes('मेरी'))) ||
