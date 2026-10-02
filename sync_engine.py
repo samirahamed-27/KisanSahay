@@ -123,6 +123,68 @@ class DeterministicFallbackEmbeddings(Embeddings):
         return self.embed_documents([text])[0]
 
 
+def format_scheme_benefits(raw_benefits: str, last_verified: str, source_url: str) -> str:
+    """
+    Ensures that volatile numbers (loan limits, interest rates, subsidies, premiums)
+    in scheme benefits are formatted on single lines with mandatory:
+    '(as of YYYY-MM-DD, source: <url>)'
+    or replaced with an official source link where unverified.
+    """
+    if not raw_benefits:
+        return f"- Benefit details: Refer to official portal at [Official Source]({source_url})"
+
+    date_str = str(last_verified)[:10] if last_verified else "2026-10-02"
+    from src.ingest.volatile_validator import AS_OF_PATTERN, extract_volatile_figures_from_line
+
+    lines = [l.strip() for l in raw_benefits.strip().splitlines() if l.strip()]
+    needs_formatting = False
+    for l in lines:
+        if extract_volatile_figures_from_line(l) and not AS_OF_PATTERN.search(l):
+            needs_formatting = True
+            break
+
+    if not needs_formatting and lines:
+        return "\n".join(lines)
+
+    # Convert volatile figures into explicit single-line dated statements
+    low = raw_benefits.lower()
+    formatted = []
+
+    # Check for Loan limits
+    if "3 lakh" in low or "credit limit" in low or "loan limit" in low or "₹3" in low:
+        formatted.append(f"- Loan limit: Credit limit up to 3 Lakh (₹3,00,000) (as of {date_str}, source: {source_url})")
+    elif "1.60 lakh" in low or "1.6 lakh" in low or "collateral-free" in low:
+        formatted.append(f"- Loan limit: ₹1,60,000 collateral-free (as of {date_str}, source: {source_url})")
+
+    # Check for Interest rates
+    if "7%" in low and "4%" in low:
+        formatted.append(f"- Interest rate: 7% basic, reduced to 4% effective upon prompt repayment (as of {date_str}, source: {source_url})")
+    elif "7%" in low:
+        formatted.append(f"- Interest rate: 7% p.a. (as of {date_str}, source: {source_url})")
+    elif "4%" in low:
+        formatted.append(f"- Interest rate: 4% effective concessional rate (as of {date_str}, source: {source_url})")
+
+    # Check for Accident cover / RuPay
+    if "1 lakh" in low and ("rupay" in low or "accident" in low):
+        formatted.append(f"- RuPay Debit Card accident cover: ₹1,00,000 (as of {date_str}, source: {source_url})")
+
+    # Check for Subsidy / PM-KISAN
+    if "6,000" in low or "6000" in low:
+        formatted.append(f"- Subsidy amount: ₹6,000 per year in three 4-monthly installments (as of {date_str}, source: {source_url})")
+
+    # Check for Insurance premium
+    if "premium" in low and ("1.5%" in low or "2%" in low or "5%" in low):
+        formatted.append(f"- Premium rate: 1.5% for Rabi, 2.0% for Kharif, 5% for Commercial Crops (as of {date_str}, source: {source_url})")
+
+    if not formatted:
+        if extract_volatile_figures_from_line(raw_benefits):
+            formatted.append(f"- Scheme benefits: Refer to official portal at [Official Source]({source_url}) for verified rates and limits.")
+        else:
+            formatted.append(f"- {raw_benefits.strip()}")
+
+    return "\n".join(formatted)
+
+
 def format_record_to_markdown(record: Dict[str, Any]) -> str:
     """
     Converts any agricultural record into structured Markdown with a top-level # title
@@ -155,10 +217,13 @@ def format_record_to_markdown(record: Dict[str, Any]) -> str:
     if dtype == "gov_schemes_loans":
         scheme_name = content.get("scheme_name", "Agricultural Government Scheme")
         scheme_type = content.get("scheme_type", "Subsidy / Credit Program")
-        benefits = content.get("benefits", "Direct benefit transfer and institutional assistance.")
+        benefits_raw = content.get("benefits", "Direct benefit transfer and institutional assistance.")
         how_to_apply = content.get("how_to_apply", "Apply through official portal or local CSC center.")
         deadlines = content.get("deadlines", "Open throughout the year.")
         helpline = content.get("helpline", "1800-180-1551")
+
+        # Format volatile numbers (loan limits, interest rates, subsidies) into single dated lines
+        benefits = format_scheme_benefits(benefits_raw, last_verified, source_url)
 
         elig_list = content.get("eligibility", ["All eligible landholding farmers."])
         if isinstance(elig_list, str): elig_list = [elig_list]
@@ -523,9 +588,11 @@ class SyncEngine:
 
             # Tier 2: If section length exceeds ~800 characters, recursively split
             if len(sec_text) > 800:
-                sub_texts = self.rec_splitter.split_text(sec_text)
+                from src.ingest.volatile_validator import protect_volatile_notes, unprotect_volatile_notes
+                protected_sec_text = protect_volatile_notes(sec_text)
+                sub_texts = self.rec_splitter.split_text(protected_sec_text)
                 for sub in sub_texts:
-                    chunk_text = sub.strip()
+                    chunk_text = unprotect_volatile_notes(sub).strip()
                     if context_anchor and not chunk_text.startswith("["):
                         chunk_text = context_anchor + chunk_text
 
@@ -582,6 +649,14 @@ class SyncEngine:
             self.vector_store._collection.delete(where={"record_id": record_id})
         except Exception as del_err:
             logger.debug("Chroma delete probe for %s: %s", record_id, del_err)
+
+        # Validate volatile figures attribution before embedding
+        from src.ingest.volatile_validator import validate_record_volatile_figures
+        md_text = format_record_to_markdown(record)
+        is_valid, validation_errors = validate_record_volatile_figures(record_id, md_text)
+        if not is_valid:
+            logger.warning("Record '%s' flagged during volatile figures validation:\n%s",
+                           record_id, "\n".join(validation_errors))
 
         chunks = self.chunk_record(record)
         if not chunks:

@@ -51,17 +51,21 @@ def build_gemini_system_prompt(
         "4. TTL STALENESS NOTICE: If a record is noted as older than its Time-To-Live or marked stale, explicitly inform the user that the information may be outdated and suggest confirming with the nearest Krishi Vigyan Kendra (KVK) or local bank branch.",
         "5. UNCERTAINTY FALLBACK: If the provided context does NOT cover the user's specific question, say that you are not sure and suggest visiting or contacting the nearest Krishi Vigyan Kendra (KVK) or local bank branch.",
         "6. PENDING CHANGES ADVISORY: If a record has a pending change note, include an alert that the rule is currently being updated in the system and should be confirmed directly with the bank or KVK.",
-        "7. TIME-SENSITIVE DATES: For time-sensitive questions (such as mandi prices, weather advisories, or training calendars), highlight the freshest dates prominently."
+        "7. TIME-SENSITIVE DATES: For time-sensitive questions (such as mandi prices, weather advisories, or training calendars), highlight the freshest dates prominently.",
+        "8. DATED VOLATILE NUMBERS (LIMITS & RATES): Any loan limit, credit ceiling, interest rate, subsidy amount, or crop insurance premium rate quoted in an answer MUST be quoted together with its 'as of' date (e.g. 'Interest rate: 7% (as of 2026-10-02)'). Never state a bare volatile number without its date.",
+        "9. AGED OR UNDATED VOLATILE FIGURES CAVEAT: If a financial figure, interest rate, loan limit, or subsidy amount in the context is older than 90 days or lacks an explicit date, DO NOT state the number as current. Instead, provide the official source URL link and explicitly instruct the user to confirm with the nearest Krishi Vigyan Kendra (KVK) or local bank branch."
     ]
 
+    rule_idx = 10
     if eligibility_result and eligibility_result.get("is_eligibility_query") and eligibility_result.get("decision") != "NOT_APPLICABLE":
         elig_instruction = eligibility_result.get("instruction_for_llm", "")
-        rules.append(f"8. ELIGIBILITY DECISION ENFORCEMENT: {elig_instruction}")
+        rules.append(f"{rule_idx}. ELIGIBILITY DECISION ENFORCEMENT: {elig_instruction}")
+        rule_idx += 1
 
     if is_hindi:
-        rules.append("9. LANGUAGE: Respond strictly in fluent, natural Hindi (हिंदी).")
+        rules.append(f"{rule_idx}. LANGUAGE: Respond strictly in fluent, natural Hindi (हिंदी).")
     else:
-        rules.append("9. LANGUAGE: Respond strictly in clear, professional English.")
+        rules.append(f"{rule_idx}. LANGUAGE: Respond strictly in clear, professional English.")
 
     return "\n".join(rules)
 
@@ -247,6 +251,29 @@ def _post_process_answer(
         advisories.append(
             "⚠️ **Notice:** Information from one or more sources has passed its recommended Time-To-Live and may be outdated. "
             "Please confirm current figures and directives with your nearest Krishi Vigyan Kendra (KVK) or local bank branch."
+        )
+
+    # Check if any financial figures or limits in retrieved records are older than 90 days
+    has_aged_figures = False
+    try:
+        from datetime import datetime, timezone
+        now_dt = datetime.now(timezone.utc)
+        for rec in records:
+            lv_str = rec.get("last_verified")
+            if lv_str:
+                lv_dt = datetime.fromisoformat(lv_str)
+                if lv_dt.tzinfo is None:
+                    lv_dt = lv_dt.replace(tzinfo=timezone.utc)
+                if (now_dt - lv_dt).total_seconds() > (90 * 86400):
+                    has_aged_figures = True
+                    break
+    except Exception:
+        pass
+
+    if has_aged_figures and not has_stale:
+        advisories.append(
+            "⚠️ **Financial Rate/Limit Notice:** Interest rates, loan limits, or subsidy figures from official sources "
+            "are older than 90 days. Please verify the active rates with your nearest Krishi Vigyan Kendra (KVK) or local bank branch."
         )
 
     # Build citation footer
