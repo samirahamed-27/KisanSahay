@@ -23,6 +23,20 @@ from .models import (
     IMDAgrometRecord,
 )
 
+from .exact_lookups import (
+    get_kvk_directory,
+    get_kvk_events,
+    get_crop_advisories,
+    get_mandi_prices,
+    check_source_health,
+    format_kvk_direct_answer,
+    format_soil_testing_direct_answer,
+    format_events_direct_answer,
+    format_mandi_direct_answer,
+    extract_district_from_text,
+    extract_crop_from_text,
+)
+
 __all__ = [
     "KisanDataLayer",
     "SourceRegistry",
@@ -38,6 +52,17 @@ __all__ = [
     "GovSchemeLoanRecord",
     "IMDAgrometRecord",
     "DataLayer",
+    "get_kvk_directory",
+    "get_kvk_events",
+    "get_crop_advisories",
+    "get_mandi_prices",
+    "check_source_health",
+    "format_kvk_direct_answer",
+    "format_soil_testing_direct_answer",
+    "format_events_direct_answer",
+    "format_mandi_direct_answer",
+    "extract_district_from_text",
+    "extract_crop_from_text",
 ]
 
 DataLayer = KisanDataLayer

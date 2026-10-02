@@ -33,7 +33,7 @@ from typing import Optional, Tuple, Dict, Any, List
 
 import httpx
 import hmac
-from fastapi import FastAPI, HTTPException, status, Request, Response, Header, Depends
+from fastapi import FastAPI, HTTPException, status, Request, Response, Header, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -526,6 +526,10 @@ class ChatRequest(BaseModel):
         default=None,
         description="User's state context, e.g. 'Madhya Pradesh' or 'Punjab'."
     )
+    district: Optional[str] = Field(
+        default=None,
+        description="User's district context, e.g. 'Sehore', 'Dewas', 'Bhopal'."
+    )
     top_k: Optional[int] = Field(
         default=6,
         ge=1,
@@ -578,6 +582,18 @@ class ChatResponse(BaseModel):
     has_pending_updates: Optional[bool] = Field(
         default=False,
         description="Flag indicating if any cited record has pending updates undergoing review."
+    )
+    last_updated: Optional[str] = Field(
+        default=None,
+        description="Freshness date of the direct database records used."
+    )
+    source_name: Optional[str] = Field(
+        default=None,
+        description="Name of the official source authority, e.g. ICAR KVK Portal or Agmarknet."
+    )
+    is_source_failing: Optional[bool] = Field(
+        default=False,
+        description="Flag indicating if the underlying source adapter is currently failing sync."
     )
 
 
@@ -909,6 +925,67 @@ def health_check():
     )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 4b. Exact Database Lookups Endpoints (Prompt 6)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/kvk", tags=["Exact Lookups"])
+def kvk_directory_endpoint(
+    district: Optional[str] = Query(None, description="District name, e.g. Sehore, Bhopal"),
+    state: Optional[str] = Query("Madhya Pradesh", description="State name")
+):
+    """
+    Returns KVK directory records loaded directly from the database (records table),
+    not from a static file. Includes official phone, address, and soil testing facility info.
+    """
+    from src.data_layer import get_kvk_directory
+    dl = get_admin_data_layer()
+    return get_kvk_directory(district=district, state=state, data_layer=dl)
+
+
+@app.get("/api/kvk/events", tags=["Exact Lookups"])
+def kvk_events_endpoint(
+    district: Optional[str] = Query(None, description="District name, e.g. Sehore, Bhopal"),
+    state: Optional[str] = Query("Madhya Pradesh", description="State name")
+):
+    """
+    Returns upcoming KVK vocational training and field demonstration schedules from the database.
+    """
+    from src.data_layer import get_kvk_events
+    dl = get_admin_data_layer()
+    return get_kvk_events(district=district, state=state, data_layer=dl)
+
+
+@app.get("/api/advisories", tags=["Exact Lookups"])
+def advisories_endpoint(
+    crop: Optional[str] = Query(None, description="Crop name, e.g. Soybean, Wheat"),
+    state: Optional[str] = Query("Madhya Pradesh", description="State name"),
+    district: Optional[str] = Query(None, description="District name")
+):
+    """
+    Returns current seasonal crop advisories and IMD weather advisories from the database.
+    """
+    from src.data_layer import get_crop_advisories
+    dl = get_admin_data_layer()
+    return get_crop_advisories(crop=crop, state=state, district=district, data_layer=dl)
+
+
+@app.get("/api/mandi", tags=["Exact Lookups"])
+def mandi_prices_endpoint(
+    crop: Optional[str] = Query(None, description="Commodity name, e.g. Soybean, Gram, Wheat"),
+    commodity: Optional[str] = Query(None, description="Alias for crop parameter"),
+    district: Optional[str] = Query(None, description="District name, e.g. Dewas, Bhopal, Harda"),
+    state: Optional[str] = Query("Madhya Pradesh", description="State name")
+):
+    """
+    Returns latest mandi wholesale prices (min, max, modal) from the database.
+    """
+    from src.data_layer import get_mandi_prices
+    dl = get_admin_data_layer()
+    target_crop = crop or commodity
+    return get_mandi_prices(crop=target_crop, district=district, state=state, data_layer=dl)
+
+
 @app.post("/chat", response_model=ChatResponse, tags=["Hybrid RAG"])
 def chat_endpoint(request: ChatRequest):
     """
@@ -967,6 +1044,100 @@ def chat_endpoint(request: ChatRequest):
             context=None,
             duration_ms=round(elapsed, 2),
             status="success"
+        )
+
+    # ── Step 2b: Exact Database Lookups & Zero-Model Direct Answering (Prompt 6) ─
+    # Questions about the nearest KVK, soil testing, upcoming trainings or today's mandi price
+    # are answered directly from database records with NO model call and explicit "Updated on" date.
+    q_low = query.lower()
+
+    # 1. Soil Testing Facility intent
+    is_soil_testing_query = any(w in q_low for w in [
+        "soil test", "soil testing", "mitti ki janch", "mitti parikshan", "soil lab",
+        "testing lab", "soil health card lab", "soil sample"
+    ])
+
+    # 2. Upcoming Trainings / Demonstrations intent
+    is_training_query = any(w in q_low for w in [
+        "training", "demonstration", "demonstrations", "calendar", "workshop",
+        "karyashala", "prashikshan", "training date", "training dates", "upcoming training"
+    ]) and not any(w in q_low for w in ["pm-kisan", "pmkisan", "kcc", "loan", "subsidy", "tractor", "bima"])
+
+    # 3. Mandi Prices intent
+    is_mandi_query = any(w in q_low for w in [
+        "mandi", "mandi price", "mandi bhav", "mandi rate", "bhav", "today's price",
+        "todays price", "market price", "market rate"
+    ]) and not any(w in q_low for w in ["pm-kisan", "pmkisan", "kcc", "loan", "subsidy", "tractor", "bima", "eligible", "patra"])
+
+    # 4. Nearest KVK Directory intent
+    is_kvk_query = (
+        any(w in q_low for w in ["kvk", "krishi vigyan kendra", "krishi vigyan kendr", "krishi vigyan"]) and
+        not is_training_query and
+        not is_soil_testing_query
+    ) or any(w in q_low for w in ["nearest kvk", "kvk near me", "where is kvk", "kvk contact", "kvk phone", "kvk address"])
+
+    if is_soil_testing_query or is_training_query or is_mandi_query or is_kvk_query:
+        from src.data_layer import (
+            get_kvk_directory,
+            get_kvk_events,
+            get_mandi_prices,
+            format_kvk_direct_answer,
+            format_soil_testing_direct_answer,
+            format_events_direct_answer,
+            format_mandi_direct_answer,
+            extract_district_from_text,
+            extract_crop_from_text,
+        )
+        dl = get_admin_data_layer()
+        detected_dist = (
+            request.district or
+            extract_district_from_text(query) or
+            (request.farmer_profile.get("district") if request.farmer_profile else None)
+        )
+        target_state = request.state or (request.farmer_profile.get("state") if request.farmer_profile else "Madhya Pradesh")
+
+        if is_soil_testing_query:
+            logger.info("🧪 Soil Testing exact lookup query: '%s' (district: %s, state: %s)", query, detected_dist, target_state)
+            lookup_res = get_kvk_directory(district=detected_dist, state=target_state, data_layer=dl)
+            direct_ans = format_soil_testing_direct_answer(lookup_res, lang=lang)
+            direct_source_type = "Direct Database Lookup (Soil Testing Lab)"
+        elif is_training_query:
+            logger.info("📅 KVK Upcoming Trainings exact lookup query: '%s' (district: %s, state: %s)", query, detected_dist, target_state)
+            lookup_res = get_kvk_events(district=detected_dist, state=target_state, data_layer=dl)
+            direct_ans = format_events_direct_answer(lookup_res, lang=lang)
+            direct_source_type = "Direct Database Lookup (KVK Training Calendar)"
+        elif is_mandi_query:
+            detected_crop = extract_crop_from_text(query)
+            logger.info("🌾 Mandi Price exact lookup query: '%s' (crop: %s, district: %s, state: %s)", query, detected_crop, detected_dist, target_state)
+            lookup_res = get_mandi_prices(crop=detected_crop, district=detected_dist, state=target_state, data_layer=dl)
+            direct_ans = format_mandi_direct_answer(lookup_res, lang=lang)
+            direct_source_type = "Direct Database Lookup (Agmarknet Mandi)"
+        else: # is_kvk_query
+            logger.info("🏛️ KVK Directory exact lookup query: '%s' (district: %s, state: %s)", query, detected_dist, target_state)
+            lookup_res = get_kvk_directory(district=detected_dist, state=target_state, data_layer=dl)
+            direct_ans = format_kvk_direct_answer(lookup_res, lang=lang)
+            direct_source_type = "Direct Database Lookup (KVK Directory)"
+
+        elapsed = (time.time() - start_time) * 1000
+        logger.info("⚡ Exact database lookup answered with ZERO model calls in %.2f ms", elapsed)
+        return ChatResponse(
+            answer=direct_ans,
+            user_query=query,
+            source_type=direct_source_type,
+            confidence_score=1.0,
+            context=None,
+            duration_ms=round(elapsed, 2),
+            status="success",
+            last_updated=lookup_res.get("last_updated"),
+            source_name=lookup_res.get("source_name"),
+            is_source_failing=lookup_res.get("is_source_failing", False),
+            citations=[
+                {
+                    "record_id": lookup_res.get("source_name", direct_source_type),
+                    "source_url": lookup_res.get("source_url", "https://farmer.gov.in"),
+                    "last_verified": lookup_res.get("last_updated", "")
+                }
+            ]
         )
 
     # ── Step 3: First 50 Questions check (sahayKnowledgeBase.json) ───────────

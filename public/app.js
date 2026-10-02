@@ -5003,7 +5003,7 @@ function setupSahayAI() {
       // 4. Display AI answer in Chat UI
       if (data && data.answer) {
         const answerText = data.answer;
-        appendMessage('assistant', answerText);
+        appendMessage('assistant', answerText, data);
 
         // TTS Read Aloud if active
         if (isTtsActive && 'speechSynthesis' in window) {
@@ -5047,7 +5047,7 @@ function setupSahayAI() {
     }
   }
 
-  function appendMessage(role, text) {
+  function appendMessage(role, text, metadata = null) {
     if (!messageStream) return;
     const msg = document.createElement('div');
     msg.className = `sahay-msg ${role}`;
@@ -5063,7 +5063,30 @@ function setupSahayAI() {
     } else {
       content = escapeHtml(text);
     }
-    msg.innerHTML = `<div class="sahay-msg-content">${content}</div>`;
+
+    let metaHtml = '';
+    if (role === 'assistant' && metadata) {
+      const lastUpdated = metadata.last_updated || (metadata.citations && metadata.citations[0]?.last_verified);
+      const sourceName = metadata.source_name || (metadata.citations && metadata.citations[0]?.record_id) || (metadata.source_type && metadata.source_type !== 'Official Uploaded Documents' ? metadata.source_type : null);
+      const isFailing = metadata.is_source_failing || false;
+
+      if (lastUpdated || sourceName) {
+        const dateStr = lastUpdated ? (typeof lastUpdated === 'string' && lastUpdated.includes('T') ? lastUpdated.split('T')[0] : String(lastUpdated).substring(0, 10)) : 'Recently';
+        const nameStr = sourceName || 'Official Data Registry';
+        metaHtml += `<div class="sahay-msg-meta" style="margin-top: 0.45rem; padding-top: 0.35rem; border-top: 1px dashed rgba(148, 163, 184, 0.3); font-size: 0.73rem; color: #64748b; display: flex; align-items: center; gap: 0.35rem;">
+          <span style="opacity: 0.85;">🕒</span>
+          <span>Updated on <strong>${escapeHtml(dateStr)}</strong> – source: <em>${escapeHtml(nameStr)}</em></span>
+        </div>`;
+      }
+
+      if (isFailing) {
+        metaHtml += `<div class="sahay-source-failing-notice" style="margin-top: 0.35rem; padding: 0.35rem 0.55rem; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; border-radius: 4px; font-size: 0.72rem; color: #dc2626;">
+          ⚠️ <strong>Notice:</strong> This source is currently experiencing sync delays. Showing latest cached records.
+        </div>`;
+      }
+    }
+
+    msg.innerHTML = `<div class="sahay-msg-content">${content}${metaHtml}</div>`;
     messageStream.appendChild(msg);
     messageStream.scrollTop = messageStream.scrollHeight;
   }

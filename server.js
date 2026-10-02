@@ -14,6 +14,28 @@ const { startScheduledReminders } = require('./src/services/notificationService'
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Exact Lookups Proxy (KVK Directory, Events, Advisories, Mandi Prices) to Python FastAPI backend (http://127.0.0.1:8000)
+app.get(['/api/kvk', '/api/kvk/*', '/api/advisories', '/api/mandi'], async (req, res) => {
+  try {
+    const backendUrl = `http://127.0.0.1:8000${req.originalUrl}`;
+    const apiRes = await fetch(backendUrl);
+    const contentType = apiRes.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await apiRes.json();
+      return res.status(apiRes.status).json(data);
+    } else {
+      const text = await apiRes.text();
+      return res.status(apiRes.status).send(text);
+    }
+  } catch (err) {
+    return res.status(503).json({
+      status: 'error',
+      message: 'Could not connect to KisanSahay exact lookups backend (http://127.0.0.1:8000).',
+      details: err.message
+    });
+  }
+});
+
 // Mount Swagger Documentation & Core Agricultural Finance APIs
 app.use('/api', docsRoutes);
 app.use('/api', apiRoutes);
