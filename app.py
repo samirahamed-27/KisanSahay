@@ -200,121 +200,310 @@ def is_missing_information(answer: str) -> bool:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 2b. Domain Guard — keep Sahay AI strictly on-topic
+# 2b. Dynamic Domain, Safety & FAQ Engine
+#     Powered entirely by dynamic backend data files (NOT hardcoded in code):
+#       1. src/data/duckduckgo_moderation_rules.json (DuckDuckGo SafeSearch scratch data)
+#       2. src/data/domain_config.json (allowed domains, app identity, off-topic rules)
+#       3. src/data/sahayKnowledgeBase.json (curated 50 FAQ questions)
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Keywords that confirm the query is about agriculture / KisanSahay domain
-_DOMAIN_KEYWORDS = [
-    # App identity
-    "kisansahay", "sahay ai", "sahay", "kisan sahay",
-    "about this app", "about this website", "about this portal",
-    "about yourself", "who are you", "what are you", "what can you do",
-    "introduce yourself", "tell me about", "apne bare mein",
-    "aap kaun", "aap kya", "tum kaun", "yaha kya hota", "yahan kya",
-    "is app", "iss app", "help me", "kya kar sakte",
-    # Agriculture / Farming
-    "kisan", "farmer", "farming", "agriculture", "krishi", "fasal",
-    "crop", "kharif", "rabi", "wheat", "rice", "paddy", "sugarcane",
-    "soil", "irrigation", "fertilizer", "seeds", "harvest",
-    # Loans & Finance
-    "loan", "rin", "karz", "credit", "borrow", "lending", "emi",
-    "interest", "byaj", "rate", "repay", "debt",
-    # Schemes & Subsidies
-    "scheme", "yojana", "subsidy", "sabsidi", "grant", "benefit",
-    "pm-kisan", "pmkisan", "kcc", "kisan credit card",
-    "pmfby", "fasal bima", "insurance", "bima",
-    "smam", "aif", "nabard", "rkvy", "pkvy",
-    "pm kusum", "solar pump", "tractor", "equipment", "yantra",
-    # Documents & Eligibility
-    "aadhaar", "khasra", "khatauni", "7/12", "land record",
-    "document", "dastevez", "kagaz", "eligible", "patr", "patrata",
-    "apply", "avedan", "bank", "passbook",
-    # Money amounts
-    "rupee", "rupees", "rs.", "lakh", "crore",
-]
+DOMAIN_CONFIG_PATH = BASE_DIR / "src" / "data" / "domain_config.json"
+MODERATION_RULES_PATH = BASE_DIR / "src" / "data" / "duckduckgo_moderation_rules.json"
+KB_PATH = BASE_DIR / "src" / "data" / "sahayKnowledgeBase.json"
 
+# Dynamic runtime caches with automatic mtime / TTL refresh
+_config_cache: dict = {}
+_moderation_cache: dict = {}
+_kb_cache: list = []
+_cache_loaded_at: float = 0.0
+_cache_mtimes: dict = {}
+_CACHE_CHECK_INTERVAL = 1.0  # seconds between stat() checks
+
+
+def _load_dynamic_backend_data() -> None:
+    """
+    Dynamically loads all rules, scratch data, and FAQ questions from backend JSON files.
+    Auto-detects file updates via mtime so edits to JSON take effect without server restart.
+    """
+    global _config_cache, _moderation_cache, _kb_cache, _cache_loaded_at, _cache_mtimes
+    now = time.time()
+    if (now - _cache_loaded_at) < _CACHE_CHECK_INTERVAL and _config_cache and _moderation_cache and _kb_cache:
+        return
+
+    # 1. Load domain configuration
+    try:
+        if DOMAIN_CONFIG_PATH.exists():
+            cur_mtime = DOMAIN_CONFIG_PATH.stat().st_mtime
+            if _cache_mtimes.get("domain") != cur_mtime or not _config_cache:
+                with open(DOMAIN_CONFIG_PATH, "r", encoding="utf-8") as f:
+                    _config_cache = json.load(f)
+                _cache_mtimes["domain"] = cur_mtime
+                logger.info("✅ domain_config.json loaded dynamically (%d identity phrases, %d keyword groups)",
+                            len(_config_cache.get("identity_phrases", [])),
+                            len(_config_cache.get("domain_keywords", {})))
+    except Exception as e:
+        logger.warning("⚠️ Error reading domain_config.json: %s", e)
+
+    # 2. Load DuckDuckGo-inspired moderation rules & scratch data
+    try:
+        if MODERATION_RULES_PATH.exists():
+            cur_mtime = MODERATION_RULES_PATH.stat().st_mtime
+            if _cache_mtimes.get("moderation") != cur_mtime or not _moderation_cache:
+                with open(MODERATION_RULES_PATH, "r", encoding="utf-8") as f:
+                    _moderation_cache = json.load(f)
+                _cache_mtimes["moderation"] = cur_mtime
+                logger.info("✅ duckduckgo_moderation_rules.json loaded dynamically (%d bad words, %d adult terms, %d scams)",
+                            len(_moderation_cache.get("profanity_and_bad_words", [])),
+                            len(_moderation_cache.get("adult_and_nsfw_terms", [])),
+                            len(_moderation_cache.get("financial_scams_and_predatory_fraud", [])))
+    except Exception as e:
+        logger.warning("⚠️ Error reading duckduckgo_moderation_rules.json: %s", e)
+
+    # 3. Load curated 50 FAQ questions
+    try:
+        if KB_PATH.exists():
+            cur_mtime = KB_PATH.stat().st_mtime
+            if _cache_mtimes.get("kb") != cur_mtime or not _kb_cache:
+                with open(KB_PATH, "r", encoding="utf-8") as f:
+                    _kb_cache = json.load(f)
+                _cache_mtimes["kb"] = cur_mtime
+                logger.info("✅ sahayKnowledgeBase.json loaded dynamically (%d FAQ items)", len(_kb_cache))
+    except Exception as e:
+        logger.warning("⚠️ Error reading sahayKnowledgeBase.json: %s", e)
+
+    _cache_loaded_at = now
+
+
+# ── Pipeline Step 1: DuckDuckGo-style Content Moderation & Bad Text ──────────
+
+def check_duckduckgo_safety(query: str, lang: str = "en") -> Tuple[bool, Optional[str]]:
+    """
+    Checks input against dynamic scratch data in duckduckgo_moderation_rules.json:
+    - Bad words and profanities (English + Hindi/Hinglish)
+    - Adult and NSFW terms
+    - Violence and harmful activities
+    - Hate speech and harassment
+    - Predatory financial scams and fraudulent loan traps
+    - Gambling and betting
+    - Prompt injections and jailbreak attempts
+
+    Uses regex word boundaries for single-word tokens to avoid false positives (e.g. passbook != ass).
+    Returns (is_unsafe, localized_action_response).
+    """
+    _load_dynamic_backend_data()
+    q = query.lower().strip()
+    actions = _moderation_cache.get("action_responses", {})
+
+    category_mapping = [
+        ("profanity_and_bad_words", "profanity"),
+        ("adult_and_nsfw_terms", "adult"),
+        ("violence_and_harmful", "harmful"),
+        ("hate_speech_and_harassment", "default_blocked"),
+        ("financial_scams_and_predatory_fraud", "scam"),
+        ("gambling_and_betting", "default_blocked"),
+        ("prompt_injection_and_malicious", "default_blocked")
+    ]
+
+    for list_key, action_key in category_mapping:
+        terms = _moderation_cache.get(list_key, [])
+        for term in terms:
+            t = term.lower().strip()
+            if not t:
+                continue
+            matched = False
+            if " " in t or "-" in t:
+                if t in q:
+                    matched = True
+            else:
+                if re.search(r"\b" + re.escape(t) + r"\b", q):
+                    matched = True
+
+            if matched:
+                logger.info("🛡️ DuckDuckGo safety filter matched: category=%s, term='%s'", list_key, t)
+                resp_map = actions.get(action_key, actions.get("default_blocked", {}))
+                return True, resp_map.get(lang, resp_map.get("en", "⚠️ This query cannot be processed due to content safety limitations."))
+
+    return False, None
+
+
+# ── Pipeline Step 2: KisanSahay App Identity Check ───────────────────────────
 
 def is_identity_query(query: str) -> bool:
-    """Returns True if the user is asking about Sahay AI / KisanSahay itself."""
+    """True if user is asking about KisanSahay app, identity, capabilities, or offering a greeting."""
+    _load_dynamic_backend_data()
     q = query.lower().strip()
-    identity_phrases = [
-        "tell me about yourself", "who are you", "what are you",
-        "what is kisansahay", "what is sahay", "what can you do",
-        "how do you work", "about this app", "about this website",
-        "about this portal", "about kisansahay", "what is this app",
-        "what is this website", "tell me about this app",
-        "tell me about this site", "apne bare mein", "aap kaun hain",
-        "aap kya hain", "tum kaun ho", "yaha kya hota hai",
-        "yahan kya hota hai", "apka parichay", "introduce yourself",
-        "help me", "how can you help", "what can you help",
-        "kya kar sakte ho", "kis tarah madad", "i what way",
-        "in what way", "kaise madad", "help kar sakte",
+
+    # Friendly standalone greetings (e.g. "hello", "hi", "namaste", "pranam", "hey", "ram ram")
+    words = q.split()
+    if len(words) <= 2 and any(g == q or q.startswith(g + " ") for g in ["hello", "hi", "hey", "namaste", "pranam", "ram ram"]):
+        return True
+
+    # If the user is asking about a specific agricultural/financial topic, do NOT hijack as identity query
+    strong_domain_terms = [
+        "loan", "rin", "karz", "kcc", "pm-kisan", "pmkisan", "pmfby", "bima",
+        "scheme", "yojana", "tractor", "subsidy", "fertilizer", "soil", "crop",
+        "fasal", "kheti", "dastevez", "document", "khasra", "khatauni", "aadhaar",
+        "interest", "byaj", "dairy", "animal husbandry", "pashu"
     ]
-    return any(phrase in q for phrase in identity_phrases)
+    has_domain_topic = any(dt in q for dt in strong_domain_terms)
+    if has_domain_topic:
+        explicit_identity = [
+            "what is kisansahay", "what is sahay", "about kisansahay", "kisansahay app",
+            "tell me about kisansahay", "sahay ai", "who are you"
+        ]
+        return any(ei in q for ei in explicit_identity)
+
+    phrases = _config_cache.get("identity_phrases", [])
+    for phrase in phrases:
+        p = phrase.lower().strip()
+        if not p:
+            continue
+        if re.search(r"\b" + re.escape(p) + r"\b", q):
+            return True
+
+    return False
 
 
 def get_identity_response(lang: str = "en") -> str:
-    """Returns a hardcoded KisanSahay introduction — no LLM, no web search."""
-    if lang == "hi":
-        return (
-            "🌱 **नमस्ते! मैं Sahay AI हूँ — KisanSahay का आधिकारिक कृषि सहायक।**\n\n"
-            "मैं विशेष रूप से भारत के किसानों की मदद के लिए बनाया गया हूँ:\n\n"
-            "• 🏦 **कृषि ऋण की जानकारी** — KCC, फसल ऋण, पशुपालन ऋण की पात्रता और ब्याज दरें\n"
-            "• 📋 **सरकारी योजनाएं** — PM-KISAN, SMAM, AIF, फसल बीमा, सब्सिडी योजनाएं\n"
-            "• 📄 **दस्तावेज जांच** — किस योजना के लिए कौन-से कागज चाहिए\n"
-            "• 🔒 **वॉल्ट सेवा** — आपके दस्तावेज पासवर्ड से सुरक्षित रखना\n"
-            "• 💰 **ब्याज दर तुलना** — बैंकों में सर्वोत्तम दर ढूंढना\n"
-            "• ⚠️ **लोन धोखाधड़ी पहचान** — नकली लोन ऑफर की पहचान करना\n\n"
-            "मैं सिर्फ कृषि ऋण और सरकारी योजनाओं के बारे में जानकारी देता हूँ।\n"
-            "हिंदी या अंग्रेजी में कुछ भी पूछें! 🌾"
-        )
-    return (
-        "🌱 **Hello! I'm Sahay AI — the official agricultural assistant for KisanSahay.**\n\n"
-        "I'm built specifically to help Indian farmers with:\n\n"
-        "• 🏦 **Loan Guidance** — Eligibility, interest rates & limits for KCC, crop loans, dairy/equipment loans\n"
-        "• 📋 **Government Schemes** — PM-KISAN, SMAM, AIF, Crop Insurance, PMFBY and state schemes\n"
-        "• 📄 **Document Checklists** — Exact papers needed for every loan or scheme\n"
-        "• 🔒 **Secure Document Vault** — Store Aadhaar, land records & passbook safely\n"
-        "• 💰 **Interest Rate Comparisons** — Best rates across banks and schemes for your state\n"
-        "• ⚠️ **Loan Scam Detection** — Identify fraudulent loan offers\n\n"
-        "I only answer questions about agricultural loans, government schemes, and the KisanSahay app.\n"
-        "Ask me anything in English or Hindi! 🌾"
-    )
+    """Returns the KisanSahay intro from domain_config.json."""
+    _load_dynamic_backend_data()
+    responses = _config_cache.get("identity_response", {})
+    return responses.get(lang, responses.get("en", "Hello! I'm Sahay AI, your agricultural assistant."))
 
 
-def is_on_topic(query: str) -> bool:
+# ── Pipeline Step 3: First 50 Questions Check (sahayKnowledgeBase.json) ──────
+
+def _normalize_text_for_match(text: str) -> str:
+    """Normalizes acronyms and punctuation for high-precision FAQ matching."""
+    t = text.lower()
+    t = re.sub(r"pm[\s\-_]*kisan", "pmkisan", t)
+    t = re.sub(r"kisan[\s\-_]*credit[\s\-_]*card", "kcc", t)
+    t = re.sub(r"[^\w\s]", " ", t)
+    return " ".join(t.split())
+
+
+def find_faq_match(query: str, lang: str = "en") -> Optional[Tuple[str, str]]:
     """
-    Returns True if the query is related to agriculture, farm loans,
-    government schemes, or KisanSahay — i.e. the allowed domain.
-    Returns False for completely off-topic queries (jobs, movies, sports, etc.).
+    Evaluates the user query against the 50 curated FAQ questions from sahayKnowledgeBase.json.
+    Returns (answer, faq_id) if score >= min_score_to_return, else None.
+    All scoring parameters and stop words are loaded dynamically from domain_config.json.
     """
-    q = query.lower()
-    # Always on-topic if it matches a domain keyword
-    if any(kw in q for kw in _DOMAIN_KEYWORDS):
+    _load_dynamic_backend_data()
+    if not _kb_cache:
+        return None
+
+    cfg = _config_cache.get("faq_match_config", {})
+    min_score = cfg.get("min_score_to_return", 35)
+    exact_bonus = cfg.get("exact_match_bonus", 150)
+    q_contains = cfg.get("question_contains_bonus", 80)
+    kw_exact = cfg.get("keyword_exact_bonus", 70)
+    kw_partial = cfg.get("keyword_partial_bonus", 35)
+    tok_bonus = cfg.get("token_match_bonus", 12)
+    stop_words = set(cfg.get("stop_words", []))
+
+    q_norm = _normalize_text_for_match(query)
+    words = [w for w in q_norm.split() if w not in stop_words and len(w) >= 3]
+    # Guard against matching single short words or empty tokens
+    if not words and len(q_norm) < 4:
+        return None
+
+    best_score = 0
+    best_item = None
+
+    for item in _kb_cache:
+        score = 0
+        q_en = _normalize_text_for_match(item.get("question_en", ""))
+        q_hi = _normalize_text_for_match(item.get("question_hi", ""))
+
+        # 1. Exact match on normalized question
+        if q_norm == q_en or q_norm == q_hi:
+            score += exact_bonus
+        # Whole FAQ question contained in user's query
+        elif (len(q_en) > 10 and q_en in q_norm) or (len(q_hi) > 5 and q_hi in q_norm):
+            score += q_contains
+        # Multi-word user query contained in question with word boundaries
+        elif len(words) >= 2 and (
+            re.search(r"\b" + re.escape(q_norm) + r"\b", q_en) or
+            re.search(r"\b" + re.escape(q_norm) + r"\b", q_hi)
+        ):
+            score += q_contains
+
+        # 2. Keyword matching with word boundaries
+        for kw in item.get("keywords", []):
+            kw_norm = _normalize_text_for_match(kw)
+            if not kw_norm:
+                continue
+            if q_norm == kw_norm:
+                score += kw_exact
+            elif re.search(r"\b" + re.escape(kw_norm) + r"\b", q_norm):
+                score += kw_partial
+            elif len(words) >= 2 and re.search(r"\b" + re.escape(q_norm) + r"\b", kw_norm):
+                score += kw_partial
+
+        # 3. Content token overlap
+        q_en_words = set(q_en.split())
+        q_hi_words = set(q_hi.split())
+        for w in words:
+            if w in q_en_words:
+                score += tok_bonus
+            if w in q_hi_words:
+                score += tok_bonus
+
+        if score > best_score:
+            best_score = score
+            best_item = item
+
+    if best_score >= min_score and best_item:
+        answer = best_item.get(f"answer_{lang}", best_item.get("answer_en", ""))
+        logger.info("📚 First 50 FAQ match: '%s' (score=%d, lang=%s)", best_item.get("id"), best_score, lang)
+        return answer, best_item.get("id", "faq_item")
+
+    return None
+
+
+# ── Pipeline Step 4: Domain Relevance Verification (Farmer / Loans / Schemes) ─
+
+def is_related_to_farmer_or_loans(text: str) -> bool:
+    """
+    Checks if a query or search result relates to farmer, agriculture, loans, or schemes.
+    Uses dynamic off_topic_indicators and domain_keywords with word boundaries.
+    """
+    _load_dynamic_backend_data()
+    q = text.lower().strip()
+
+    # Check off-topic indicators (jobs, cricket, movies, bollywood, coding, etc.)
+    off_topics = _config_cache.get("off_topic_indicators", [])
+    for ot in off_topics:
+        ot_l = ot.lower().strip()
+        if re.search(r"\b" + re.escape(ot_l) + r"\b", q):
+            # Only allow if a strong agricultural/loan keyword is also explicitly present
+            strong_agri = ["kcc", "pm-kisan", "pmkisan", "kisan", "farmer", "krishi", "fasal", "kheti", "rin", "karz"]
+            if not any(ak in q for ak in strong_agri):
+                return False
+
+    # Check allowed domain keywords across all categories
+    kw_map = _config_cache.get("domain_keywords", {})
+    for key, words in kw_map.items():
+        if key.startswith("_") or not isinstance(words, list):
+            continue
+        for kw in words:
+            kw_l = kw.lower().strip()
+            if re.search(r"\b" + re.escape(kw_l) + r"\b", q):
+                return True
+
+    # Friendly short greetings (<= 2 words like "hello", "namaste", "pranam")
+    words = q.split()
+    if len(words) <= 2 and any(g in q for g in ["hello", "hi", "namaste", "pranam", "hey", "ram ram"]):
         return True
-    # Very short queries are often greetings — let them through
-    if len(q.split()) <= 3:
-        return True
+
     return False
 
 
 def get_off_topic_response(lang: str = "en") -> str:
-    """Politely declines to answer off-topic queries."""
-    if lang == "hi":
-        return (
-            "मैं केवल कृषि ऋण, सरकारी योजनाओं और KisanSahay ऐप के बारे में जानकारी दे सकता हूँ।\n\n"
-            "उदाहरण के लिए आप पूछ सकते हैं:\n"
-            "• KCC के लिए पात्रता क्या है?\n"
-            "• PM-KISAN के लिए कैसे आवेदन करें?\n"
-            "• फसल ऋण के लिए कौन-से दस्तावेज चाहिए?"
-        )
-    return (
-        "I can only help with **agricultural loans, government schemes, and the KisanSahay app**.\n\n"
-        "Try asking:\n"
-        "• Am I eligible for a KCC loan?\n"
-        "• How do I apply for PM-KISAN?\n"
-        "• What documents do I need for a crop loan?"
-    )
+    """Returns the polite domain restriction response from domain_config.json."""
+    _load_dynamic_backend_data()
+    responses = _config_cache.get("off_topic_response", {})
+    return responses.get(lang, responses.get("en", "I can only help with agricultural loans, government schemes, and the KisanSahay app."))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -343,6 +532,10 @@ class ChatRequest(BaseModel):
     language: Optional[str] = Field(
         default="en",
         description="UI language selected by the user ('en' for English, 'hi' for Hindi). The answer will be returned in this language."
+    )
+    lang: Optional[str] = Field(
+        default=None,
+        description="Optional alias for language parameter ('en' or 'hi')."
     )
 
 
@@ -710,7 +903,7 @@ def chat_endpoint(request: ChatRequest):
 
     # Enforce the UI-selected language: prepend a hard instruction so the LLM always
     # responds in the language the user toggled, regardless of the RAG context language.
-    lang = (request.language or "en").strip().lower()
+    lang = (request.lang or request.language or "en").strip().lower()
     if lang == "hi":
         lang_instruction = "[STRICT INSTRUCTION: You MUST respond ONLY in Hindi (हिंदी). Do NOT use English in your answer.] "
     else:
@@ -720,9 +913,28 @@ def chat_endpoint(request: ChatRequest):
     logger.info("═" * 60)
     logger.info("📥 Incoming /chat query: '%s' (top_k=%d, force_web=%s, lang=%s)", query, request.top_k, request.force_web_search, lang)
 
-    # ── Guard 1: Identity queries — answer immediately, no LLM needed ──────
+    # ══════════════════════════════════════════════════════════════════════════
+    # DYNAMIC BACKEND PIPELINE (All rules loaded from backend JSON data)
+    # ══════════════════════════════════════════════════════════════════════════
+
+    # ── Step 1: DuckDuckGo-style bad text & content moderation limitation ────
+    is_unsafe, safety_msg = check_duckduckgo_safety(query, lang)
+    if is_unsafe:
+        logger.info("🚫 DuckDuckGo safety limitation triggered for query: '%s'", query)
+        elapsed = (time.time() - start_time) * 1000
+        return ChatResponse(
+            answer=safety_msg,
+            user_query=query,
+            source_type="Content Safety Filter (DuckDuckGo Rules)",
+            confidence_score=0.0,
+            context=None,
+            duration_ms=round(elapsed, 2),
+            status="blocked"
+        )
+
+    # ── Step 2: KisanSahay App Identity & Capabilities check ─────────────────
     if is_identity_query(query):
-        logger.info("🤖 Identity query detected — returning hardcoded KisanSahay intro.")
+        logger.info("🤖 Identity query detected → Returning KisanSahay intro from domain_config.json")
         elapsed = (time.time() - start_time) * 1000
         return ChatResponse(
             answer=get_identity_response(lang),
@@ -734,9 +946,26 @@ def chat_endpoint(request: ChatRequest):
             status="success"
         )
 
-    # ── Guard 2: Off-topic queries — block before web search runs ───────────
-    if not is_on_topic(query):
-        logger.info("🚫 Off-topic query blocked: '%s'", query)
+    # ── Step 3: First 50 Questions check (sahayKnowledgeBase.json) ───────────
+    faq_match = find_faq_match(query, lang)
+    if faq_match:
+        faq_answer, faq_id = faq_match
+        logger.info("📚 Match found in first 50 questions: '%s' — returning curated answer", faq_id)
+        elapsed = (time.time() - start_time) * 1000
+        return ChatResponse(
+            answer=faq_answer,
+            user_query=query,
+            source_type="KisanSahay FAQ Knowledge Base",
+            confidence_score=1.0,
+            context=None,
+            duration_ms=round(elapsed, 2),
+            status="success"
+        )
+
+    # ── Step 4: Domain relevance check — Must relate to farmer, loans, schemes
+    # "and then go on web search and then if it related to farmer or somthing like loan and schemes then give the output to user.."
+    if not is_related_to_farmer_or_loans(query):
+        logger.info("🚫 Off-topic query blocked: '%s' (not related to farmer/loans/schemes)", query)
         elapsed = (time.time() - start_time) * 1000
         return ChatResponse(
             answer=get_off_topic_response(lang),
@@ -748,6 +977,7 @@ def chat_endpoint(request: ChatRequest):
             status="success"
         )
 
+    # ── Steps 5 & 6: ChromaDB local search → DuckDuckGo web search fallback ─
     source_type = None
     final_answer = None
     context_used = None
@@ -825,6 +1055,11 @@ def chat_endpoint(request: ChatRequest):
                     model=LLM_MODEL,
                     ollama_url=OLLAMA_URL
                 )
+                # Verify synthesized text passes safety rules
+                is_web_unsafe, web_safety_msg = check_duckduckgo_safety(raw_web_answer, lang)
+                if is_web_unsafe:
+                    raw_web_answer = web_safety_msg or get_off_topic_response(lang)
+
                 source_type = "Web Search"
                 context_used = web_results
                 final_answer = (

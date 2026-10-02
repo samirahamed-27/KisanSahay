@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "description": "DuckDuckGo-inspired Dynamic Content Moderation & SafeSearch Filter for Sahay AI. All filters and limitation scratch data are stored here as dynamic backend data, not hardcoded in code.",
+    "source_inspiration": "DuckDuckGo SafeSearch taxonomies, community profanity lists, and RBI fraud advisory guidelines for agricultural banking.",
+    "last_updated": "2026-09-28"
+  },
+  "settings": {
+    "safe_search_mode": "strict",
+    "block_profanity": true,
+    "block_adult_content": true,
+    "block_violence": true,
+    "block_hate_speech": true,
+    "block_financial_fraud": true,
+    "block_gambling": true,
+    "block_prompt_injection": true
+  },
+  "profanity_and_bad_words": [
+    "fuck", "fucking", "fucked", "shit", "bullshit", "bitch", "bitches",
+    "asshole", "assholes", "bastard", "bastards", "cunt", "cunts",
+    "dick", "dicks", "pussy", "motherfucker", "motherfucking",
+    "slut", "sluts", "whore", "whores", "piss", "wanker", "prick",
+    "cocksucker", "twat", "fag", "faggot",
+    "madarchod", "madarchodh", "bhenchod", "behenchod",
+    "chutiya", "chutiyapa", "chutiye", "bhosdike", "bhosadike", "bsdk",
+    "gaand", "gand", "lund", "lauda", "lavde", "lawde", "harami", "haraami",
+    "kamina", "kaminey", "kamine", "kutta", "kutte", "randi", "saala", "saale",
+    "suar", "bhadwa", "bhadwe", "chodu", "gandu", "hijra"
+  ],
+  "adult_and_nsfw_terms": [
+    "porn", "pornography", "xxx", "nude", "nudes", "nudity",
+    "sexual", "sex video", "sexy video", "erotic", "stripper", "strip club", "strip dance", "nsfw", "hentai",
+    "camgirl", "onlyfans", "boobs", "tits", "vagina", "penis",
+    "sexual intercourse", "masturbation", "leaked mms", "blue film", "adult movie"
+  ],
+  "violence_and_harmful": [
+    "how to kill", "how to make bomb", "bomb making", "weapon making",
+    "explosive device", "suicide method", "how to commit suicide", "self harm",
+    "hurt someone", "murder plan", "assassinate", "poison recipe",
+    "hack bank account", "ddos attack", "cyber attack", "steal money"
+  ],
+  "hate_speech_and_harassment": [
+    "hate speech", "racial slur", "caste discrimination", "religious hate",
+    "communal violence", "bigotry", "genocide", "ethnic cleansing"
+  ],
+  "financial_scams_and_predatory_fraud": [
+    "guaranteed loan without documents", "no kyc loan",
+    "instant approval without bank", "loan from whatsapp",
+    "advance fee loan", "processing fee fraud", "easy loan trap",
+    "share otp for loan", "send otp to get money", "lottery prize winner",
+    "pay upfront fee for scheme", "unauthorized loan app", "fake loan app",
+    "give bank password", "transfer money for processing"
+  ],
+  "gambling_and_betting": [
+    "satta", "matka", "satta king", "online betting", "cricket betting",
+    "ipl betting", "casino", "poker real money", "slots machine",
+    "rummy real cash", "roulette", "gambling site", "dream11 hack"
+  ],
+  "prompt_injection_and_malicious": [
+    "ignore previous instructions", "ignore all previous instructions",
+    "disregard all instructions", "jailbreak", "dan mode", "system prompt",
+    "extract system prompt", "<script>", "drop table", "select * from users"
+  ],
+  "action_responses": {
+    "profanity": {
+      "en": "⚠️ Please maintain respectful language. Sahay AI is designed to assist farmers with loans, subsidies, and agriculture.",
+      "hi": "⚠️ कृपया सम्मानजनक भाषा का प्रयोग करें। Sahay AI किसानों को ऋण, सरकारी योजनाओं और कृषि संबंधित सहायता देने के लिए है।"
+    },
+    "adult": {
+      "en": "⚠️ Adult or explicit content is strictly restricted. Sahay AI is dedicated solely to agricultural and financial services for farmers.",
+      "hi": "⚠️ अनुचित या वयस्क सामग्री प्रतिबंधित है। Sahay AI केवल किसानों की कृषि और वित्तीय सहायता के लिए समर्पित है।"
+    },
+    "harmful": {
+      "en": "⚠️ Requests involving harmful, dangerous, or illegal activities cannot be answered.",
+      "hi": "⚠️ हानिकारक, खतरनाक या गैरकानूनी गतिविधियों से संबंधित प्रश्नों का उत्तर नहीं दिया जा सकता।"
+    },
+    "scam": {
+      "en": "⚠️ **Fraud Warning:** Offers claiming instant loans without documents or requiring advance processing fees are common scams. Always apply via official banks or Kisan Credit Card (KCC) channels.",
+      "hi": "⚠️ **धोखाधड़ी चेतावनी:** बिना कागजात तत्काल ऋण या अग्रिम शुल्क मांगने वाले प्रस्ताव अक्सर फर्जी होते हैं। हमेशा आधिकारिक बैंक या KCC माध्यम से ही आवेदन करें।"
+    },
+    "default_blocked": {
+      "en": "⚠️ I am unable to process that query due to content safety limitations. Please ask me about agricultural loans, government schemes, or the KisanSahay app.",
+      "hi": "⚠️ सामग्री सुरक्षा नियमों के तहत मैं इस प्रश्न का उत्तर नहीं दे सकता। कृपया कृषि ऋण, सरकारी योजनाओं या KisanSahay ऐप के बारे में पूछें।"
+    }
+  }
+}
