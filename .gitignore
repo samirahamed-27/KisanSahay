@@ -20,3 +20,10 @@ ios/DerivedData/
 # Local reference docs (not pushed to GitHub)
 MYGOGO
 MYGOGO.md
+
+# SQLite Temporary WAL / SHM files
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+Data/*.db

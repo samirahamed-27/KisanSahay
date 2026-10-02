@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>DAC&amp;FW Seasonal Crop Advisories - Madhya Pradesh</title>
+    <link>https://farmer.gov.in/CropAdvisories.aspx?state=MP</link>
+    <description>Weekly and bi-weekly agronomic recommendations</description>
+    <item>
+      <title>Soybean: Harvesting and Storage Management</title>
+      <description>Harvest soybean crops when 90% of pods turn golden brown to avoid pod shattering losses. Check for tobacco caterpillar in late maturing fields and dry grains to below 12% moisture before bagging.</description>
+      <pubDate>Fri, 02 Oct 2026 06:00:00 +0530</pubDate>
+      <category>Kharif-Rabi</category>
+      <link>https://farmer.gov.in/advisory/soybean-oct26</link>
+    </item>
+    <item>
+      <title>Gram (Chickpea): Seed Treatment and Pre-Sowing Irrigation</title>
+      <description>Give pre-sowing light irrigation (Palewa). Treat seed with Trichoderma viride @ 5g/kg seed followed by Rhizobium culture to safeguard against wilt and root rot diseases.</description>
+      <pubDate>Thu, 01 Oct 2026 09:30:00 +0530</pubDate>
+      <category>Rabi</category>
+      <link>https://farmer.gov.in/advisory/gram-oct26</link>
+    </item>
+  </channel>
+</rss>

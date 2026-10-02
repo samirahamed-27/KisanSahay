@@ -1,0 +1,65 @@
+{
+  "updated_date": "2026-10-02T12:00:00Z",
+  "records": [
+    {
+      "state": "Madhya Pradesh",
+      "district": "Sehore",
+      "market": "Sehore",
+      "commodity": "Soybean",
+      "variety": "Yellow (JS 9560)",
+      "arrival_date": "2026-10-02",
+      "min_price": "4450",
+      "max_price": "4980",
+      "modal_price": "4750",
+      "arrivals_tonnes": 185.5
+    },
+    {
+      "state": "Madhya Pradesh",
+      "district": "Ujjain",
+      "market": "Ujjain",
+      "commodity": "Wheat",
+      "variety": "Lokwan",
+      "arrival_date": "2026-10-02",
+      "min_price": "2350",
+      "max_price": "2620",
+      "modal_price": "2500",
+      "arrivals_tonnes": 412.0
+    },
+    {
+      "state": "Madhya Pradesh",
+      "district": "Bhopal",
+      "market": "Bhopal",
+      "commodity": "Gram (Chickpea)",
+      "variety": "Desi",
+      "arrival_date": "2026-10-02",
+      "min_price": "5600",
+      "max_price": "6100",
+      "modal_price": "5850",
+      "arrivals_tonnes": 95.0
+    },
+    {
+      "state": "Madhya Pradesh",
+      "district": "Dewas",
+      "market": "Dewas",
+      "commodity": "Mustard",
+      "variety": "Black",
+      "arrival_date": "BAD-DATE-FORMAT",
+      "min_price": "5100",
+      "max_price": "5500",
+      "modal_price": "5350",
+      "arrivals_tonnes": 40.0
+    },
+    {
+      "state": "Madhya Pradesh",
+      "district": "Harda",
+      "market": "Harda",
+      "commodity": "Maize",
+      "variety": "Hybrid",
+      "arrival_date": "2026-10-02",
+      "min_price": "0",
+      "max_price": "0",
+      "modal_price": "0",
+      "arrivals_tonnes": 10.0
+    }
+  ]
+}

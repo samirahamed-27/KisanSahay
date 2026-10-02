@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>IMD Gramin Krishi Mausam Sewa (GKMS) Agromet Bulletin</title>
+    <link>https://imdagrimet.gov.in/bulletin</link>
+    <description>District-level Agromet Bulletins for Madhya Pradesh</description>
+    <item>
+      <title>Agromet Advisory Bulletin: Sehore District</title>
+      <description>Forecast: Partly cloudy sky. Maximum temperature 32.5 C, Minimum temperature 21.0 C. Relative humidity 65-75%. Expected rainfall 2.0 mm. Agricultural Advisory: Weather is favorable for harvesting mature Kharif soybean. Sun dry produce to below 12% moisture.</description>
+      <pubDate>Fri, 02 Oct 2026 10:00:00 +0530</pubDate>
+      <link>https://imdagrimet.gov.in/bulletin/sehore</link>
+    </item>
+    <item>
+      <title>Agromet Advisory Bulletin: Bhopal District</title>
+      <description>Forecast: Clear sky. Maximum temperature 33.0 C, Minimum temperature 22.0 C. Rainfall 0.0 mm. Favorable weather for land preparation and field sowing of early Rabi mustard and toria.</description>
+      <pubDate>Fri, 02 Oct 2026 10:00:00 +0530</pubDate>
+      <link>https://imdagrimet.gov.in/bulletin/bhopal</link>
+    </item>
+  </channel>
+</rss>

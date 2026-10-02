@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head><title>ICAR KVK Directory</title></head>
+<body>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>S.No</th><th>District</th><th>KVK Name</th><th>Address</th><th>Phone</th><th>Website</th><th>Soil Testing Facility</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Sehore</td>
+      <td>Krishi Vigyan Kendra, Sehore</td>
+      <td>Near RAK Agri College, Sehore, Madhya Pradesh - 466001</td>
+      <td>07562-222456</td>
+      <td><a href="https://kvksehore.icar.gov.in">Visit</a></td>
+      <td>Available (Soil & Water Testing Lab)</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Bhopal</td>
+      <td>ICAR - Central Institute of Agricultural Engineering KVK Bhopal</td>
+      <td>Nabi Bagh, Berasia Road, Bhopal - 462038</td>
+      <td>0755-2730985</td>
+      <td><a href="https://ciae.icar.gov.in/kvk">Visit</a></td>
+      <td>Functional</td>
+    </tr>
+    <!-- Invalid phone number (fake letters) - should be rejected -->
+    <tr>
+      <td>3</td>
+      <td>Ujjain</td>
+      <td>Krishi Vigyan Kendra Ujjain</td>
+      <td>Dewas Road, Ujjain</td>
+      <td>INVALID-PHONE-123</td>
+      <td><a href="https://kvkujjain.icar.gov.in">Visit</a></td>
+      <td>Yes</td>
+    </tr>
+    <!-- Insecure HTTP website - should be rejected -->
+    <tr>
+      <td>4</td>
+      <td>Dewas</td>
+      <td>Krishi Vigyan Kendra Dewas</td>
+      <td>AB Road, Dewas</td>
+      <td>07272-255123</td>
+      <td><a href="http://insecure-kvk-site.org">Visit</a></td>
+      <td>Yes</td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>
