@@ -4965,20 +4965,35 @@ function setupSahayAI() {
     const farmerProfile = getComprehensiveFarmerProfile();
 
     try {
-      // 3. Send query to local FastAPI RAG endpoint
-      const res = await fetch('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_query: messageText,
-          top_k: 3,
-          include_context: false,
-          language: sahayLang
-        })
-      });
-
-      if (!res.ok) {
-        throw new Error(`RAG Server returned HTTP ${res.status}: ${res.statusText}`);
+      // 3. Send query to local FastAPI RAG endpoint (with /chat proxy fallback)
+      let res;
+      try {
+        res = await fetch('http://localhost:8000/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_query: messageText,
+            top_k: 3,
+            include_context: false,
+            language: sahayLang
+          })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      } catch (errDirect) {
+        // Fallback to relative /chat on current host/server
+        res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_query: messageText,
+            top_k: 3,
+            include_context: false,
+            language: sahayLang
+          })
+        });
+        if (!res.ok) {
+          throw new Error(`RAG Server returned HTTP ${res.status}: ${res.statusText}`);
+        }
       }
 
       const data = await res.json();

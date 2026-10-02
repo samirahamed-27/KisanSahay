@@ -18,6 +18,38 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api', docsRoutes);
 app.use('/api', apiRoutes);
 
+// Direct /chat proxy to Python FastAPI backend (http://127.0.0.1:8000/chat) with fallback
+app.post('/chat', async (req, res) => {
+  try {
+    const apiRes = await fetch('http://127.0.0.1:8000/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await apiRes.json();
+    return res.status(apiRes.status).json(data);
+  } catch (err) {
+    try {
+      const { processAssistantQuery } = require('./src/services/assistantService');
+      const query = req.body?.user_query || req.body?.message || '';
+      const lang = req.body?.language || req.body?.lang || 'en';
+      const result = await processAssistantQuery(query, { language: lang });
+      return res.json({
+        answer: result.reply || result.message || (lang === 'hi' ? 'क्षमा करें, उत्तर प्राप्त नहीं हो सका।' : 'Could not process query.'),
+        user_query: query,
+        source_type: 'Local Fallback Assistant',
+        confidence_score: 0.8,
+        status: 'success'
+      });
+    } catch (fallbackErr) {
+      return res.status(503).json({
+        answer: '⚠️ Could not connect to Sahay AI backend (`http://localhost:8000/chat`). Please ensure your local FastAPI server is running (`python app.py`).',
+        status: 'error'
+      });
+    }
+  }
+});
+
 const DATA_DIR = path.join(__dirname, 'Data', 'Data');
 const LOANS_FILE = path.join(DATA_DIR, 'loans.json');
 

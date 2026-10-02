@@ -84,12 +84,17 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",   # Express / Node dev server
+        "http://localhost:3001",   # Express dev server (PORT=3001)
         "http://localhost:5173",   # Vite dev server
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
         "http://localhost:8080",
-        "*"                        # Permissive for local development
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+        "null",                    # file:/// origin
+        "*"
     ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
