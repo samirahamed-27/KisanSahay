@@ -133,14 +133,16 @@ def format_record_to_markdown(record: Dict[str, Any]) -> str:
       - ## How to Apply
       - ## Notes
     """
-    dtype = record.get("type", "unknown")
+    dtype = record.get("type") or record.get("data_type") or "unknown"
     state = record.get("state", "India")
     district = record.get("district") or "All"
     source_url = record.get("source_url", "https://farmer.gov.in")
     last_verified = str(record.get("last_verified", ""))[:10]
     version = record.get("version", 1)
     rec_id = record.get("id", "")
-    content = record.get("content", {})
+    content = record.get("content")
+    if content is None:
+        content = record.get("content_json", {})
     if isinstance(content, str):
         try:
             content = json.loads(content)
@@ -477,9 +479,17 @@ class SyncEngine:
         - Attaches metadata: (record_id, type, state, district, source_url, last_verified, version, header_path, chunk_index)
         - Returns list of chunks with stable IDs: {record_id}::{chunk_index}
         """
+        record_id = record.get("id", "")
+        # If record is only a partial audit dict (e.g. from upsert_record), load full record from database
+        if hasattr(self, "data_layer") and self.data_layer and record_id:
+            if "type" not in record or ("content" not in record and "content_json" not in record):
+                full_rec = self.data_layer.get_record(record_id)
+                if full_rec:
+                    record = full_rec
+
         md_text = format_record_to_markdown(record)
-        record_id = record["id"]
-        dtype = record.get("type", "unknown")
+        record_id = record.get("id", record_id)
+        dtype = record.get("type") or record.get("data_type") or "unknown"
         state = record.get("state", self.target_state)
         district = record.get("district") or "All"
         source_url = record.get("source_url", "")
@@ -528,7 +538,8 @@ class SyncEngine:
                         "last_verified": last_verified,
                         "version": version,
                         "header_path": header_path,
-                        "chunk_index": chunk_idx
+                        "chunk_index": chunk_idx,
+                        "status": record.get("status", "live")
                     }
                     chunk_id = f"{record_id}::{chunk_idx}"
                     chunks.append({"id": chunk_id, "text": chunk_text, "metadata": chunk_meta})
@@ -548,7 +559,8 @@ class SyncEngine:
                     "last_verified": last_verified,
                     "version": version,
                     "header_path": header_path,
-                    "chunk_index": chunk_idx
+                    "chunk_index": chunk_idx,
+                    "status": record.get("status", "live")
                 }
                 chunk_id = f"{record_id}::{chunk_idx}"
                 chunks.append({"id": chunk_id, "text": chunk_text, "metadata": chunk_meta})

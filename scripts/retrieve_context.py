@@ -128,6 +128,12 @@ def get_relevant_context(
         raise
 
 
+def retrieve(question: str, state: Optional[str] = None, n: int = 6, **kwargs):
+    """Convenience alias exposing src.rag.retrieve."""
+    from src.rag.retrieval import retrieve as _retrieve
+    return _retrieve(question=question, state=state, n=n, **kwargs)
+
+
 if __name__ == "__main__":
     test_query = sys.argv[1] if len(sys.argv) > 1 else "How much financial assistance is provided under PM-KISAN?"
     print(f"\n🔎 Query: '{test_query}'\n")
@@ -137,3 +143,4 @@ if __name__ == "__main__":
     print("=" * 60)
     print(context_output)
     print("=" * 60)
+

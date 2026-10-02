@@ -46,6 +46,7 @@ if str(BASE_DIR) not in sys.path:
 from scripts.retrieve_context import get_relevant_context, get_vector_store
 from scripts.generate_answer import generate_answer_langchain, FALLBACK_MESSAGE
 from scripts.ingest_data import check_ollama_service
+from src.rag import retrieve, evaluate_eligibility, generate_with_gemini
 
 # macOS LibreSSL compatibility safeguard for ddgs / duckduckgo-search
 try:
@@ -521,11 +522,15 @@ class ChatRequest(BaseModel):
         example="How much money is provided to farmer families under PM-KISAN?",
         description="The question or prompt submitted by the user."
     )
+    state: Optional[str] = Field(
+        default=None,
+        description="User's state context, e.g. 'Madhya Pradesh' or 'Punjab'."
+    )
     top_k: Optional[int] = Field(
-        default=3,
+        default=6,
         ge=1,
-        le=10,
-        description="Number of relevant context chunks to retrieve from ChromaDB."
+        le=20,
+        description="Number of relevant context chunks to retrieve from ChromaDB (default 6)."
     )
     include_context: Optional[bool] = Field(
         default=False,
@@ -542,6 +547,10 @@ class ChatRequest(BaseModel):
     lang: Optional[str] = Field(
         default=None,
         description="Optional alias for language parameter ('en' or 'hi')."
+    )
+    farmer_profile: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Optional structured farmer profile attributes for deterministic Python eligibility evaluation."
     )
 
 
@@ -562,6 +571,14 @@ class ChatResponse(BaseModel):
     )
     duration_ms: float = Field(..., description="Total pipeline latency in milliseconds.")
     status: str = Field(default="success", description="Status code (success, fallback, no_results, error).")
+    citations: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="List of verified sources and portals cited in the response."
+    )
+    has_pending_updates: Optional[bool] = Field(
+        default=False,
+        description="Flag indicating if any cited record has pending updates undergoing review."
+    )
 
 
 class HealthResponse(BaseModel):
@@ -953,7 +970,12 @@ def chat_endpoint(request: ChatRequest):
         )
 
     # ── Step 3: First 50 Questions check (sahayKnowledgeBase.json) ───────────
-    faq_match = find_faq_match(query, lang)
+    # If the user is asking an eligibility question or time-sensitive query, bypass static 1-liner FAQ
+    # so the Python Eligibility Engine and fresh ChromaDB retrieval evaluate the query accurately.
+    is_elig_check = evaluate_eligibility(query, farmer_profile=request.farmer_profile).get("is_eligibility_query", False)
+    is_time_sensitive_check = any(w in query.lower() for w in ["mandi", "price", "bhav", "rate", "weather", "today", "tomorrow", "forecast", "calendar", "training", "latest"])
+
+    faq_match = find_faq_match(query, lang) if (not is_elig_check and not is_time_sensitive_check) else None
     if faq_match:
         faq_answer, faq_id = faq_match
         logger.info("📚 Match found in first 50 questions: '%s' — returning curated answer", faq_id)
@@ -1001,44 +1023,53 @@ def chat_endpoint(request: ChatRequest):
         # ─────────────────────────────────────────────────────────────────────
         # Step 1: Search Local ChromaDB
         # ─────────────────────────────────────────────────────────────────────
-        if not request.force_web_search:
-            logger.info("🔍 Step 1: Searching local ChromaDB...")
-            docs_with_scores = vector_store.similarity_search_with_score(query, k=request.top_k)
+        citations = []
+        has_pending_updates = False
 
-            if docs_with_scores:
-                best_doc, best_distance = docs_with_scores[0]
+        if not request.force_web_search:
+            logger.info("🔍 Step 1: Executing fresh ChromaDB retrieve(question, state=%s, n=%d)...", request.state, request.top_k or 6)
+
+            # 1. Deterministic Python eligibility evaluation
+            elig_result = evaluate_eligibility(
+                query=query,
+                farmer_profile=request.farmer_profile
+            )
+
+            # 2. Fresh ChromaDB retrieval with state and live status filtering, grouping, and freshness ranking
+            retrieval_res = retrieve(
+                question=query,
+                state=request.state,
+                n=request.top_k or 6,
+                data_layer=get_admin_data_layer(),
+                vector_store=vector_store
+            )
+
+            citations = retrieval_res.get("citations", [])
+            has_pending_updates = retrieval_res.get("has_pending_updates", False)
+
+            if retrieval_res.get("records") or elig_result.get("is_eligibility_query"):
+                best_distance = min(r["best_score"] for r in retrieval_res["records"]) if retrieval_res.get("records") else 0.0
                 logger.info("   ChromaDB best match distance: %.4f (threshold: <= %.2f)", best_distance, SIMILARITY_DISTANCE_THRESHOLD)
 
-                # Check if local retrieval confidence is high
-                if best_distance <= SIMILARITY_DISTANCE_THRESHOLD:
-                    local_chunks = [doc.page_content.strip() for doc, _ in docs_with_scores if doc.page_content]
-                    local_context = "\n\n---\n\n".join(local_chunks)
-
-                    logger.info("   Testing local context with Llama 3.2...")
-                    raw_local_answer = generate_answer_langchain(
+                # Generate grounded response with Gemini rules if confidence is sufficient or eligibility checked
+                if best_distance <= SIMILARITY_DISTANCE_THRESHOLD or elig_result.get("is_eligibility_query"):
+                    logger.info("   Synthesizing grounded answer with Gemini rules...")
+                    gemini_output = generate_with_gemini(
                         query=query_for_llm,
-                        context=local_context,
-                        model=LLM_MODEL,
-                        ollama_url=OLLAMA_URL,
-                        temperature=0.0
+                        retrieval_result=retrieval_res,
+                        eligibility_result=elig_result,
+                        lang=lang
                     )
-
-                    # Check if the LLM was able to answer from local documents
-                    if not is_missing_information(raw_local_answer):
-                        logger.info("✅ Answer found in Official Uploaded Documents!")
-                        source_type = "Official Uploaded Documents"
-                        context_used = local_context
-                        final_answer = (
-                            f"{raw_local_answer}\n\n"
-                            f"---\n"
-                            f"📌 **Source:** Official Uploaded Documents"
-                        )
-                    else:
-                        logger.info("⚠️ LLM decided information is missing from local context. Triggering Web Search fallback...")
+                    source_type = "Official Uploaded Documents"
+                    context_used = retrieval_res.get("formatted_context")
+                    final_answer = gemini_output["answer"]
+                    citations = gemini_output.get("citations", citations)
+                    has_pending_updates = gemini_output.get("has_pending_updates", has_pending_updates)
+                    logger.info("✅ Answer synthesized from Official Uploaded Documents via Gemini rules!")
                 else:
-                    logger.info("⚠️ Low-confidence local match (distance: %.4f > %.2f). Triggering Web Search fallback...", best_distance, SIMILARITY_DISTANCE_THRESHOLD)
+                    logger.info("⚠️ Low-confidence match (distance: %.4f > %.2f). Triggering Web Search fallback...", best_distance, SIMILARITY_DISTANCE_THRESHOLD)
             else:
-                logger.info("⚠️ ChromaDB returned 0 documents. Triggering Web Search fallback...")
+                logger.info("⚠️ ChromaDB returned 0 live records. Triggering Web Search fallback...")
         else:
             logger.info("⚡ force_web_search is enabled. Skipping local search...")
 
@@ -1095,7 +1126,9 @@ def chat_endpoint(request: ChatRequest):
             confidence_score=round(best_distance, 4) if best_distance is not None else None,
             context=context_used if request.include_context else None,
             duration_ms=round(elapsed, 2),
-            status="success"
+            status="success",
+            citations=citations if citations else None,
+            has_pending_updates=has_pending_updates
         )
 
     except requests.exceptions.ConnectionError:
