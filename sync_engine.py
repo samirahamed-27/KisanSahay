@@ -396,11 +396,16 @@ class SyncEngine:
         ollama_url: Optional[str] = None,
         embed_model: Optional[str] = None,
         target_state: str = "Madhya Pradesh",
-        embeddings: Optional[Embeddings] = None
+        embeddings: Optional[Embeddings] = None,
+        data_layer: Optional[Any] = None
     ):
         self.target_state = target_state
-        self.registry = SourceRegistry(sources_path=sources_path, target_state=target_state)
-        self.data_layer = KisanDataLayer(db_path=db_path, registry=self.registry)
+        if data_layer is not None:
+            self.data_layer = data_layer
+            self.registry = getattr(data_layer, "registry", SourceRegistry(sources_path=sources_path, target_state=target_state))
+        else:
+            self.registry = SourceRegistry(sources_path=sources_path, target_state=target_state)
+            self.data_layer = KisanDataLayer(db_path=db_path, registry=self.registry)
 
         self.chroma_dir = chroma_dir or DEFAULT_CHROMA_DIR
         self.collection_name = collection_name or DEFAULT_COLLECTION_NAME

@@ -50,6 +50,47 @@ app.post('/chat', async (req, res) => {
   }
 });
 
+// Admin Review, Scheduler & Health Check Proxy to Python FastAPI backend (http://127.0.0.1:8000)
+app.all(['/admin/*', '/api/admin/*'], async (req, res) => {
+  try {
+    const backendUrl = `http://127.0.0.1:8000${req.originalUrl}`;
+    const headers = { ...req.headers };
+    delete headers.host;
+    delete headers.connection;
+    delete headers['content-length'];
+
+    const fetchOptions = {
+      method: req.method,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      }
+    };
+
+    if (['POST', 'PUT', 'PATCH'].includes(req.method.toUpperCase()) && req.body && Object.keys(req.body).length > 0) {
+      fetchOptions.body = JSON.stringify(req.body);
+    }
+
+    const apiRes = await fetch(backendUrl, fetchOptions);
+    const contentType = apiRes.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+      const data = await apiRes.json();
+      return res.status(apiRes.status).json(data);
+    } else {
+      const text = await apiRes.text();
+      return res.status(apiRes.status).send(text);
+    }
+  } catch (err) {
+    return res.status(503).json({
+      success: false,
+      error: 'Backend Service Unavailable',
+      message: 'Could not connect to KisanSahay Python backend (http://127.0.0.1:8000). Please ensure python app.py is running.',
+      details: err.message
+    });
+  }
+});
+
 const DATA_DIR = path.join(__dirname, 'Data', 'Data');
 const LOANS_FILE = path.join(DATA_DIR, 'loans.json');
 

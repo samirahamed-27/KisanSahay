@@ -36,6 +36,9 @@ __all__ = [
     "KVKCalendarRecord",
     "CropAdvisoryRecord",
     "GovSchemeLoanRecord",
-    "MandiPriceRecord",
     "IMDAgrometRecord",
+    "DataLayer",
 ]
+
+DataLayer = KisanDataLayer
+

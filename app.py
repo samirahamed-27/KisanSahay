@@ -32,7 +32,8 @@ from pathlib import Path
 from typing import Optional, Tuple, Dict, Any, List
 
 import httpx
-from fastapi import FastAPI, HTTPException, status, Request, Response
+import hmac
+from fastapi import FastAPI, HTTPException, status, Request, Response, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -1109,10 +1110,186 @@ def chat_endpoint(request: ChatRequest):
             detail=f"An error occurred while generating the answer: {str(err)}"
         )
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. Admin Review, Data Scheduling & Health Alerting Engine
+# ─────────────────────────────────────────────────────────────────────────────
+
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "kisansahay-admin-secret-2026")
+
+
+def verify_admin_auth(
+    request: Request,
+    x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+):
+    """
+    Validates admin credentials via either:
+      - X-Admin-Key header
+      - Authorization: Bearer <token>
+    """
+    provided_key = None
+    if x_admin_key:
+        provided_key = x_admin_key.strip()
+    elif authorization:
+        parts = authorization.strip().split(" ", 1)
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            provided_key = parts[1].strip()
+        else:
+            provided_key = parts[0].strip()
+
+    if not provided_key or not hmac.compare_digest(provided_key, ADMIN_API_KEY):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized: Invalid or missing admin credentials.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return True
+
+
+_data_layer_instance = None
+_sync_engine_instance = None
+
+
+def get_admin_data_layer():
+    global _data_layer_instance
+    if _data_layer_instance is None:
+        from src.data_layer import KisanDataLayer
+        _data_layer_instance = KisanDataLayer()
+    return _data_layer_instance
+
+
+def get_admin_sync_engine():
+    global _sync_engine_instance
+    if _sync_engine_instance is None:
+        from sync_engine import SyncEngine
+        _sync_engine_instance = SyncEngine(data_layer=get_admin_data_layer())
+    return _sync_engine_instance
+
+
+@app.get("/admin/pending", tags=["Admin Review"])
+@app.get("/api/admin/pending", tags=["Admin Review"])
+def list_pending_reviews(is_admin: bool = Depends(verify_admin_auth)):
+    """
+    Returns all records pending review with before and after diffs,
+    metadata, and wait duration in days.
+    """
+    from src.admin import get_pending_changes
+    dl = get_admin_data_layer()
+    pending = get_pending_changes(dl)
+    return {
+        "success": True,
+        "count": len(pending),
+        "pending": pending
+    }
+
+
+@app.post("/admin/approve/{record_id:path}", tags=["Admin Review"])
+@app.post("/api/admin/approve/{record_id:path}", tags=["Admin Review"])
+def approve_pending_record(record_id: str, is_admin: bool = Depends(verify_admin_auth)):
+    """
+    Approves and publishes a pending change:
+    - Moves status to 'live'
+    - Updates SQLite record
+    - Triggers ChromaDB vector indexing for the published record
+    """
+    from src.admin import approve_pending_change
+    dl = get_admin_data_layer()
+    se = get_admin_sync_engine()
+    try:
+        res = approve_pending_change(record_id, data_layer=dl, sync_engine=se)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error("Error approving record '%s': %s", record_id, e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to approve record '{record_id}': {str(e)}"
+        )
+
+
+@app.post("/admin/reject/{record_id:path}", tags=["Admin Review"])
+@app.post("/api/admin/reject/{record_id:path}", tags=["Admin Review"])
+def reject_pending_record(record_id: str, is_admin: bool = Depends(verify_admin_auth)):
+    """
+    Rejects and discards a pending change:
+    - If draft (__pending), removes draft so previous live version remains active
+    - If standalone pending record, marks as retired
+    """
+    from src.admin import reject_pending_change
+    dl = get_admin_data_layer()
+    try:
+        res = reject_pending_change(record_id, data_layer=dl)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error("Error rejecting record '%s': %s", record_id, e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reject record '{record_id}': {str(e)}"
+        )
+
+
+@app.get("/admin/health", tags=["Admin Health"])
+@app.get("/api/admin/health", tags=["Admin Health"])
+def admin_health_check(
+    email_alert: bool = False,
+    is_admin: bool = Depends(verify_admin_auth)
+):
+    """
+    Daily health check endpoint:
+    - Detects sources failing for >= 3 consecutive runs
+    - Detects records past their TTL expiration
+    - Detects pending changes waiting > 3 days
+    - Logs alert and optionally triggers email dispatch
+    """
+    from src.admin import run_daily_health_check
+    dl = get_admin_data_layer()
+    se = get_admin_sync_engine()
+    report = run_daily_health_check(dl, se.registry, email_alert=email_alert)
+    return report
+
+
+class TriggerSyncRequest(BaseModel):
+    state: str = "Madhya Pradesh"
+    force: bool = False
+    fixtures: bool = False
+    source_id: Optional[str] = None
+
+
+@app.post("/admin/sync", tags=["Admin Scheduler"])
+@app.post("/api/admin/sync", tags=["Admin Scheduler"])
+def trigger_admin_sync(
+    payload: TriggerSyncRequest = TriggerSyncRequest(),
+    is_admin: bool = Depends(verify_admin_auth)
+):
+    """
+    Admin-triggered synchronization run with lock protection and error isolation.
+    Sync failures never crash the server or chat availability.
+    """
+    from run_sync import run_scheduled_sync, ProcessLock
+    try:
+        with ProcessLock():
+            result = run_scheduled_sync(
+                state=payload.state,
+                force=payload.force,
+                fixtures=payload.fixtures
+            )
+            return {"success": True, "result": result}
+    except Exception as e:
+        logger.error("Error executing admin-triggered sync: %s", e, exc_info=True)
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Sync encountered an error or lock was held, but chat and server remain fully operational."
+        }
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. Entrypoint
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 if __name__ == "__main__":
     import uvicorn
