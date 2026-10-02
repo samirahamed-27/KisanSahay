@@ -48,7 +48,7 @@ def build_gemini_system_prompt(
         "1. STRICT FACTUAL GROUNDING: Answer ONLY from the provided context. Do NOT use outside knowledge, speculate, or guess.",
         "2. SOURCE ATTRIBUTION: Clearly name the scheme, institution, or source mentioned in the context.",
         "3. CITATIONS: Always cite the official source_url and last_verified date of the relevant record(s).",
-        "4. TTL STALENESS NOTICE: If a record is noted as older than its Time-To-Live, explicitly inform the user that the data has passed its recommended refresh period and should be verified.",
+        "4. TTL STALENESS NOTICE: If a record is noted as older than its Time-To-Live or marked stale, explicitly inform the user that the information may be outdated and suggest confirming with the nearest Krishi Vigyan Kendra (KVK) or local bank branch.",
         "5. UNCERTAINTY FALLBACK: If the provided context does NOT cover the user's specific question, say that you are not sure and suggest visiting or contacting the nearest Krishi Vigyan Kendra (KVK) or local bank branch.",
         "6. PENDING CHANGES ADVISORY: If a record has a pending change note, include an alert that the rule is currently being updated in the system and should be confirmed directly with the bank or KVK.",
         "7. TIME-SENSITIVE DATES: For time-sensitive questions (such as mandi prices, weather advisories, or training calendars), highlight the freshest dates prominently."
@@ -245,8 +245,8 @@ def _post_process_answer(
 
     if has_stale:
         advisories.append(
-            "⚠️ **Notice:** Information from one or more sources has passed its recommended Time-To-Live (refresh period). "
-            "Verify current rates, deadlines, or dates with local authorities."
+            "⚠️ **Notice:** Information from one or more sources has passed its recommended Time-To-Live and may be outdated. "
+            "Please confirm current figures and directives with your nearest Krishi Vigyan Kendra (KVK) or local bank branch."
         )
 
     # Build citation footer

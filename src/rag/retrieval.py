@@ -268,7 +268,7 @@ def retrieve(
             has_any_stale = True
             notices.append(
                 f"⚠️ [TTL EXPIRATION NOTICE]: This record was last verified on {l_ver} and has exceeded its recommended Time-To-Live. "
-                "Current figures may have changed. Please verify latest directives."
+                "Information may be outdated. Please confirm current figures and directives with your nearest Krishi Vigyan Kendra (KVK) or local bank branch."
             )
 
         notices_text = "\n".join(notices) + "\n\n" if notices else ""
