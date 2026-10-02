@@ -75,5 +75,16 @@
     "verifierHash": "d2cade0b1fa5774c1a19f438dd466d79",
     "documentCount": 0,
     "updatedAt": "2026-09-19T07:34:42.988Z"
+  },
+  "farmer_primary": {
+    "userId": "farmer_primary",
+    "passwordType": "pattern",
+    "salt": "58db7ae7b3f6ff144d59123385c6317a",
+    "iv": "5e819b061139791250a3e4bd",
+    "authTag": "8db42a1dbfe4803556caee57f6062e65",
+    "encryptedData": "23add2e04bba1f50bd6d4560abf850a19366b934adb7188db2fac666e7864a6d085f3ed3e510f09284056cbb61bde870c605294813e4b351595c34187766e2aae848d63ef86f4ec237d7eda2052c8ccf9c34bb66bc2804638b8c4673931a3020c1516a428f9f32c642080f8333b70e8dc0718425ec57f84644721783a98c8a5227d13469a89b94a2a44f1f049bf56c13781787255ee8aa7dd0804233001e07078c951e63d652e93e225cd7e9ced0532160adee9d13445d766b6fd775646d6a02c8ad3ff85cc18d73d6a538b1590c28ce4a613b194b12c7d94448c5d2bf6255c53a87cab384",
+    "verifierHash": "e0ba82a424a8f96a51862c2c21a9b3d4",
+    "documentCount": 7,
+    "updatedAt": "2026-10-02T13:12:04.167Z"
   }
 }
