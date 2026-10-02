@@ -595,6 +595,10 @@ class ChatResponse(BaseModel):
         default=False,
         description="Flag indicating if the underlying source adapter is currently failing sync."
     )
+    eligibility_result: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Structured JSON result from the deterministic Python eligibility engine."
+    )
 
 
 class HealthResponse(BaseModel):
@@ -1201,9 +1205,12 @@ def chat_endpoint(request: ChatRequest):
             logger.info("🔍 Step 1: Executing fresh ChromaDB retrieve(question, state=%s, n=%d)...", request.state, request.top_k or 6)
 
             # 1. Deterministic Python eligibility evaluation
+            profile_with_ctx = dict(request.farmer_profile or {})
+            if request.state and "state" not in profile_with_ctx:
+                profile_with_ctx["state"] = request.state
             elig_result = evaluate_eligibility(
                 query=query,
-                farmer_profile=request.farmer_profile
+                farmer_profile=profile_with_ctx
             )
 
             # 2. Fresh ChromaDB retrieval with state and live status filtering, grouping, and freshness ranking
@@ -1299,7 +1306,8 @@ def chat_endpoint(request: ChatRequest):
             duration_ms=round(elapsed, 2),
             status="success",
             citations=citations if citations else None,
-            has_pending_updates=has_pending_updates
+            has_pending_updates=has_pending_updates,
+            eligibility_result=elig_result.get("eligibility_json") if elig_result.get("is_eligibility_query") else None
         )
 
     except requests.exceptions.ConnectionError:

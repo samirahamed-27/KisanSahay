@@ -101,61 +101,39 @@ def detect_scheme_from_query(query: str) -> Optional[str]:
 def extract_farmer_attributes(query: str, profile: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Extracts farmer landholding, ownership status, category, income, and documents
-    from query text and optional structured profile.
+    from query text and optional structured profile using eligibility.py.
     """
-    attrs = {
-        "land_acres": None,
-        "ownership": None,  # "owner", "tenant", "sharecropper"
-        "category": None,   # "general", "obc", "sc", "st", "women"
-        "income": None,
-        "has_aadhaar": True,
-        "is_govt_employee": False,
-        "is_tax_payer": False,
-        "age": None
-    }
+    from eligibility import extract_profile_from_text
+    attrs = extract_profile_from_text(query, profile)
 
-    # Overlay profile if provided
-    if profile:
-        for k in ["land_acres", "ownership", "category", "income", "has_aadhaar", "age"]:
-            if k in profile and profile[k] is not None:
-                attrs[k] = profile[k]
-
-    q = query.lower()
-
-    # Land size extraction (e.g. "2 acres", "5 acre", "2.5 hectares", "10 bigha")
-    land_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:acres?|acre|ac)", q)
-    if land_match:
-        attrs["land_acres"] = float(land_match.group(1))
+    # Maintain backward-compatible legacy keys for existing test assertions
+    if "land_size" in attrs and attrs["land_size"] is not None:
+        attrs["land_acres"] = attrs["land_size"]
     else:
-        hectare_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:hectares?|ha)", q)
-        if hectare_match:
-            attrs["land_acres"] = round(float(hectare_match.group(1)) * 2.471, 2)
+        attrs["land_acres"] = None
 
-    # Ownership extraction
-    if any(w in q for w in ["tenant", "leased", "on lease", "kiraye", "batai", "bataidar"]):
-        attrs["ownership"] = "tenant"
-    elif any(w in q for w in ["sharecropper", "hissedar"]):
-        attrs["ownership"] = "sharecropper"
-    elif any(w in q for w in ["my own land", "own land", "patta", "landowner", "zameen meri", "khud ki"]):
-        attrs["ownership"] = "owner"
+    if "farmer_category" in attrs and attrs["farmer_category"] is not None:
+        attrs["category"] = attrs["farmer_category"]
+    else:
+        attrs["category"] = None
 
-    # Social Category & Gender
-    if any(w in q for w in ["female", "woman", "women", "mahila", "lady"]):
-        attrs["category"] = "women"
-    elif any(w in q for w in ["sc", "scheduled caste", "dalit"]):
-        attrs["category"] = "sc"
-    elif any(w in q for w in ["st", "scheduled tribe", "adivasi"]):
-        attrs["category"] = "st"
-    elif "obc" in q:
-        attrs["category"] = "obc"
+    if "ownership" not in attrs:
+        attrs["ownership"] = None
 
-    # Disqualification flags
-    if any(w in q for w in ["government employee", "govt job", "sarkari naukri", "pensioner"]):
-        attrs["is_govt_employee"] = True
-    if any(w in q for w in ["income tax", "tax payer", "itr"]):
-        attrs["is_tax_payer"] = True
-    if any(w in q for w in ["no aadhaar", "without aadhaar"]):
-        attrs["has_aadhaar"] = False
+    if "is_govt_employee" not in attrs:
+        attrs["is_govt_employee"] = False
+
+    if "is_tax_payer" not in attrs:
+        attrs["is_tax_payer"] = False
+
+    if "kyc_documents" in attrs and attrs["kyc_documents"]:
+        docs = attrs["kyc_documents"]
+        attrs["has_aadhaar"] = any("aadhaar" in d.lower() for d in docs) if isinstance(docs, list) else bool(docs)
+    elif "has_aadhaar" not in attrs:
+        attrs["has_aadhaar"] = True
+
+    if "age" not in attrs:
+        attrs["age"] = None
 
     return attrs
 
@@ -276,26 +254,31 @@ def evaluate_eligibility(
         decision = "CONDITIONAL"
         reasons.append("Eligible in principle if you own cultivable agricultural land, hold an Aadhaar-linked bank account, and do not fall under statutory exclusions.")
 
+    # Call official eligibility.py engine for structured output and validation
+    from eligibility import check_eligibility, format_gemini_eligibility_instruction
+    elig_structured = check_eligibility(scheme_key, attrs)
+
+    status = elig_structured.get("status", "eligible" if decision == "YES" else ("not_eligible" if decision == "NO" else "needs_more_info"))
+    missing_inputs = elig_structured.get("missing_inputs", [])
+    notice = elig_structured.get("notice")
+
     # Build prompt instruction for Gemini
-    instruction = (
-        f"OFFICIAL PYTHON ELIGIBILITY ENGINE RESULT:\n"
-        f"Scheme: {rules['name']}\n"
-        f"Decision: {decision}\n"
-        f"Met Criteria: {'; '.join(reasons) if reasons else 'Standard basic criteria'}\n"
-        f"Unmet Criteria / Disqualifications: {'; '.join(unmet_criteria) if unmet_criteria else 'None'}\n"
-        f"Required Documents: {', '.join(rules['mandatory_documents'])}\n"
-        f"RULE FOR GEMINI: You must communicate this exact decision ('{decision}') clearly to the farmer and ONLY explain why using these verified Python criteria and documents. Do NOT change or contradict this decision."
-    )
+    instruction = format_gemini_eligibility_instruction(elig_structured)
 
     return {
         "is_eligibility_query": is_eligibility,
         "scheme_key": scheme_key,
         "scheme_name": rules["name"],
         "decision": decision,
+        "status": status,
         "reasons": reasons,
         "unmet_criteria": unmet_criteria,
+        "missing_inputs": missing_inputs,
         "mandatory_documents": rules["mandatory_documents"],
         "benefit_summary": rules["benefit_summary"],
         "official_url": rules.get("official_url", "https://farmer.gov.in"),
+        "last_verified": elig_structured.get("last_verified", "2026-10-02"),
+        "notice": notice,
+        "eligibility_json": elig_structured,
         "instruction_for_llm": instruction
     }

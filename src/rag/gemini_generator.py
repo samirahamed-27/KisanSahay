@@ -58,7 +58,20 @@ def build_gemini_system_prompt(
 
     rule_idx = 10
     if eligibility_result and eligibility_result.get("is_eligibility_query") and eligibility_result.get("decision") != "NOT_APPLICABLE":
-        elig_instruction = eligibility_result.get("instruction_for_llm", "")
+        status = eligibility_result.get("status", eligibility_result.get("decision", "EVALUATED"))
+        missing = eligibility_result.get("missing_inputs", [])
+        notice = eligibility_result.get("notice")
+        elig_instruction = (
+            f"EXPLAIN THE ELIGIBILITY RESULT ({str(status).upper()}) IN SIMPLE LANGUAGE: "
+            f"Explain the Python eligibility verdict in simple language, in the user's language ({'Hindi' if is_hindi else 'English'}), "
+            f"without changing or overriding the verdict ('{status}') and without adding conditions of your own. "
+        )
+        if status == "needs_more_info" and missing:
+            elig_instruction += f"Ask the user for the missing inputs ({', '.join(missing)}). "
+        if notice:
+            elig_instruction += "You MUST include the warning notice that the rule may have changed and should be confirmed with the bank or KVK. "
+        if eligibility_result.get("instruction_for_llm"):
+            elig_instruction += f"\n{eligibility_result['instruction_for_llm']}"
         rules.append(f"{rule_idx}. ELIGIBILITY DECISION ENFORCEMENT: {elig_instruction}")
         rule_idx += 1
 
@@ -184,31 +197,58 @@ def _synthesize_grounded_answer(
     # Eligibility evaluation handling
     if eligibility_result and eligibility_result.get("is_eligibility_query"):
         dec = eligibility_result.get("decision", "CONDITIONAL")
+        status = eligibility_result.get("status", "eligible" if dec == "YES" else ("not_eligible" if dec == "NO" else "needs_more_info"))
         sname = eligibility_result.get("scheme_name") or rec_id
-        if dec == "YES":
-            lines.append(f"### Eligibility Result: YES — You are eligible for {sname}\n")
-        elif dec == "NO":
-            lines.append(f"### Eligibility Result: NO — Not currently eligible for {sname}\n")
+        missing_inputs = eligibility_result.get("missing_inputs", [])
+        notice = eligibility_result.get("notice")
+
+        if is_hindi:
+            if status == "eligible" or dec == "YES":
+                lines.append(f"### पात्रता परिणाम: हाँ (पात्र) — आप {sname} के लिए पात्र हैं\n")
+            elif status == "not_eligible" or dec == "NO":
+                lines.append(f"### पात्रता परिणाम: नहीं (अपात्र) — आप वर्तमान में {sname} के लिए पात्र नहीं हैं\n")
+            else:
+                lines.append(f"### {sname} पात्रता मूल्यांकन: अतिरिक्त जानकारी आवश्यक है\n")
+                if missing_inputs:
+                    lines.append("आपकी पात्रता की सटीक जांच करने के लिए कृपया निम्नलिखित आवश्यक विवरण प्रदान करें:")
+                    for m in missing_inputs:
+                        field_name = m.replace('_', ' ').title()
+                        lines.append(f"• **{field_name}**")
+                    lines.append("")
         else:
-            lines.append(f"### Eligibility Evaluation for {sname}\n")
+            if status == "eligible" or dec == "YES":
+                lines.append(f"### Eligibility Result: YES — You are eligible for {sname}\n")
+            elif status == "not_eligible" or dec == "NO":
+                lines.append(f"### Eligibility Result: NO — Not currently eligible for {sname}\n")
+            else:
+                lines.append(f"### Eligibility Evaluation for {sname}: More Information Needed\n")
+                if missing_inputs:
+                    lines.append("To verify your exact eligibility, please provide the following missing details:")
+                    for m in missing_inputs:
+                        field_name = m.replace('_', ' ').title()
+                        lines.append(f"• **{field_name}**")
+                    lines.append("")
 
         if eligibility_result.get("reasons"):
-            lines.append("**Qualified Conditions:**")
+            lines.append("**Qualified Conditions:**" if not is_hindi else "**संतुष्ट शर्तें:**")
             for r in eligibility_result["reasons"]:
                 lines.append(f"• {r}")
             lines.append("")
 
         if eligibility_result.get("unmet_criteria"):
-            lines.append("**Unmet Criteria / Disqualifying Factors:**")
+            lines.append("**Unmet Criteria / Disqualifying Factors:**" if not is_hindi else "**असंतोषजनक शर्तें / अयोग्यता के कारण:**")
             for u in eligibility_result["unmet_criteria"]:
                 lines.append(f"• ⚠️ {u}")
             lines.append("")
 
         if eligibility_result.get("mandatory_documents"):
-            lines.append("**Mandatory Documents Required:**")
+            lines.append("**Mandatory Documents Required:**" if not is_hindi else "**आवश्यक दस्तावेज:**")
             for d in eligibility_result["mandatory_documents"]:
                 lines.append(f"• {d}")
             lines.append("")
+
+        if notice:
+            lines.append(f"{notice}\n")
 
     # Standard factual synthesis from retrieved text
     if not lines and content:
@@ -247,6 +287,10 @@ def _post_process_answer(
             "Please confirm the latest conditions directly with your nearest bank branch or Krishi Vigyan Kendra (KVK)."
         )
 
+    if eligibility_result and eligibility_result.get("notice"):
+        elig_notice = eligibility_result["notice"]
+        if elig_notice not in raw_answer and not any(elig_notice in a for a in advisories):
+            advisories.append(elig_notice)
     if has_stale:
         advisories.append(
             "⚠️ **Notice:** Information from one or more sources has passed its recommended Time-To-Live and may be outdated. "
