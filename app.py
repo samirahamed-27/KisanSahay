@@ -21,6 +21,13 @@ Run locally:
 
 import os
 import sys
+
+# macOS / Apple Silicon ChromaDB SQLite compatibility shim
+try:
+    __import__("pysqlite3")
+    sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+except (ImportError, KeyError):
+    pass
 import ssl
 import time
 import logging
