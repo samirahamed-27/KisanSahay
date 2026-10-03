@@ -102,33 +102,40 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy B: Cache-First for App Shell, CSS, JS, Images, Icons, and Fonts
+  // Strategy B: Cache-First for App Shell, CSS, JS, Images, Icons, and Fonts with background revalidation
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
+      // In the background, always revalidate and refresh the cache from the network
+      const networkFetch = fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && (networkResponse.type === 'basic' || networkResponse.type === 'cors')) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => null);
+
       if (cachedResponse) {
         // Return from cache immediately
         return cachedResponse;
       }
 
-      // Not in cache: fetch from network, then cache dynamically
-      return fetch(request)
-        .then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
-          }
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
-          return networkResponse;
-        })
-        .catch(async () => {
-          // If navigation request (HTML page) fails, serve cached index.html
-          if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
-            const fallbackIndex = await caches.match('/index.html') || await caches.match('/');
-            if (fallbackIndex) return fallbackIndex;
-          }
-        });
+      // Not in cache: await network response with offline fallback
+      return networkFetch.then(async (networkResponse) => {
+        if (networkResponse) return networkResponse;
+        if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+          const fallbackIndex = await caches.match('/index.html') || await caches.match('/');
+          if (fallbackIndex) return fallbackIndex;
+        }
+      }).catch(async () => {
+        if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+          const fallbackIndex = await caches.match('/index.html') || await caches.match('/');
+          if (fallbackIndex) return fallbackIndex;
+        }
+      });
     })
   );
 });
@@ -186,4 +193,13 @@ self.addEventListener('notificationclick', function (event) {
       }
     })
   );
+});
+
+// ==========================================================================
+// 6. Message Event — Skip Waiting & Cache Refresh
+// ==========================================================================
+self.addEventListener('message', function (event) {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });

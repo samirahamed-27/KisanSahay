@@ -11941,7 +11941,24 @@ body.dark-mode .btn-clean-reset-pw {
    PWA Download Bar in Switch Profile Dropdown (Removed from UI per user request)
    ========================================================================== */
 .dropdown-pwa-download-bar {
-  display: none !important;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.45rem 0.6rem;
+  padding: 0.65rem 0.75rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1.5px solid #86efac;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
+}
+
+.dropdown-pwa-download-bar:hover {
+  background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+  border-color: #4ade80;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.22);
 }
 
 .pwa-download-icon-wrap {
@@ -12051,7 +12068,15 @@ body.dark-mode .btn-clean-reset-pw {
 }
 
 body.dark-mode .dropdown-pwa-download-bar {
-  display: none !important;
+  display: flex;
+  background: linear-gradient(135deg, #052e16 0%, #064e3b 100%);
+  border-color: #059669;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .dropdown-pwa-download-bar:hover {
+  background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+  border-color: #10b981;
 }
 
 body.dark-mode .pwa-download-title {

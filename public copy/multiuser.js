@@ -133,8 +133,8 @@
             <span class="dropdown-badge">${this.state.profiles.length} Profiles</span>
           </div>
 
-          <!-- Download KisanSahay App Bar inside Switch Profile Column (Removed from UI per user request) -->
-          <div class="dropdown-pwa-download-bar" id="dropdown-btn-download-app" role="button" tabindex="0" title="Download & Install KisanSahay App on your phone or PC" style="display: none !important;">
+          <!-- Download KisanSahay App Bar inside Switch Profile Column -->
+          <div class="dropdown-pwa-download-bar" id="dropdown-btn-download-app" role="button" tabindex="0" title="Download & Install KisanSahay App on your phone or PC">
             <div class="pwa-download-icon-wrap">
               <img src="/icons/icon-192.png" alt="KisanSahay" class="pwa-bar-mini-icon">
               <span class="pwa-pulse-dot"></span>
@@ -217,7 +217,7 @@
       // Wire Download App bar click inside Switch Profile dropdown
       const btnDownloadApp = document.getElementById('dropdown-btn-download-app');
       if (btnDownloadApp) {
-        btnDownloadApp.addEventListener('click', (e) => {
+        const handleDownload = (e) => {
           e.stopPropagation();
           if (menu) menu.style.display = 'none';
           if (typeof window.triggerPWAInstallOrModal === 'function') {
@@ -225,6 +225,13 @@
           } else {
             const modal = document.getElementById('pwa-universal-download-modal');
             if (modal) modal.style.display = 'flex';
+          }
+        };
+        btnDownloadApp.addEventListener('click', handleDownload);
+        btnDownloadApp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleDownload(e);
           }
         });
       }
