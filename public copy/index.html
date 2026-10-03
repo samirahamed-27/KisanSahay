@@ -1824,18 +1824,21 @@
        ========================================================================== -->
   <div class="modal-overlay" id="vault-modal" style="z-index: 170;">
     <div class="modal-dialog modal-vault-dialog" style="max-width: 650px;">
-      <button class="modal-close-x" id="vault-modal-close" aria-label="Close document vault"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-
       <!-- Header Banner -->
       <div class="vault-modal-header">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <div class="vault-modal-header-top">
           <div class="vault-modal-badge" style="margin-bottom: 0;">
             <span id="vault-header-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
             <span id="vault-header-status">Encrypted Farmer Vault</span>
           </div>
-          <button type="button" class="btn-clear-vault" id="btn-vault-clear-all" title="Clear all fields to enter your own documents">
-            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> <span>Clear All Fields</span>
-          </button>
+          <div class="vault-header-actions">
+            <button type="button" class="btn-clear-vault" id="btn-vault-clear-all" title="Clear all fields to enter your own documents">
+              <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> <span>Clear All Fields</span>
+            </button>
+            <button type="button" class="modal-close-x vault-header-close-btn" id="vault-modal-close" aria-label="Close document vault" title="Close document vault">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
         <h2 class="vault-modal-title" data-i18n="vaultTitle">Farmer Document Vault & Verification</h2>
         <p class="vault-modal-desc" data-i18n="vaultSubtitle">

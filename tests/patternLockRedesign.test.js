@@ -82,4 +82,12 @@ test('Prompt 3: Pattern Lock Tab & Cancel Button Cover Design Suite', async (t) 
     assert.ok(appJs.includes('state.isPatternConfirmed'), 'app.js must track pattern confirmation state');
     assert.ok(appJs.includes('pattern-error-shake'), 'app.js must trigger shake animation on error');
   });
+
+  await t.test('7. Vault modal header top right actions spacing & no overlapping buttons', () => {
+    assert.ok(indexHtml.includes('class="vault-modal-header-top"'), 'index.html must include vault-modal-header-top');
+    assert.ok(indexHtml.includes('class="vault-header-actions"'), 'index.html must group actions in vault-header-actions');
+    assert.ok(stylesCss.includes('.vault-header-actions'), 'styles.css must style vault-header-actions with gap');
+    assert.ok(stylesCss.includes('gap: 0.75rem'), 'styles.css must enforce spacing between Clear All Fields and Close button');
+    assert.ok(stylesCss.includes('body.dark-mode .modal-close-x'), 'styles.css must define dark mode close button');
+  });
 });

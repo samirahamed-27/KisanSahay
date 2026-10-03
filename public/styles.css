@@ -4047,6 +4047,41 @@ body.dark-mode .btn-install-pwa:hover {
   margin-bottom: 1.25rem;
 }
 
+.vault-modal-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.vault-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.modal-vault-dialog .modal-close-x,
+.vault-header-actions .modal-close-x,
+.vault-header-close-btn {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+}
+
 .vault-modal-badge {
   display: inline-flex;
   align-items: center;
@@ -8118,6 +8153,17 @@ body.dark-mode .btn-clear-vault:hover {
   background: #dc2626;
   color: #ffffff;
   border-color: #dc2626;
+}
+
+body.dark-mode .modal-close-x {
+  background: #1e293b;
+  color: #cbd5e1;
+  border: 1px solid #334155;
+}
+
+body.dark-mode .modal-close-x:hover {
+  background: #334155;
+  color: #ffffff;
 }
 
 body.dark-mode .vault-modal-footer {
