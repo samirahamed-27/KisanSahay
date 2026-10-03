@@ -2030,7 +2030,7 @@
               <div>
                 <label class="input-label-clean" for="vault-pin-pass">4 to 6 Digit PIN *</label>
                 <div class="password-input-wrap">
-                  <input type="password" id="vault-pin-pass" class="input-clean input-pin-display" placeholder="• • • •" maxlength="6"
+                  <input type="password" id="vault-pin-pass" class="input-clean input-pin-display" placeholder="Enter 4 to 6 digits" maxlength="6"
                     inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
                   <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-pin-pass', this)"
                     title="Show PIN" aria-label="Show PIN">
@@ -2041,7 +2041,7 @@
               <div style="margin-top: 0.85rem;">
                 <label class="input-label-clean" for="vault-pin-confirm">Confirm PIN *</label>
                 <div class="password-input-wrap">
-                  <input type="password" id="vault-pin-confirm" class="input-clean input-pin-display" placeholder="• • • •" maxlength="6"
+                  <input type="password" id="vault-pin-confirm" class="input-clean input-pin-display" placeholder="Re-enter your PIN" maxlength="6"
                     inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
                   <button type="button" class="btn-toggle-pw"
                     onclick="togglePasswordVisibility('vault-pin-confirm', this)" title="Show PIN"
@@ -2174,16 +2174,21 @@
   </div>
 
   <!-- Vault Password Reset Modal -->
-  <div class="modal-overlay" id="vault-reset-modal" style="z-index: 190;">
-    <div class="modal-dialog" style="max-width: 460px;">
+  <div class="modal-overlay" id="vault-reset-modal" style="z-index: 190;" role="dialog" aria-modal="true" aria-labelledby="vault-reset-title">
+    <div class="modal-dialog vault-reset-dialog" style="max-width: 460px;">
       <button class="modal-close-x" id="vault-reset-close" aria-label="Close reset modal"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       <div style="text-align: center; margin-bottom: 1.2rem;">
-        <div
-          style="width: 52px; height: 52px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.6rem;">
-          <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></div>
-        <h2 style="font-size: 1.3rem; color: #0f172a; margin-bottom: 0.3rem;">Reset Vault Password</h2>
-        <p style="font-size: 0.85rem; color: #64748b;">Set a new secret password, PIN, or pattern to protect your
-          sensitive documents.</p>
+        <div class="vault-reset-icon-badge" aria-hidden="true">
+          <svg class="vault-reset-leaf-shield-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 3L6 9V18C6 27.2 12 35.5 20 38C28 35.5 34 27.2 34 18V9L20 3Z" fill="#ecfdf5" stroke="#16a34a" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M20 12C20 12 25.5 13.2 25.5 18.5C25.5 22 22.8 24.2 20 25.5C17.2 24.2 14.5 22 14.5 18.5C14.5 13.2 20 12 20 12Z" fill="#22c55e" fill-opacity="0.25" stroke="#15803d" stroke-width="1.8"/>
+            <path d="M20 14V25M20 18L23 16M20 21L17 19" stroke="#15803d" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M27.5 11.5A11 11 0 0 0 10.5 22.5" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 3"/>
+            <path d="M25 8L28.5 11.5L25 15" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 id="vault-reset-title" style="font-size: 1.3rem; color: #1b4332; margin-bottom: 0.3rem; font-weight: 800;">Reset Vault Password</h2>
+        <p style="font-size: 0.85rem; color: #586e58; line-height: 1.45;">Set a new secret password, PIN, or pattern to protect your sensitive documents.</p>
       </div>
 
       <div id="reset-error-notice"
@@ -2199,82 +2204,122 @@
           <span class="sec-tab-icon"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></span> <span>PIN</span>
         </button>
         <button type="button" class="sec-tab-btn" data-tab="pattern" id="reset-tab-pattern" role="tab" aria-selected="false">
-          <span class="sec-tab-icon">
-            <svg class="pattern-tab-svg" viewBox="0 0 18 18" width="15" height="15" fill="currentColor" aria-hidden="true">
-              <circle cx="3" cy="3" r="1.7"/>
-              <circle cx="9" cy="3" r="1.7"/>
-              <circle cx="15" cy="3" r="1.7"/>
-              <circle cx="3" cy="9" r="1.7"/>
-              <circle cx="9" cy="9" r="1.7"/>
-              <circle cx="15" cy="9" r="1.7"/>
-              <circle cx="3" cy="15" r="1.7"/>
-              <circle cx="9" cy="15" r="1.7"/>
-              <circle cx="15" cy="15" r="1.7"/>
-            </svg>
-          </span>
-          <span>Pattern</span>
+          <span class="sec-tab-icon"><i class="fa-solid fa-grip" aria-hidden="true"></i></span> <span>Pattern</span>
         </button>
       </div>
 
       <!-- Reset Tab Pane 1: Word -->
       <div class="sec-pane active" id="reset-pane-word">
-        <div style="margin-bottom: 0.9rem;">
-          <label class="input-label-clean" for="vault-reset-word-pass">New Secret Password *</label>
-          <div class="password-input-wrap">
-            <input type="password" id="vault-reset-word-pass" class="input-clean"
-              placeholder="Enter new secret password" autocomplete="new-password">
-            <button type="button" class="btn-toggle-pw"
-              onclick="togglePasswordVisibility('vault-reset-word-pass', this)" title="Show password" aria-label="Show password">
-              <i class="fa-solid fa-eye" aria-hidden="true"></i>
-            </button>
+        <div class="reset-pin-tip">
+          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+          <span>Enter a memorable secret password with at least 4 characters.</span>
+        </div>
+        <div class="reset-fields-card">
+          <div style="margin-bottom: 0.85rem;">
+            <label class="input-label-clean" for="vault-reset-word-pass">New Secret Password <span class="required-star">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="vault-reset-word-pass" class="input-clean"
+                placeholder="Enter new secret password" autocomplete="new-password">
+              <button type="button" class="btn-toggle-pw"
+                onclick="togglePasswordVisibility('vault-reset-word-pass', this)" title="Show password" aria-label="Show password">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="input-label-clean" for="vault-reset-word-confirm">Confirm New Password <span class="required-star">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="vault-reset-word-confirm" class="input-clean" placeholder="Re-enter new password"
+                autocomplete="new-password">
+              <button type="button" class="btn-toggle-pw"
+                onclick="togglePasswordVisibility('vault-reset-word-confirm', this)"
+                title="Show password" aria-label="Show password">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
         </div>
-        <div style="margin-bottom: 0.9rem;">
-          <label class="input-label-clean" for="vault-reset-word-confirm">Confirm New Password *</label>
-          <div class="password-input-wrap">
-            <input type="password" id="vault-reset-word-confirm" class="input-clean" placeholder="Re-enter new password"
-              autocomplete="new-password">
-            <button type="button" class="btn-toggle-pw"
-              onclick="togglePasswordVisibility('vault-reset-word-confirm', this)"
-              title="Show password" aria-label="Show password">
-              <i class="fa-solid fa-eye" aria-hidden="true"></i>
-            </button>
-          </div>
+        <div id="reset-word-match-indicator" class="reset-match-feedback" style="display: none;" role="status">
+          <i class="fa-solid fa-circle-xmark status-icon" aria-hidden="true"></i>
+          <span class="status-msg"></span>
         </div>
       </div>
 
       <!-- Reset Tab Pane 2: Number PIN -->
       <div class="sec-pane" id="reset-pane-number" style="display: none;">
-        <div style="margin-bottom: 0.9rem;">
-          <label class="input-label-clean" for="vault-reset-pin-pass">New 4 to 6 Digit PIN *</label>
-          <div class="password-input-wrap">
-            <input type="password" id="vault-reset-pin-pass" class="input-clean input-pin-display" placeholder="• • • •" maxlength="6"
-              inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
-            <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-reset-pin-pass', this)"
-              title="Show PIN" aria-label="Show PIN">
-              <i class="fa-solid fa-eye" aria-hidden="true"></i>
-            </button>
+        <div class="reset-pin-tip">
+          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+          <span>Choose a 4 to 6 digit numeric PIN to protect your farm documents.</span>
+        </div>
+
+        <div class="reset-fields-card">
+          <div style="margin-bottom: 0.85rem;">
+            <label class="input-label-clean" for="vault-reset-pin-pass">New 4 to 6 Digit PIN <span class="required-star">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="vault-reset-pin-pass" class="input-clean reset-pin-input"
+                placeholder="Enter 4 to 6 digits" maxlength="6"
+                inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
+              <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-reset-pin-pass', this)"
+                title="Show PIN" aria-label="Show PIN">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            <!-- 6 Individual Digit Slots for New PIN -->
+            <div class="pin-slots-wrapper">
+              <div class="pin-digit-slot-row" id="reset-pin-pass-slots" role="group" aria-label="New PIN digit progress (4 to 6 digits)">
+                <div class="pin-slot empty" data-index="0" title="Digit 1 (Required)"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty" data-index="1" title="Digit 2 (Required)"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty" data-index="2" title="Digit 3 (Required)"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty" data-index="3" title="Digit 4 (Required)"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty pin-slot-optional" data-index="4" title="Digit 5 (Optional)"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty pin-slot-optional" data-index="5" title="Digit 6 (Optional)"><span class="pin-slot-content"></span></div>
+              </div>
+              <div class="pin-slots-legend">
+                <span class="legend-item"><span class="legend-dot-req"></span> Slots 1–4 required</span>
+                <span class="legend-item"><span class="legend-dot-opt"></span> 5–6 optional</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="input-label-clean" for="vault-reset-pin-confirm">Confirm New PIN <span class="required-star">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="vault-reset-pin-confirm" class="input-clean reset-pin-input"
+                placeholder="Re-enter your PIN" maxlength="6"
+                inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
+              <button type="button" class="btn-toggle-pw"
+                onclick="togglePasswordVisibility('vault-reset-pin-confirm', this)" title="Show PIN" aria-label="Show PIN">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            <!-- 6 Individual Digit Slots for Confirm PIN -->
+            <div class="pin-slots-wrapper">
+              <div class="pin-digit-slot-row" id="reset-pin-confirm-slots" role="group" aria-label="Confirm PIN digit progress">
+                <div class="pin-slot empty" data-index="0" title="Digit 1"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty" data-index="1" title="Digit 2"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty" data-index="2" title="Digit 3"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty" data-index="3" title="Digit 4"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty pin-slot-optional" data-index="4" title="Digit 5 (Optional)"><span class="pin-slot-content"></span></div>
+                <div class="pin-slot empty pin-slot-optional" data-index="5" title="Digit 6 (Optional)"><span class="pin-slot-content"></span></div>
+              </div>
+            </div>
           </div>
         </div>
-        <div style="margin-bottom: 0.9rem;">
-          <label class="input-label-clean" for="vault-reset-pin-confirm">Confirm New PIN *</label>
-          <div class="password-input-wrap">
-            <input type="password" id="vault-reset-pin-confirm" class="input-clean input-pin-display" placeholder="• • • •" maxlength="6"
-              inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
-            <button type="button" class="btn-toggle-pw"
-              onclick="togglePasswordVisibility('vault-reset-pin-confirm', this)" title="Show PIN" aria-label="Show PIN">
-              <i class="fa-solid fa-eye" aria-hidden="true"></i>
-            </button>
-          </div>
+
+        <!-- Live PIN Match & Error Indicator -->
+        <div id="reset-pin-match-indicator" class="reset-match-feedback" style="display: none;" role="status">
+          <i class="fa-solid fa-circle-xmark status-icon" aria-hidden="true"></i>
+          <span class="status-msg"></span>
         </div>
       </div>
 
       <!-- Reset Tab Pane 3: Pattern Lock -->
       <div class="sec-pane" id="reset-pane-pattern" style="display: none;">
         <div class="pattern-lock-wrap">
-          <p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.6rem; text-align: center;">
-            Draw your new pattern (connect at least 4 dots):
-          </p>
+          <div class="reset-pin-tip" style="margin-bottom: 0.6rem;">
+            <i class="fa-solid fa-grip" aria-hidden="true"></i>
+            <span>Draw a secret pattern connecting at least 4 dots in sequence.</span>
+          </div>
           <div class="pattern-container" id="reset-pattern-container">
             <canvas id="reset-pattern-canvas" width="240" height="240"></canvas>
             <div class="pattern-dots-grid" id="reset-pattern-dots-grid">
@@ -2297,10 +2342,11 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1.4rem;">
+      <!-- Modal Action Footer -->
+      <div class="vault-reset-footer">
         <button type="button" class="btn-vault-cancel" id="btn-reset-modal-cancel">Cancel</button>
-        <button type="button" class="btn-vault-save-action" id="btn-submit-vault-reset">
-          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        <button type="button" class="btn-vault-save-action" id="btn-submit-vault-reset" disabled aria-disabled="true">
+          <i class="fa-solid fa-lock" aria-hidden="true"></i>
           <span>Save New Password</span>
         </button>
       </div>

@@ -4688,6 +4688,285 @@ body.dark-mode .btn-install-pwa:hover {
 }
 
 /* ==========================================================================
+   Vault Password Reset Modal (Prompt 2 Redesign)
+   - Farm Green and Cream Palette
+   - Leaf-Shield SVG Header Badge
+   - Card container for credential fields
+   - Empty text placeholders instead of confusing dot placeholders
+   - 4 to 6 Discrete Interactive PIN Digit Slots (Empty, Active, Filled, Error, Success)
+   - Real-time match & security feedback badges
+   - Ghost Cancel button with equal 42px height, no border-text clipping
+   - Primary Save button disabled until valid
+   ========================================================================== */
+
+.vault-reset-dialog {
+  max-width: 480px !important;
+  border-radius: 20px !important;
+  padding: 2.2rem 2.2rem 1.8rem !important;
+  background: #ffffff;
+  border: 1.5px solid #e5dccb;
+  box-shadow: 0 20px 45px -10px rgba(27, 67, 50, 0.22), 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.vault-reset-icon-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #bbf7d0;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.15);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+}
+
+.vault-reset-icon-badge:hover {
+  transform: rotate(-6deg) scale(1.04);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.24);
+}
+
+.vault-reset-leaf-shield-svg {
+  width: 32px;
+  height: 32px;
+}
+
+.reset-pin-tip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.9rem;
+  background: #f7f3eb;
+  border: 1px solid #e2d7c3;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: #5d5345;
+  margin-bottom: 0.95rem;
+  line-height: 1.35;
+}
+
+.reset-pin-tip i {
+  color: #15803d;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.reset-fields-card {
+  background: #faf7f2;
+  border: 1px solid #e5ded2;
+  border-radius: 14px;
+  padding: 1.15rem 1.1rem 0.95rem;
+  margin-bottom: 0.85rem;
+}
+
+.reset-pin-input {
+  letter-spacing: 0.08em;
+  font-size: 0.96rem !important;
+  color: #1b4332 !important;
+}
+
+.reset-pin-input::placeholder {
+  letter-spacing: normal;
+  color: #9ca3af;
+  font-size: 0.88rem;
+  font-weight: 400;
+}
+
+/* 4 to 6 Discrete PIN Digit Slots */
+.pin-slots-wrapper {
+  margin-top: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.pin-digit-slot-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  justify-content: flex-start;
+}
+
+.pin-slot {
+  width: 38px;
+  height: 42px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1.5px solid #dcd3c4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #15803d;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.pin-slot:hover {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.pin-slot.empty {
+  border-color: #dcd3c4;
+  background: #faf7f2;
+}
+
+.pin-slot-optional {
+  border-style: dashed;
+  background: #fbf9f5;
+  border-color: #e5ded2;
+}
+
+.pin-slot.active {
+  border-color: #16a34a !important;
+  background: #f0fdf4 !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18) !important;
+  transform: translateY(-1px);
+}
+
+.pin-slot.active::after {
+  content: '';
+  position: absolute;
+  bottom: 7px;
+  width: 14px;
+  height: 2px;
+  background: #16a34a;
+  border-radius: 1px;
+  animation: pinSlotPulse 1s infinite alternate ease-in-out;
+}
+
+@keyframes pinSlotPulse {
+  0% { opacity: 0.25; transform: scaleX(0.7); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+.pin-slot.filled {
+  background: #ffffff;
+  border-color: #15803d;
+  color: #15803d;
+  box-shadow: 0 2px 5px rgba(21, 128, 61, 0.12);
+  transform: translateY(-1px);
+}
+
+.pin-slot.filled .pin-slot-dot {
+  width: 8px;
+  height: 8px;
+  background: #15803d;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pinDotPop 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pin-slot.filled .pin-slot-char {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #15803d;
+  animation: pinDotPop 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pinDotPop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+.pin-slot.error {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+.pin-slot.error .pin-slot-dot {
+  background: #dc2626 !important;
+}
+
+.pin-slot.success {
+  border-color: #16a34a !important;
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+}
+
+.pin-slot.success .pin-slot-dot {
+  background: #16a34a !important;
+}
+
+.pin-slots-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  color: #78716c;
+}
+
+.pin-slots-legend .legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.legend-dot-req {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #15803d;
+}
+
+.legend-dot-opt {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px dashed #a8a29e;
+}
+
+/* Live validation indicator badges */
+.reset-match-feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  margin-bottom: 0.7rem;
+  animation: fadeInDown 0.2s ease;
+}
+
+.reset-match-feedback.match-warn {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+}
+
+.reset-match-feedback.match-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.reset-match-feedback.match-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+/* Vault Reset Footer */
+.vault-reset-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.85rem;
+  margin-top: 1.4rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid #e5dccb;
+}
+
+/* ==========================================================================
    Vault Modal Footer: 4 Buttons with Proper Padding, Equal Height,
    No Text Wrapping, and Clear Visual Hierarchy (Prompt 1)
    1. Update & Secure Documents: Dominant Primary Button
@@ -4709,6 +4988,7 @@ body.dark-mode .btn-install-pwa:hover {
 
 /* Base button properties ensuring equal height and no text wrapping */
 .vault-modal-footer button,
+.vault-reset-footer button,
 .btn-vault-cancel,
 .btn-vault-reset-pw,
 .btn-vault-lock-caution,
@@ -4733,25 +5013,30 @@ body.dark-mode .btn-install-pwa:hover {
 
 /* 4. Cancel Button: Quiet ghost or text button with clean hover state */
 .btn-vault-cancel,
-#btn-vault-cancel {
+#btn-vault-cancel,
+#btn-reset-modal-cancel {
   margin-right: auto;
-  padding: 0 1.25rem;
-  background: transparent;
-  border: 1.5px solid transparent;
-  color: #6b6255;
-  font-weight: 600;
+  padding: 0 1.35rem !important;
+  background: transparent !important;
+  border: 1.5px solid transparent !important;
+  color: #6b6255 !important;
+  font-weight: 600 !important;
   width: auto !important;
+  min-width: 90px !important;
+  border-radius: var(--radius-pill) !important;
 }
 
 .btn-vault-cancel:hover,
-#btn-vault-cancel:hover {
-  background: #f5efe6;
-  border-color: #e2d7c3;
-  color: #1e1b18;
+#btn-vault-cancel:hover,
+#btn-reset-modal-cancel:hover {
+  background: #f5efe6 !important;
+  border-color: #e2d7c3 !important;
+  color: #1e1b18 !important;
 }
 
 .btn-vault-cancel:focus-visible,
-#btn-vault-cancel:focus-visible {
+#btn-vault-cancel:focus-visible,
+#btn-reset-modal-cancel:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(107, 98, 85, 0.2);
 }
@@ -4820,7 +5105,8 @@ body.dark-mode .btn-install-pwa:hover {
 
 /* 1. Update & Secure Documents: Dominant Primary Button */
 .btn-vault-save-action,
-#btn-vault-save-submit {
+#btn-vault-save-submit,
+#btn-submit-vault-reset {
   padding: 0 1.6rem;
   background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
   border: 1.5px solid transparent;
@@ -4831,42 +5117,60 @@ body.dark-mode .btn-install-pwa:hover {
   width: auto !important;
 }
 
-.btn-vault-save-action:hover,
-#btn-vault-save-submit:hover {
+.btn-vault-save-action:hover:not(:disabled),
+#btn-vault-save-submit:hover:not(:disabled),
+#btn-submit-vault-reset:hover:not(:disabled) {
   background: linear-gradient(135deg, #166534 0%, #15803d 100%);
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(22, 163, 74, 0.4);
 }
 
-.btn-vault-save-action:active,
-#btn-vault-save-submit:active {
+.btn-vault-save-action:active:not(:disabled),
+#btn-vault-save-submit:active:not(:disabled),
+#btn-submit-vault-reset:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
 }
 
 .btn-vault-save-action:focus-visible,
-#btn-vault-save-submit:focus-visible {
+#btn-vault-save-submit:focus-visible,
+#btn-submit-vault-reset:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3.5px rgba(22, 163, 74, 0.35);
 }
 
+.btn-vault-save-action:disabled,
+#btn-submit-vault-reset:disabled {
+  opacity: 0.55 !important;
+  background: #cbd5e1 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+  border-color: transparent !important;
+}
+
 /* Responsive Action Row for Small Mobile Screens */
 @media (max-width: 580px) {
-  .vault-modal-footer {
+  .vault-modal-footer,
+  .vault-reset-footer {
     flex-direction: column-reverse;
     gap: 0.6rem;
     width: 100%;
   }
 
   .vault-modal-footer button,
+  .vault-reset-footer button,
   .btn-vault-cancel,
   .btn-vault-reset-pw,
   .btn-vault-lock-caution,
   .btn-vault-save-action,
   #btn-vault-cancel,
+  #btn-reset-modal-cancel,
   #btn-vault-reset-trigger,
   #btn-vault-lock-now,
-  #btn-vault-save-submit {
+  #btn-vault-save-submit,
+  #btn-submit-vault-reset {
     width: 100% !important;
     margin-right: 0 !important;
     justify-content: center !important;
@@ -7720,16 +8024,103 @@ body.dark-mode .btn-reset-pattern:hover {
   color: #34d399;
 }
 
+body.dark-mode .vault-reset-dialog {
+  background: #152219 !important;
+  border-color: #28392d !important;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark-mode .vault-reset-icon-badge {
+  background: linear-gradient(135deg, #183522 0%, #1c452b 100%) !important;
+  border-color: #22c55e !important;
+}
+
+body.dark-mode #vault-reset-title {
+  color: #ecfdf5 !important;
+}
+
+body.dark-mode #vault-reset-modal p {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .reset-fields-card {
+  background: #19271e !important;
+  border-color: #28392d !important;
+}
+
+body.dark-mode .reset-pin-tip {
+  background: #19271e !important;
+  border-color: #28392d !important;
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .reset-pin-input {
+  background: #121d15 !important;
+  border-color: #28392d !important;
+  color: #ecfdf5 !important;
+}
+
+body.dark-mode .pin-slot {
+  background: #19271e !important;
+  border-color: #28392d !important;
+  color: #ecfdf5 !important;
+}
+
+body.dark-mode .pin-slot.empty {
+  background: #19271e !important;
+  border-color: #28392d !important;
+}
+
+body.dark-mode .pin-slot-optional {
+  background: #16221a !important;
+  border-color: #28392d !important;
+}
+
+body.dark-mode .pin-slot.active {
+  background: #12301f !important;
+  border-color: #22c55e !important;
+}
+
+body.dark-mode .pin-slot.filled {
+  background: #183824 !important;
+  border-color: #4ade80 !important;
+  color: #4ade80 !important;
+}
+
+body.dark-mode .pin-slot.filled .pin-slot-dot {
+  background: #4ade80 !important;
+}
+
+body.dark-mode .pin-slot.filled .pin-slot-char {
+  color: #4ade80 !important;
+}
+
+body.dark-mode .pin-slots-legend {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .vault-reset-footer {
+  border-top-color: #28392d !important;
+}
+
 body.dark-mode .btn-vault-cancel,
-body.dark-mode #btn-vault-cancel {
+body.dark-mode #btn-vault-cancel,
+body.dark-mode #btn-reset-modal-cancel {
   color: #94a3b8;
 }
 
 body.dark-mode .btn-vault-cancel:hover,
-body.dark-mode #btn-vault-cancel:hover {
+body.dark-mode #btn-vault-cancel:hover,
+body.dark-mode #btn-reset-modal-cancel:hover {
   background: #1e293b;
   border-color: #334155;
   color: #f8fafc;
+}
+
+body.dark-mode #btn-submit-vault-reset:disabled,
+body.dark-mode .btn-vault-save-action:disabled {
+  background: #243529 !important;
+  color: #64748b !important;
 }
 
 body.dark-mode .btn-vault-reset-pw,

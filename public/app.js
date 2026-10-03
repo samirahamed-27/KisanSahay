@@ -2080,6 +2080,9 @@ function setupDocumentVault() {
     const btn = document.getElementById(`reset-tab-${tab}`);
     if (btn) btn.addEventListener('click', () => switchResetSecTab(tab));
   });
+  if (typeof initResetModalValidation === 'function') {
+    initResetModalValidation();
+  }
 
   // 9. Quick Select Crop Chips
   document.querySelectorAll('.crop-chip-pill').forEach(chip => {
@@ -2343,6 +2346,11 @@ window.togglePasswordVisibility = function(inputId, btn) {
       icon.className = isNowText ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
     } else {
       btn.innerHTML = `<i class="fa-solid ${isNowText ? 'fa-eye-slash' : 'fa-eye'}" aria-hidden="true"></i>`;
+    }
+  }
+  if (inputId === 'vault-reset-pin-pass' || inputId === 'vault-reset-pin-confirm') {
+    if (typeof syncResetPinSlots === 'function') {
+      syncResetPinSlots(inputId);
     }
   }
 };
@@ -2953,6 +2961,169 @@ async function unlockFarmerVault() {
 let activeResetSecTab = 'word';
 let resetPatternSequence = [];
 
+function syncResetPinSlots(inputId) {
+  const input = document.getElementById(inputId);
+  const slotsContainerId = inputId === 'vault-reset-pin-pass' ? 'reset-pin-pass-slots' : 'reset-pin-confirm-slots';
+  const container = document.getElementById(slotsContainerId);
+  if (!input || !container) return;
+
+  const value = input.value || '';
+  const isText = input.type === 'text';
+  const isFocused = document.activeElement === input;
+  const slots = container.querySelectorAll('.pin-slot');
+
+  slots.forEach((slot, idx) => {
+    const isOptional = idx >= 4;
+    slot.className = 'pin-slot' + (isOptional ? ' pin-slot-optional' : '');
+
+    const content = slot.querySelector('.pin-slot-content');
+    if (idx < value.length) {
+      slot.classList.add('filled');
+      if (content) {
+        if (isText) {
+          content.textContent = value[idx];
+          content.className = 'pin-slot-content pin-slot-char';
+        } else {
+          content.innerHTML = '<span class="pin-slot-dot"></span>';
+          content.className = 'pin-slot-content';
+        }
+      }
+    } else {
+      if (content) content.textContent = '';
+      if (idx === value.length && isFocused) {
+        slot.classList.add('active');
+      } else {
+        slot.classList.add('empty');
+      }
+    }
+  });
+}
+
+function validateResetForm() {
+  const btnSubmit = document.getElementById('btn-submit-vault-reset');
+  if (!btnSubmit) return;
+
+  let isValid = false;
+  const pwType = activeResetSecTab || 'word';
+
+  const wordIndicator = document.getElementById('reset-word-match-indicator');
+  const pinIndicator = document.getElementById('reset-pin-match-indicator');
+
+  if (pwType === 'word') {
+    const pass = document.getElementById('vault-reset-word-pass')?.value || '';
+    const conf = document.getElementById('vault-reset-word-confirm')?.value || '';
+
+    if (wordIndicator) {
+      if (!pass && !conf) {
+        wordIndicator.style.display = 'none';
+      } else if (pass.length > 0 && pass.length < 4) {
+        wordIndicator.style.display = 'flex';
+        wordIndicator.className = 'reset-match-feedback match-warn';
+        wordIndicator.innerHTML = '<i class="fa-solid fa-circle-exclamation status-icon" aria-hidden="true"></i><span class="status-msg">Password must be at least 4 characters</span>';
+      } else if (conf.length > 0 && pass !== conf) {
+        wordIndicator.style.display = 'flex';
+        wordIndicator.className = 'reset-match-feedback match-error';
+        wordIndicator.innerHTML = '<i class="fa-solid fa-circle-xmark status-icon" aria-hidden="true"></i><span class="status-msg">Passwords do not match</span>';
+      } else if (pass.length >= 4 && pass === conf) {
+        wordIndicator.style.display = 'flex';
+        wordIndicator.className = 'reset-match-feedback match-success';
+        wordIndicator.innerHTML = '<i class="fa-solid fa-circle-check status-icon" aria-hidden="true"></i><span class="status-msg">Passwords match securely</span>';
+        isValid = true;
+      } else {
+        wordIndicator.style.display = 'none';
+      }
+    }
+  } else if (pwType === 'number') {
+    const pass = document.getElementById('vault-reset-pin-pass')?.value.trim() || '';
+    const conf = document.getElementById('vault-reset-pin-confirm')?.value.trim() || '';
+    const passSlots = document.querySelectorAll('#reset-pin-pass-slots .pin-slot');
+    const confSlots = document.querySelectorAll('#reset-pin-confirm-slots .pin-slot');
+
+    if (pinIndicator) {
+      if (!pass && !conf) {
+        pinIndicator.style.display = 'none';
+        passSlots.forEach(s => s.classList.remove('error', 'success'));
+        confSlots.forEach(s => s.classList.remove('error', 'success'));
+      } else if (pass.length > 0 && pass.length < 4) {
+        pinIndicator.style.display = 'flex';
+        pinIndicator.className = 'reset-match-feedback match-warn';
+        pinIndicator.innerHTML = '<i class="fa-solid fa-circle-exclamation status-icon" aria-hidden="true"></i><span class="status-msg">PIN must be 4 to 6 numeric digits</span>';
+        passSlots.forEach(s => s.classList.remove('error', 'success'));
+        confSlots.forEach(s => s.classList.remove('error', 'success'));
+      } else if (conf.length > 0 && pass !== conf) {
+        pinIndicator.style.display = 'flex';
+        pinIndicator.className = 'reset-match-feedback match-error';
+        pinIndicator.innerHTML = '<i class="fa-solid fa-circle-xmark status-icon" aria-hidden="true"></i><span class="status-msg">PINs do not match</span>';
+        confSlots.forEach(s => { if (s.classList.contains('filled')) s.classList.add('error'); });
+      } else if (pass.length >= 4 && pass === conf) {
+        pinIndicator.style.display = 'flex';
+        pinIndicator.className = 'reset-match-feedback match-success';
+        pinIndicator.innerHTML = `<i class="fa-solid fa-circle-check status-icon" aria-hidden="true"></i><span class="status-msg">PINs match securely (${pass.length} digits)</span>`;
+        passSlots.forEach(s => { if (s.classList.contains('filled')) s.classList.add('success'); });
+        confSlots.forEach(s => { if (s.classList.contains('filled')) s.classList.add('success'); });
+        isValid = true;
+      } else {
+        pinIndicator.style.display = 'none';
+        passSlots.forEach(s => s.classList.remove('error', 'success'));
+        confSlots.forEach(s => s.classList.remove('error', 'success'));
+      }
+    }
+  } else if (pwType === 'pattern') {
+    if (resetPatternSequence && resetPatternSequence.length >= 4) {
+      isValid = true;
+    }
+  }
+
+  btnSubmit.disabled = !isValid;
+  if (isValid) {
+    btnSubmit.removeAttribute('aria-disabled');
+  } else {
+    btnSubmit.setAttribute('aria-disabled', 'true');
+  }
+}
+
+function initResetModalValidation() {
+  const pinPass = document.getElementById('vault-reset-pin-pass');
+  const pinConf = document.getElementById('vault-reset-pin-confirm');
+  const wordPass = document.getElementById('vault-reset-word-pass');
+  const wordConf = document.getElementById('vault-reset-word-confirm');
+
+  [pinPass, pinConf].forEach(input => {
+    if (!input || input.dataset.resetBound) return;
+    input.dataset.resetBound = 'true';
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(0, 6);
+      syncResetPinSlots(input.id);
+      validateResetForm();
+    });
+    input.addEventListener('focus', () => {
+      syncResetPinSlots(input.id);
+    });
+    input.addEventListener('blur', () => {
+      syncResetPinSlots(input.id);
+      validateResetForm();
+    });
+  });
+
+  const passSlots = document.getElementById('reset-pin-pass-slots');
+  if (passSlots && pinPass && !passSlots.dataset.resetBound) {
+    passSlots.dataset.resetBound = 'true';
+    passSlots.addEventListener('click', () => pinPass.focus());
+  }
+  const confSlots = document.getElementById('reset-pin-confirm-slots');
+  if (confSlots && pinConf && !confSlots.dataset.resetBound) {
+    confSlots.dataset.resetBound = 'true';
+    confSlots.addEventListener('click', () => pinConf.focus());
+  }
+
+  [wordPass, wordConf].forEach(input => {
+    if (!input || input.dataset.resetBound) return;
+    input.dataset.resetBound = 'true';
+    input.addEventListener('input', validateResetForm);
+    input.addEventListener('blur', validateResetForm);
+  });
+}
+
 function openVaultResetModal() {
   const modal = document.getElementById('vault-reset-modal');
   if (!modal) return;
@@ -2971,8 +3142,18 @@ function openVaultResetModal() {
   if (pinConf) pinConf.value = '';
   resetPatternSequence = [];
 
+  syncResetPinSlots('vault-reset-pin-pass');
+  syncResetPinSlots('vault-reset-pin-confirm');
+
+  const wordIndicator = document.getElementById('reset-word-match-indicator');
+  if (wordIndicator) wordIndicator.style.display = 'none';
+  const pinIndicator = document.getElementById('reset-pin-match-indicator');
+  if (pinIndicator) pinIndicator.style.display = 'none';
+
+  initResetModalValidation();
   setupResetPatternCanvas();
   switchResetSecTab('word');
+  validateResetForm();
 }
 
 function closeVaultResetModal() {
@@ -2985,9 +3166,13 @@ function switchResetSecTab(tab) {
   ['word', 'number', 'pattern'].forEach(t => {
     const btn = document.getElementById(`reset-tab-${t}`);
     const pane = document.getElementById(`reset-pane-${t}`);
-    if (btn) btn.classList.toggle('active', t === tab);
+    if (btn) {
+      btn.classList.toggle('active', t === tab);
+      btn.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+    }
     if (pane) pane.style.display = t === tab ? 'block' : 'none';
   });
+  validateResetForm();
 }
 
 function setupResetPatternCanvas() {
@@ -3012,7 +3197,11 @@ function setupResetPatternCanvas() {
       clearCanvas();
       resetPatternSequence = [];
       const fb = document.getElementById('reset-pattern-feedback');
-      if (fb) fb.textContent = 'Draw new pattern in sequence';
+      if (fb) {
+        fb.textContent = 'Draw new pattern in sequence';
+        fb.style.color = '#15803d';
+      }
+      validateResetForm();
     };
   }
 
@@ -3032,7 +3221,7 @@ function setupResetPatternCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (resetPatternSequence.length === 0) return;
 
-    ctx.strokeStyle = '#0284c7';
+    ctx.strokeStyle = '#15803d';
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -3066,6 +3255,23 @@ function setupResetPatternCanvas() {
     });
   }
 
+  function handleEnd() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    drawLines(null);
+    const fb = document.getElementById('reset-pattern-feedback');
+    if (fb) {
+      if (resetPatternSequence.length >= 4) {
+        fb.textContent = `Pattern ready (${resetPatternSequence.length} dots connected)`;
+        fb.style.color = '#15803d';
+      } else {
+        fb.textContent = `Connect at least 4 dots (${resetPatternSequence.length} connected)`;
+        fb.style.color = '#dc2626';
+      }
+    }
+    validateResetForm();
+  }
+
   container.onmousedown = (e) => {
     isDrawing = true;
     clearCanvas();
@@ -3082,13 +3288,26 @@ function setupResetPatternCanvas() {
     drawLines(pos);
   };
 
-  window.onmouseup = () => {
-    if (!isDrawing) return;
-    isDrawing = false;
-    drawLines(null);
-    const fb = document.getElementById('reset-pattern-feedback');
-    if (fb) fb.textContent = `Pattern: ${resetPatternSequence.length} dots connected`;
+  window.onmouseup = handleEnd;
+
+  container.ontouchstart = (e) => {
+    e.preventDefault();
+    isDrawing = true;
+    clearCanvas();
+    resetPatternSequence = [];
+    const pos = getPointerPos(e);
+    checkCollision(pos);
+    drawLines(pos);
   };
+
+  window.ontouchmove = (e) => {
+    if (!isDrawing) return;
+    const pos = getPointerPos(e);
+    checkCollision(pos);
+    drawLines(pos);
+  };
+
+  window.ontouchend = handleEnd;
 }
 
 async function submitVaultReset() {
@@ -3176,7 +3395,7 @@ async function submitVaultReset() {
   updateVaultNavIndicator('locked');
 
   closeVaultResetModal();
-  showToast(`✅ Vault password reset to ${pwType.toUpperCase()} successfully! Please unlock with your new password.`);
+  showToast(`Vault password reset to ${pwType.toUpperCase()} successfully! Please unlock with your new password.`);
 }
 
 function showResetError(msg) {
@@ -3193,6 +3412,8 @@ function showResetError(msg) {
 window.openVaultResetModal = openVaultResetModal;
 window.closeVaultResetModal = closeVaultResetModal;
 window.submitVaultReset = submitVaultReset;
+window.syncResetPinSlots = syncResetPinSlots;
+window.validateResetForm = validateResetForm;
 
 async function checkVaultStatus() {
   const userId = getActiveVaultUserId();
