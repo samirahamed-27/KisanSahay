@@ -67,6 +67,23 @@ self.addEventListener('fetch', (event) => {
   // Only handle http(s) requests
   if (!url.protocol.startsWith('http')) return;
 
+  // CRITICAL: Only intercept GET requests! Never intercept POST, PUT, DELETE (e.g. /chat, logins, vault)
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Do not intercept backend requests to other origins/ports (e.g. port 8000 FastAPI)
+  if (url.origin !== self.location.origin) {
+    if (!url.hostname.includes('cdnjs') && !url.hostname.includes('fonts') && !url.hostname.includes('jsdelivr')) {
+      return;
+    }
+  }
+
+  // Never intercept /chat
+  if (url.pathname === '/chat' || url.pathname.startsWith('/chat/')) {
+    return;
+  }
+
   // Strategy A: Network-First with Cache/Offline Fallback for API Endpoints
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(

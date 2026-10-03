@@ -5750,35 +5750,48 @@ function setupSahayAI() {
     const farmerProfile = getComprehensiveFarmerProfile();
 
     try {
-      // 3. Send query to local FastAPI RAG endpoint (with /chat proxy fallback)
-      let res;
-      try {
-        res = await fetch('http://localhost:8000/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_query: messageText,
-            top_k: 3,
-            include_context: false,
-            language: sahayLang
-          })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      } catch (errDirect) {
-        // Fallback to relative /chat on current host/server
-        res = await fetch('/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_query: messageText,
-            top_k: 3,
-            include_context: false,
-            language: sahayLang
-          })
-        });
-        if (!res.ok) {
-          throw new Error(`RAG Server returned HTTP ${res.status}: ${res.statusText}`);
+      // 3. Send query to local FastAPI RAG endpoint (or Node /chat proxy fallback)
+      let res = null;
+      const chatPayload = JSON.stringify({
+        user_query: messageText,
+        top_k: 3,
+        include_context: false,
+        language: sahayLang
+      });
+
+      const endpointsToTry = [
+        `http://${window.location.hostname || 'localhost'}:8000/chat`,
+        'http://localhost:8000/chat',
+        'http://127.0.0.1:8000/chat',
+        '/chat',
+        'http://localhost:3000/chat',
+        'http://127.0.0.1:3000/chat',
+        'http://localhost:3001/chat',
+        'http://127.0.0.1:3001/chat'
+      ];
+
+      for (const endpoint of endpointsToTry) {
+        try {
+          const fetchPromise = fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: chatPayload
+          });
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), 2500)
+          );
+          const candidate = await Promise.race([fetchPromise, timeoutPromise]);
+          if (candidate && candidate.ok) {
+            res = candidate;
+            break;
+          }
+        } catch (e) {
+          // Continue to next endpoint fallback
         }
+      }
+
+      if (!res || !res.ok) {
+        throw new Error('All chat endpoints failed');
       }
 
       const data = await res.json();
@@ -5819,10 +5832,19 @@ function setupSahayAI() {
       if (localMatch) {
         appendAssistantReply(localMatch);
       } else {
-        appendMessage(
-          'assistant',
-          '⚠️ **Could not connect to Sahay AI backend (`http://localhost:8000/chat`).**\nPlease ensure your local FastAPI server is running (`python app.py`).'
-        );
+        const lowerText = messageText.toLowerCase().trim();
+        const isGreeting = /^(hi|hello|hey|namaste|pranam|ram ram|kisan sahay|sahay ai|नमस्ते|प्रणाम|राम राम)/i.test(lowerText);
+        if (isGreeting) {
+          const greetingReply = sahayLang === 'hi'
+            ? "🌱 **नमस्ते! मैं सहाय AI हूँ — किसानसहाय का आधिकारिक डिजिटल सहायक।**\n\nमैं कृषि ऋण (KCC, फसली ऋण), सरकारी योजनाओं (PM-KISAN, कृषि यंत्रीकरण), ब्याज दरों और दस्तावेज़ चेकलिस्ट में आपकी सहायता कर सकता हूँ।\n\nआप मुझसे क्या पूछना चाहते हैं?"
+            : "🌱 **Hello! I'm Sahay AI — the official agricultural assistant for KisanSahay.**\n\nI can help you with farm loans (KCC, crop loans), government schemes (PM-KISAN, tractor subsidies), interest rate comparisons, and document checklists.\n\nHow can I assist your farming today?";
+          appendMessage('assistant', greetingReply);
+        } else {
+          appendMessage(
+            'assistant',
+            '⚠️ **Could not connect to Sahay AI backend (`http://localhost:8000/chat`).**\nPlease ensure your local FastAPI server is running (`python app.py`).'
+          );
+        }
       }
     } finally {
       if (userInput) {
