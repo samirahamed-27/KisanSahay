@@ -2177,6 +2177,48 @@ function initPatternLock() {
   if (!container || !canvas) return;
 
   const dotElements = el.patternDotsGrid ? el.patternDotsGrid.querySelectorAll('.pattern-dot') : [];
+  const step1Badge = document.getElementById('vault-pattern-step1-badge');
+  const step2Badge = document.getElementById('vault-pattern-step2-badge');
+  const instructionEl = document.getElementById('vault-pattern-instruction');
+  const trailToggleBtn = document.getElementById('vault-pattern-trail-toggle');
+
+  let patternStep = 1; // 1 = Draw New, 2 = Confirm
+  let firstPattern = [];
+  let currentStroke = [];
+  let showTrail = true;
+  state.isPatternConfirmed = false;
+  state.patternSequence = [];
+
+  function updateStepUI() {
+    if (step1Badge && step2Badge) {
+      if (state.isPatternConfirmed) {
+        step1Badge.className = 'pattern-step-pill completed';
+        step1Badge.innerHTML = '<span class="step-num"><i class="fa-solid fa-check"></i></span><span class="step-label">Draw</span>';
+        step2Badge.className = 'pattern-step-pill active completed';
+        step2Badge.innerHTML = '<span class="step-num"><i class="fa-solid fa-check"></i></span><span class="step-label">Confirmed</span>';
+      } else if (patternStep === 2) {
+        step1Badge.className = 'pattern-step-pill completed';
+        step1Badge.innerHTML = '<span class="step-num"><i class="fa-solid fa-check"></i></span><span class="step-label">Draw</span>';
+        step2Badge.className = 'pattern-step-pill active';
+        step2Badge.innerHTML = '<span class="step-num">2</span><span class="step-label">Confirm</span>';
+      } else {
+        step1Badge.className = 'pattern-step-pill active';
+        step1Badge.innerHTML = '<span class="step-num">1</span><span class="step-label">Draw</span>';
+        step2Badge.className = 'pattern-step-pill';
+        step2Badge.innerHTML = '<span class="step-num">2</span><span class="step-label">Confirm</span>';
+      }
+    }
+
+    if (instructionEl) {
+      if (state.isPatternConfirmed) {
+        instructionEl.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true" style="color: #16a34a;"></i> <span id="vault-pattern-instruction-text">Pattern lock verified and ready!</span>';
+      } else if (patternStep === 2) {
+        instructionEl.innerHTML = '<i class="fa-solid fa-check-double" aria-hidden="true" style="color: #16a34a;"></i> <span id="vault-pattern-instruction-text">Draw the same pattern again to confirm</span>';
+      } else {
+        instructionEl.innerHTML = '<i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span id="vault-pattern-instruction-text">Draw a pattern connecting at least 4 dots</span>';
+      }
+    }
+  }
 
   function getPointerPos(e) {
     const rect = container.getBoundingClientRect();
@@ -2188,19 +2230,82 @@ function initPatternLock() {
     };
   }
 
+  function drawLines(targetPos = null, sequence = currentStroke) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!showTrail || sequence.length === 0) return;
+
+    ctx.strokeStyle = state.isPatternConfirmed ? '#16a34a' : '#16a34a';
+    ctx.lineWidth = 4.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(22, 163, 74, 0.45)';
+    ctx.shadowBlur = 6;
+
+    ctx.beginPath();
+    sequence.forEach((dotIdx, i) => {
+      const pt = PATTERN_DOT_COORDS[dotIdx];
+      if (i === 0) {
+        ctx.moveTo(pt.x, pt.y);
+      } else {
+        ctx.lineTo(pt.x, pt.y);
+      }
+    });
+
+    if (targetPos && state.isDrawingPattern) {
+      ctx.lineTo(targetPos.x, targetPos.y);
+    }
+
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  function checkDotCollision(pos) {
+    PATTERN_DOT_COORDS.forEach(dot => {
+      const dist = Math.hypot(dot.x - pos.x, dot.y - pos.y);
+      if (dist < 28) {
+        if (!currentStroke.includes(dot.index)) {
+          if (currentStroke.length === 0) {
+            dotElements[dot.index]?.classList.add('dot-origin');
+          }
+          currentStroke.push(dot.index);
+          dotElements[dot.index]?.classList.add('dot-selected');
+          if (el.patternFeedback) {
+            el.patternFeedback.className = 'pattern-feedback';
+            el.patternFeedback.textContent = patternStep === 2
+              ? `Confirming: ${currentStroke.length} dots connected`
+              : `Pattern: ${currentStroke.length} dots connected`;
+          }
+        }
+      }
+    });
+  }
+
   function handleStart(e) {
     e.preventDefault();
+    if (state.isPatternConfirmed) {
+      patternStep = 1;
+      firstPattern = [];
+      state.isPatternConfirmed = false;
+      state.patternSequence = [];
+      updateStepUI();
+    }
+
     state.isDrawingPattern = true;
-    state.patternSequence = [];
-    dotElements.forEach(d => d.classList.remove('dot-selected', 'dot-origin'));
+    currentStroke = [];
+    dotElements.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-matched', 'dot-error'));
+
     if (el.patternFeedback) {
-      el.patternFeedback.textContent = 'Drawing pattern...';
-      el.patternFeedback.style.color = '#15803d';
+      el.patternFeedback.className = 'pattern-feedback';
+      el.patternFeedback.textContent = patternStep === 2
+        ? 'Draw matching pattern to confirm...'
+        : 'Drawing pattern...';
     }
 
     const pos = getPointerPos(e);
     checkDotCollision(pos);
-    drawPatternLines(pos);
+    drawLines(pos);
   }
 
   function handleMove(e) {
@@ -2208,43 +2313,99 @@ function initPatternLock() {
     e.preventDefault();
     const pos = getPointerPos(e);
     checkDotCollision(pos);
-    drawPatternLines(pos);
+    drawLines(pos);
   }
 
-  function handleEnd(e) {
+  function handleEnd() {
     if (!state.isDrawingPattern) return;
     state.isDrawingPattern = false;
-    drawPatternLines(null);
+    drawLines(null);
 
-    if (state.patternSequence.length < 4) {
-      if (el.patternFeedback) {
-        el.patternFeedback.textContent = `⚠️ Connect at least 4 dots (${state.patternSequence.length} connected). Try again.`;
-        el.patternFeedback.style.color = '#dc2626';
-      }
-    } else {
-      if (el.patternFeedback) {
-        el.patternFeedback.textContent = `✓ Pattern recorded (${state.patternSequence.length} dots connected)`;
-        el.patternFeedback.style.color = '#15803d';
-      }
-    }
-  }
-
-  function checkDotCollision(pos) {
-    PATTERN_DOT_COORDS.forEach(dot => {
-      const dist = Math.hypot(dot.x - pos.x, dot.y - pos.y);
-      if (dist < 26) {
-        if (!state.patternSequence.includes(dot.index)) {
-          if (state.patternSequence.length === 0) {
-            dotElements[dot.index]?.classList.add('dot-origin');
-          }
-          state.patternSequence.push(dot.index);
-          dotElements[dot.index]?.classList.add('dot-selected');
+    if (patternStep === 1) {
+      if (currentStroke.length < 4) {
+        container.classList.add('pattern-error-shake');
+        currentStroke.forEach(idx => dotElements[idx]?.classList.add('dot-error'));
+        if (el.patternFeedback) {
+          el.patternFeedback.className = 'pattern-feedback status-error';
+          el.patternFeedback.textContent = `⚠️ Connect at least 4 dots (${currentStroke.length} connected). Try again.`;
+        }
+        setTimeout(() => {
+          container.classList.remove('pattern-error-shake');
+          dotElements.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-error'));
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          currentStroke = [];
           if (el.patternFeedback) {
-            el.patternFeedback.textContent = `Pattern: ${state.patternSequence.length} dots connected`;
+            el.patternFeedback.className = 'pattern-feedback';
+            el.patternFeedback.textContent = 'Touch & drag or click dots to draw pattern';
           }
+        }, 800);
+      } else {
+        // Step 1 success! Save first pattern and advance to Step 2
+        firstPattern = [...currentStroke];
+        patternStep = 2;
+        updateStepUI();
+        if (el.patternFeedback) {
+          el.patternFeedback.className = 'pattern-feedback status-success';
+          el.patternFeedback.textContent = `✓ Step 1 complete (${firstPattern.length} dots). Draw again to confirm.`;
+        }
+        setTimeout(() => {
+          dotElements.forEach(d => d.classList.remove('dot-selected', 'dot-origin'));
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          currentStroke = [];
+        }, 450);
+      }
+    } else if (patternStep === 2) {
+      if (currentStroke.length < 4) {
+        container.classList.add('pattern-error-shake');
+        currentStroke.forEach(idx => dotElements[idx]?.classList.add('dot-error'));
+        if (el.patternFeedback) {
+          el.patternFeedback.className = 'pattern-feedback status-error';
+          el.patternFeedback.textContent = `⚠️ Pattern too short. Draw your matching ${firstPattern.length}-dot pattern.`;
+        }
+        setTimeout(() => {
+          container.classList.remove('pattern-error-shake');
+          dotElements.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-error'));
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          currentStroke = [];
+          if (el.patternFeedback) {
+            el.patternFeedback.className = 'pattern-feedback';
+            el.patternFeedback.textContent = 'Draw matching pattern to confirm';
+          }
+        }, 800);
+      } else {
+        const isMatch = currentStroke.length === firstPattern.length &&
+          currentStroke.every((val, i) => val === firstPattern[i]);
+
+        if (isMatch) {
+          state.isPatternConfirmed = true;
+          state.patternSequence = [...firstPattern];
+          currentStroke.forEach(idx => dotElements[idx]?.classList.add('dot-matched'));
+          updateStepUI();
+          if (el.patternFeedback) {
+            el.patternFeedback.className = 'pattern-feedback status-success';
+            el.patternFeedback.textContent = `✓ Patterns match! Pattern lock set (${state.patternSequence.length} dots).`;
+          }
+          drawLines(null, state.patternSequence);
+        } else {
+          container.classList.add('pattern-error-shake');
+          currentStroke.forEach(idx => dotElements[idx]?.classList.add('dot-error'));
+          if (el.patternFeedback) {
+            el.patternFeedback.className = 'pattern-feedback status-error';
+            el.patternFeedback.textContent = '⚠️ Patterns do not match. Redraw to confirm or click Redraw to restart.';
+          }
+          setTimeout(() => {
+            container.classList.remove('pattern-error-shake');
+            dotElements.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-error'));
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            currentStroke = [];
+          }, 900);
         }
       }
-    });
+    }
   }
 
   container.addEventListener('mousedown', handleStart);
@@ -2255,19 +2416,89 @@ function initPatternLock() {
   container.addEventListener('touchmove', handleMove, { passive: false });
   window.addEventListener('touchend', handleEnd);
 
+  // Redraw Button
   if (el.btnResetPattern) {
     el.btnResetPattern.addEventListener('click', () => {
+      patternStep = 1;
+      firstPattern = [];
+      currentStroke = [];
       state.patternSequence = [];
+      state.isPatternConfirmed = false;
       state.isDrawingPattern = false;
-      dotElements.forEach(d => d.classList.remove('dot-selected', 'dot-origin'));
+      dotElements.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-matched', 'dot-error'));
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      updateStepUI();
       if (el.patternFeedback) {
+        el.patternFeedback.className = 'pattern-feedback';
         el.patternFeedback.textContent = 'Touch & drag or click dots to draw pattern';
-        el.patternFeedback.style.color = '#15803d';
       }
     });
   }
+
+  // Trail Toggle Button
+  if (trailToggleBtn) {
+    trailToggleBtn.addEventListener('click', () => {
+      showTrail = !showTrail;
+      trailToggleBtn.setAttribute('aria-checked', showTrail ? 'true' : 'false');
+      trailToggleBtn.classList.toggle('trail-hidden', !showTrail);
+      if (showTrail) {
+        trailToggleBtn.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i> <span class="pattern-toolbar-btn-text">Trail</span>';
+        trailToggleBtn.title = 'Hide pattern trail while drawing';
+        trailToggleBtn.setAttribute('aria-label', 'Hide pattern trail while drawing');
+        drawLines(null, state.isPatternConfirmed ? state.patternSequence : currentStroke);
+      } else {
+        trailToggleBtn.innerHTML = '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i> <span class="pattern-toolbar-btn-text">Hidden</span>';
+        trailToggleBtn.title = 'Show pattern trail while drawing';
+        trailToggleBtn.setAttribute('aria-label', 'Show pattern trail while drawing');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    });
+  }
+
+  // Keyboard navigation & accessibility on dots
+  dotElements.forEach(dot => {
+    dot.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const idx = parseInt(dot.getAttribute('data-index'), 10);
+        if (!isNaN(idx) && !currentStroke.includes(idx)) {
+          if (currentStroke.length === 0) dot.classList.add('dot-origin');
+          currentStroke.push(idx);
+          dot.classList.add('dot-selected');
+          drawLines(null, currentStroke);
+          if (el.patternFeedback) {
+            el.patternFeedback.textContent = `Pattern: ${currentStroke.length} dots connected`;
+          }
+        }
+      }
+    });
+  });
+
+  // Numeric keyboard support (1 to 9)
+  container.addEventListener('keydown', (e) => {
+    const num = parseInt(e.key, 10);
+    if (num >= 1 && num <= 9) {
+      e.preventDefault();
+      const idx = num - 1;
+      if (!currentStroke.includes(idx)) {
+        if (currentStroke.length === 0) dotElements[idx]?.classList.add('dot-origin');
+        currentStroke.push(idx);
+        dotElements[idx]?.classList.add('dot-selected');
+        drawLines(null, currentStroke);
+        if (el.patternFeedback) {
+          el.patternFeedback.textContent = `Pattern: ${currentStroke.length} dots connected`;
+        }
+      }
+    } else if (e.key === 'Enter' && currentStroke.length >= 4) {
+      e.preventDefault();
+      state.isDrawingPattern = true;
+      handleEnd();
+    }
+  });
+
+  updateStepUI();
 }
 
 function drawPatternLines(targetPos = null, canvasId = 'pattern-canvas') {
@@ -2279,7 +2510,7 @@ function drawPatternLines(targetPos = null, canvasId = 'pattern-canvas') {
   if (state.patternSequence.length === 0) return;
 
   ctx.strokeStyle = '#16a34a';
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 4.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
@@ -2772,8 +3003,12 @@ async function saveFarmerVault() {
     }
     chosenPassword = pass;
   } else if (pwType === 'pattern') {
-    if (state.patternSequence.length < 4) {
-      showToast('⚠️ Pattern Lock must connect at least 4 dots.');
+    if (!state.isPatternConfirmed || state.patternSequence.length < 4) {
+      showToast('⚠️ Please draw and confirm your pattern lock (Step 2 of 2).');
+      if (el.patternFeedback) {
+        el.patternFeedback.className = 'pattern-feedback status-error';
+        el.patternFeedback.textContent = '⚠️ Please draw and confirm your pattern lock before saving.';
+      }
       return;
     }
     chosenPassword = state.patternSequence.join('-');
@@ -3182,30 +3417,95 @@ function setupResetPatternCanvas() {
 
   const ctx = canvas.getContext('2d');
   const dots = container.querySelectorAll('.pattern-dot');
+  const step1Badge = document.getElementById('reset-pattern-step1-badge');
+  const step2Badge = document.getElementById('reset-pattern-step2-badge');
+  const instructionEl = document.getElementById('reset-pattern-instruction');
+  const trailToggleBtn = document.getElementById('reset-pattern-trail-toggle');
+  const fb = document.getElementById('reset-pattern-feedback');
+
+  let resetPatternStep = 1;
+  let resetFirstPattern = [];
+  let resetCurrentStroke = [];
+  let resetShowTrail = true;
+  let isResetPatternConfirmed = false;
+  let isDrawing = false;
+  resetPatternSequence = [];
+
+  function updateResetStepUI() {
+    if (step1Badge && step2Badge) {
+      if (isResetPatternConfirmed) {
+        step1Badge.className = 'pattern-step-pill completed';
+        step1Badge.innerHTML = '<span class="step-num"><i class="fa-solid fa-check"></i></span><span class="step-label">Draw</span>';
+        step2Badge.className = 'pattern-step-pill active completed';
+        step2Badge.innerHTML = '<span class="step-num"><i class="fa-solid fa-check"></i></span><span class="step-label">Confirmed</span>';
+      } else if (resetPatternStep === 2) {
+        step1Badge.className = 'pattern-step-pill completed';
+        step1Badge.innerHTML = '<span class="step-num"><i class="fa-solid fa-check"></i></span><span class="step-label">Draw</span>';
+        step2Badge.className = 'pattern-step-pill active';
+        step2Badge.innerHTML = '<span class="step-num">2</span><span class="step-label">Confirm</span>';
+      } else {
+        step1Badge.className = 'pattern-step-pill active';
+        step1Badge.innerHTML = '<span class="step-num">1</span><span class="step-label">Draw</span>';
+        step2Badge.className = 'pattern-step-pill';
+        step2Badge.innerHTML = '<span class="step-num">2</span><span class="step-label">Confirm</span>';
+      }
+    }
+
+    if (instructionEl) {
+      if (isResetPatternConfirmed) {
+        instructionEl.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true" style="color: #16a34a;"></i> <span id="reset-pattern-instruction-text">New pattern verified and ready!</span>';
+      } else if (resetPatternStep === 2) {
+        instructionEl.innerHTML = '<i class="fa-solid fa-check-double" aria-hidden="true" style="color: #16a34a;"></i> <span id="reset-pattern-instruction-text">Draw the same pattern again to confirm</span>';
+      } else {
+        instructionEl.innerHTML = '<i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span id="reset-pattern-instruction-text">Draw a pattern connecting at least 4 dots</span>';
+      }
+    }
+  }
 
   function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    dots.forEach(d => d.classList.remove('dot-selected', 'dot-origin'));
+    dots.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-matched', 'dot-error'));
   }
 
   clearCanvas();
-  resetPatternSequence = [];
+  updateResetStepUI();
 
   const btnClear = document.getElementById('btn-clear-reset-pattern');
   if (btnClear) {
     btnClear.onclick = () => {
-      clearCanvas();
+      resetPatternStep = 1;
+      resetFirstPattern = [];
+      resetCurrentStroke = [];
       resetPatternSequence = [];
-      const fb = document.getElementById('reset-pattern-feedback');
+      isResetPatternConfirmed = false;
+      clearCanvas();
+      updateResetStepUI();
       if (fb) {
-        fb.textContent = 'Draw new pattern in sequence';
-        fb.style.color = '#15803d';
+        fb.className = 'pattern-feedback';
+        fb.textContent = 'Touch & drag or click dots to draw pattern';
       }
       validateResetForm();
     };
   }
 
-  let isDrawing = false;
+  if (trailToggleBtn) {
+    trailToggleBtn.onclick = () => {
+      resetShowTrail = !resetShowTrail;
+      trailToggleBtn.setAttribute('aria-checked', resetShowTrail ? 'true' : 'false');
+      trailToggleBtn.classList.toggle('trail-hidden', !resetShowTrail);
+      if (resetShowTrail) {
+        trailToggleBtn.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i> <span class="pattern-toolbar-btn-text">Trail</span>';
+        trailToggleBtn.title = 'Hide pattern trail while drawing';
+        trailToggleBtn.setAttribute('aria-label', 'Hide pattern trail while drawing');
+        drawLines(null, isResetPatternConfirmed ? resetPatternSequence : resetCurrentStroke);
+      } else {
+        trailToggleBtn.innerHTML = '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i> <span class="pattern-toolbar-btn-text">Hidden</span>';
+        trailToggleBtn.title = 'Show pattern trail while drawing';
+        trailToggleBtn.setAttribute('aria-label', 'Show pattern trail while drawing');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+  }
 
   function getPointerPos(e) {
     const rect = canvas.getBoundingClientRect();
@@ -3217,97 +3517,229 @@ function setupResetPatternCanvas() {
     };
   }
 
-  function drawLines(currentPos) {
+  function drawLines(currentPos, sequence = resetCurrentStroke) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (resetPatternSequence.length === 0) return;
+    if (!resetShowTrail || sequence.length === 0) return;
 
-    ctx.strokeStyle = '#15803d';
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = isResetPatternConfirmed ? '#16a34a' : '#16a34a';
+    ctx.lineWidth = 4.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(22, 163, 74, 0.45)';
+    ctx.shadowBlur = 6;
 
     ctx.beginPath();
-    const first = PATTERN_DOT_COORDS[resetPatternSequence[0]];
-    ctx.moveTo(first.x, first.y);
+    sequence.forEach((dotIdx, i) => {
+      const pt = PATTERN_DOT_COORDS[dotIdx];
+      if (i === 0) {
+        ctx.moveTo(pt.x, pt.y);
+      } else {
+        ctx.lineTo(pt.x, pt.y);
+      }
+    });
 
-    for (let i = 1; i < resetPatternSequence.length; i++) {
-      const pt = PATTERN_DOT_COORDS[resetPatternSequence[i]];
-      ctx.lineTo(pt.x, pt.y);
-    }
-    if (currentPos) {
+    if (currentPos && isDrawing) {
       ctx.lineTo(currentPos.x, currentPos.y);
     }
     ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 
   function checkCollision(pos) {
     PATTERN_DOT_COORDS.forEach(dot => {
       const dist = Math.hypot(dot.x - pos.x, dot.y - pos.y);
-      if (dist < 26) {
-        if (!resetPatternSequence.includes(dot.index)) {
-          if (resetPatternSequence.length === 0) {
+      if (dist < 28) {
+        if (!resetCurrentStroke.includes(dot.index)) {
+          if (resetCurrentStroke.length === 0) {
             dots[dot.index]?.classList.add('dot-origin');
           }
-          resetPatternSequence.push(dot.index);
+          resetCurrentStroke.push(dot.index);
           dots[dot.index]?.classList.add('dot-selected');
+          if (fb) {
+            fb.className = 'pattern-feedback';
+            fb.textContent = resetPatternStep === 2
+              ? `Confirming: ${resetCurrentStroke.length} dots connected`
+              : `Pattern: ${resetCurrentStroke.length} dots connected`;
+          }
         }
       }
     });
+  }
+
+  function handleStart(e) {
+    if (isResetPatternConfirmed) {
+      resetPatternStep = 1;
+      resetFirstPattern = [];
+      resetPatternSequence = [];
+      isResetPatternConfirmed = false;
+      updateResetStepUI();
+      validateResetForm();
+    }
+    isDrawing = true;
+    resetCurrentStroke = [];
+    dots.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-matched', 'dot-error'));
+
+    if (fb) {
+      fb.className = 'pattern-feedback';
+      fb.textContent = resetPatternStep === 2
+        ? 'Draw matching pattern to confirm...'
+        : 'Drawing pattern...';
+    }
+
+    const pos = getPointerPos(e);
+    checkCollision(pos);
+    drawLines(pos);
+  }
+
+  function handleMove(e) {
+    if (!isDrawing) return;
+    const pos = getPointerPos(e);
+    checkCollision(pos);
+    drawLines(pos);
   }
 
   function handleEnd() {
     if (!isDrawing) return;
     isDrawing = false;
     drawLines(null);
-    const fb = document.getElementById('reset-pattern-feedback');
-    if (fb) {
-      if (resetPatternSequence.length >= 4) {
-        fb.textContent = `Pattern ready (${resetPatternSequence.length} dots connected)`;
-        fb.style.color = '#15803d';
+
+    if (resetPatternStep === 1) {
+      if (resetCurrentStroke.length < 4) {
+        container.classList.add('pattern-error-shake');
+        resetCurrentStroke.forEach(idx => dots[idx]?.classList.add('dot-error'));
+        if (fb) {
+          fb.className = 'pattern-feedback status-error';
+          fb.textContent = `⚠️ Connect at least 4 dots (${resetCurrentStroke.length} connected). Try again.`;
+        }
+        setTimeout(() => {
+          container.classList.remove('pattern-error-shake');
+          dots.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-error'));
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          resetCurrentStroke = [];
+          if (fb) {
+            fb.className = 'pattern-feedback';
+            fb.textContent = 'Touch & drag or click dots to draw pattern';
+          }
+        }, 800);
       } else {
-        fb.textContent = `Connect at least 4 dots (${resetPatternSequence.length} connected)`;
-        fb.style.color = '#dc2626';
+        // Step 1 success
+        resetFirstPattern = [...resetCurrentStroke];
+        resetPatternStep = 2;
+        updateResetStepUI();
+        if (fb) {
+          fb.className = 'pattern-feedback status-success';
+          fb.textContent = `✓ Step 1 complete (${resetFirstPattern.length} dots). Draw again to confirm.`;
+        }
+        setTimeout(() => {
+          dots.forEach(d => d.classList.remove('dot-selected', 'dot-origin'));
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          resetCurrentStroke = [];
+        }, 450);
+      }
+    } else if (resetPatternStep === 2) {
+      if (resetCurrentStroke.length < 4) {
+        container.classList.add('pattern-error-shake');
+        resetCurrentStroke.forEach(idx => dots[idx]?.classList.add('dot-error'));
+        if (fb) {
+          fb.className = 'pattern-feedback status-error';
+          fb.textContent = `⚠️ Pattern too short. Draw your matching ${resetFirstPattern.length}-dot pattern.`;
+        }
+        setTimeout(() => {
+          container.classList.remove('pattern-error-shake');
+          dots.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-error'));
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          resetCurrentStroke = [];
+          if (fb) {
+            fb.className = 'pattern-feedback';
+            fb.textContent = 'Draw matching pattern to confirm';
+          }
+        }, 800);
+      } else {
+        const isMatch = resetCurrentStroke.length === resetFirstPattern.length &&
+          resetCurrentStroke.every((val, i) => val === resetFirstPattern[i]);
+
+        if (isMatch) {
+          isResetPatternConfirmed = true;
+          resetPatternSequence = [...resetFirstPattern];
+          resetCurrentStroke.forEach(idx => dots[idx]?.classList.add('dot-matched'));
+          updateResetStepUI();
+          if (fb) {
+            fb.className = 'pattern-feedback status-success';
+            fb.textContent = `✓ Patterns match! Reset pattern set (${resetPatternSequence.length} dots).`;
+          }
+          drawLines(null, resetPatternSequence);
+        } else {
+          container.classList.add('pattern-error-shake');
+          resetCurrentStroke.forEach(idx => dots[idx]?.classList.add('dot-error'));
+          if (fb) {
+            fb.className = 'pattern-feedback status-error';
+            fb.textContent = '⚠️ Patterns do not match. Redraw to confirm or click Redraw to restart.';
+          }
+          setTimeout(() => {
+            container.classList.remove('pattern-error-shake');
+            dots.forEach(d => d.classList.remove('dot-selected', 'dot-origin', 'dot-error'));
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            resetCurrentStroke = [];
+          }, 900);
+        }
       }
     }
     validateResetForm();
   }
 
   container.onmousedown = (e) => {
-    isDrawing = true;
-    clearCanvas();
-    resetPatternSequence = [];
-    const pos = getPointerPos(e);
-    checkCollision(pos);
-    drawLines(pos);
+    handleStart(e);
   };
-
   window.onmousemove = (e) => {
-    if (!isDrawing) return;
-    const pos = getPointerPos(e);
-    checkCollision(pos);
-    drawLines(pos);
+    handleMove(e);
   };
-
   window.onmouseup = handleEnd;
 
   container.ontouchstart = (e) => {
     e.preventDefault();
-    isDrawing = true;
-    clearCanvas();
-    resetPatternSequence = [];
-    const pos = getPointerPos(e);
-    checkCollision(pos);
-    drawLines(pos);
+    handleStart(e);
   };
-
   window.ontouchmove = (e) => {
-    if (!isDrawing) return;
-    const pos = getPointerPos(e);
-    checkCollision(pos);
-    drawLines(pos);
+    handleMove(e);
   };
-
   window.ontouchend = handleEnd;
+
+  // Dot keyboard accessibility
+  dots.forEach(dot => {
+    dot.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const idx = parseInt(dot.getAttribute('data-index'), 10);
+        if (!isNaN(idx) && !resetCurrentStroke.includes(idx)) {
+          if (resetCurrentStroke.length === 0) dot.classList.add('dot-origin');
+          resetCurrentStroke.push(idx);
+          dot.classList.add('dot-selected');
+          drawLines(null, resetCurrentStroke);
+          if (fb) fb.textContent = `Pattern: ${resetCurrentStroke.length} dots connected`;
+        }
+      }
+    });
+  });
+
+  // Numeric keyboard support (1 to 9)
+  container.addEventListener('keydown', (e) => {
+    const num = parseInt(e.key, 10);
+    if (num >= 1 && num <= 9) {
+      e.preventDefault();
+      const idx = num - 1;
+      if (!resetCurrentStroke.includes(idx)) {
+        if (resetCurrentStroke.length === 0) dots[idx]?.classList.add('dot-origin');
+        resetCurrentStroke.push(idx);
+        dots[idx]?.classList.add('dot-selected');
+        drawLines(null, resetCurrentStroke);
+        if (fb) fb.textContent = `Pattern: ${resetCurrentStroke.length} dots connected`;
+      }
+    } else if (e.key === 'Enter' && resetCurrentStroke.length >= 4) {
+      e.preventDefault();
+      isDrawing = true;
+      handleEnd();
+    }
+  });
 }
 
 async function submitVaultReset() {

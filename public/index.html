@@ -2085,31 +2085,66 @@
 
         <!-- Tab Pane 3: 3x3 Visual Pattern Lock -->
         <div class="sec-pane" id="sec-pane-pattern" style="display: none;" role="tabpanel" aria-labelledby="sec-tab-pattern">
-          <div class="pattern-lock-wrap">
-            <p class="pattern-lock-instruction">
-              <i class="fa-solid fa-shield-halved" aria-hidden="true" style="color: #16a34a; margin-right: 0.35rem;"></i>
-              Connect at least 4 dots in sequence to create your secret pattern lock:
-            </p>
-            <!-- 3x3 Pattern Grid Container with Canvas Overlay -->
-            <div class="pattern-container" id="pattern-container" aria-label="Pattern lock drawing canvas">
-              <canvas id="pattern-canvas" width="240" height="240"></canvas>
-              <div class="pattern-dots-grid" id="pattern-dots-grid">
-                <div class="pattern-dot" data-index="0" role="button" aria-label="Dot 1"><span></span></div>
-                <div class="pattern-dot" data-index="1" role="button" aria-label="Dot 2"><span></span></div>
-                <div class="pattern-dot" data-index="2" role="button" aria-label="Dot 3"><span></span></div>
-                <div class="pattern-dot" data-index="3" role="button" aria-label="Dot 4"><span></span></div>
-                <div class="pattern-dot" data-index="4" role="button" aria-label="Dot 5"><span></span></div>
-                <div class="pattern-dot" data-index="5" role="button" aria-label="Dot 6"><span></span></div>
-                <div class="pattern-dot" data-index="6" role="button" aria-label="Dot 7"><span></span></div>
-                <div class="pattern-dot" data-index="7" role="button" aria-label="Dot 8"><span></span></div>
-                <div class="pattern-dot" data-index="8" role="button" aria-label="Dot 9"><span></span></div>
+          <div class="pattern-lock-card">
+            <!-- Header Toolbar: Step Indicator & Actions -->
+            <div class="pattern-card-toolbar">
+              <div class="pattern-step-indicator" id="vault-pattern-step-indicator" role="status" aria-live="polite">
+                <span class="pattern-step-pill active" id="vault-pattern-step1-badge">
+                  <span class="step-num">1</span>
+                  <span class="step-label">Draw</span>
+                </span>
+                <i class="fa-solid fa-chevron-right step-arrow" aria-hidden="true"></i>
+                <span class="pattern-step-pill" id="vault-pattern-step2-badge">
+                  <span class="step-num">2</span>
+                  <span class="step-label">Confirm</span>
+                </span>
+              </div>
+              <div class="pattern-toolbar-actions">
+                <button type="button" class="btn-pattern-toolbar" id="vault-pattern-trail-toggle" role="switch" aria-checked="true" aria-label="Toggle trail visibility while drawing" title="Show or hide pattern trail">
+                  <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                  <span class="pattern-toolbar-btn-text">Trail</span>
+                </button>
+                <button type="button" class="btn-pattern-toolbar btn-pattern-redraw" id="btn-reset-pattern" title="Redraw pattern from Step 1" aria-label="Redraw pattern">
+                  <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+                  <span class="pattern-toolbar-btn-text">Redraw</span>
+                </button>
               </div>
             </div>
-            <div class="pattern-feedback" id="pattern-feedback">Connect dots in sequence to draw pattern</div>
-            <button type="button" class="btn-reset-pattern" id="btn-reset-pattern">
-              <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
-              <span>Reset Pattern</span>
-            </button>
+
+            <!-- Dynamic Instruction Line Above Grid -->
+            <div class="pattern-instruction-line" id="vault-pattern-instruction" aria-live="polite">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              <span id="vault-pattern-instruction-text">Draw a pattern connecting at least 4 dots</span>
+            </div>
+
+            <!-- 3x3 Pattern Grid Container with Canvas Overlay -->
+            <div class="pattern-canvas-shell">
+              <div class="pattern-container" id="pattern-container" role="application" aria-label="3 by 3 pattern lock grid. Touch and drag or click dots to draw pattern.">
+                <canvas id="pattern-canvas" width="240" height="240"></canvas>
+                <div class="pattern-dots-grid" id="pattern-dots-grid">
+                  <div class="pattern-dot" data-index="0" role="button" tabindex="0" aria-label="Dot 1, row 1 column 1"><span></span></div>
+                  <div class="pattern-dot" data-index="1" role="button" tabindex="0" aria-label="Dot 2, row 1 column 2"><span></span></div>
+                  <div class="pattern-dot" data-index="2" role="button" tabindex="0" aria-label="Dot 3, row 1 column 3"><span></span></div>
+                  <div class="pattern-dot" data-index="3" role="button" tabindex="0" aria-label="Dot 4, row 2 column 1"><span></span></div>
+                  <div class="pattern-dot" data-index="4" role="button" tabindex="0" aria-label="Dot 5, row 2 column 2"><span></span></div>
+                  <div class="pattern-dot" data-index="5" role="button" tabindex="0" aria-label="Dot 6, row 2 column 3"><span></span></div>
+                  <div class="pattern-dot" data-index="6" role="button" tabindex="0" aria-label="Dot 7, row 3 column 1"><span></span></div>
+                  <div class="pattern-dot" data-index="7" role="button" tabindex="0" aria-label="Dot 8, row 3 column 2"><span></span></div>
+                  <div class="pattern-dot" data-index="8" role="button" tabindex="0" aria-label="Dot 9, row 3 column 3"><span></span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real-time Status / Feedback Line Below Grid -->
+            <div class="pattern-feedback" id="pattern-feedback" role="status" aria-live="polite">
+              Touch &amp; drag or click dots to draw pattern
+            </div>
+          </div>
+
+          <!-- Security Note -->
+          <div class="pattern-security-note">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <span><strong>Security Note:</strong> Pattern locks are fast and convenient, but easier to guess than a password. For your most sensitive land records and bank documents, we recommend a strong password or 6-digit PIN.</span>
           </div>
         </div>
       </div>
@@ -2314,31 +2349,67 @@
       </div>
 
       <!-- Reset Tab Pane 3: Pattern Lock -->
-      <div class="sec-pane" id="reset-pane-pattern" style="display: none;">
-        <div class="pattern-lock-wrap">
-          <div class="reset-pin-tip" style="margin-bottom: 0.6rem;">
-            <i class="fa-solid fa-grip" aria-hidden="true"></i>
-            <span>Draw a secret pattern connecting at least 4 dots in sequence.</span>
-          </div>
-          <div class="pattern-container" id="reset-pattern-container">
-            <canvas id="reset-pattern-canvas" width="240" height="240"></canvas>
-            <div class="pattern-dots-grid" id="reset-pattern-dots-grid">
-              <div class="pattern-dot" data-index="0"><span></span></div>
-              <div class="pattern-dot" data-index="1"><span></span></div>
-              <div class="pattern-dot" data-index="2"><span></span></div>
-              <div class="pattern-dot" data-index="3"><span></span></div>
-              <div class="pattern-dot" data-index="4"><span></span></div>
-              <div class="pattern-dot" data-index="5"><span></span></div>
-              <div class="pattern-dot" data-index="6"><span></span></div>
-              <div class="pattern-dot" data-index="7"><span></span></div>
-              <div class="pattern-dot" data-index="8"><span></span></div>
+      <div class="sec-pane" id="reset-pane-pattern" style="display: none;" role="tabpanel" aria-labelledby="reset-tab-pattern">
+        <div class="pattern-lock-card">
+          <!-- Header Toolbar: Step Indicator & Actions -->
+          <div class="pattern-card-toolbar">
+            <div class="pattern-step-indicator" id="reset-pattern-step-indicator" role="status" aria-live="polite">
+              <span class="pattern-step-pill active" id="reset-pattern-step1-badge">
+                <span class="step-num">1</span>
+                <span class="step-label">Draw</span>
+              </span>
+              <i class="fa-solid fa-chevron-right step-arrow" aria-hidden="true"></i>
+              <span class="pattern-step-pill" id="reset-pattern-step2-badge">
+                <span class="step-num">2</span>
+                <span class="step-label">Confirm</span>
+              </span>
+            </div>
+            <div class="pattern-toolbar-actions">
+              <button type="button" class="btn-pattern-toolbar" id="reset-pattern-trail-toggle" role="switch" aria-checked="true" aria-label="Toggle trail visibility while drawing" title="Show or hide pattern trail">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                <span class="pattern-toolbar-btn-text">Trail</span>
+              </button>
+              <button type="button" class="btn-pattern-toolbar btn-pattern-redraw" id="btn-clear-reset-pattern" title="Redraw pattern from Step 1" aria-label="Redraw pattern">
+                <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+                <span class="pattern-toolbar-btn-text">Redraw</span>
+              </button>
             </div>
           </div>
-          <div class="pattern-feedback" id="reset-pattern-feedback">Connect dots in sequence</div>
-          <button type="button" class="btn-reset-pattern" id="btn-clear-reset-pattern">
-            <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
-            <span>Redraw Pattern</span>
-          </button>
+
+          <!-- Dynamic Instruction Line Above Grid -->
+          <div class="pattern-instruction-line" id="reset-pattern-instruction" aria-live="polite">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <span id="reset-pattern-instruction-text">Draw a pattern connecting at least 4 dots</span>
+          </div>
+
+          <!-- 3x3 Pattern Grid Container with Canvas Overlay -->
+          <div class="pattern-canvas-shell">
+            <div class="pattern-container" id="reset-pattern-container" role="application" aria-label="3 by 3 reset pattern lock grid. Touch and drag or click dots to draw pattern.">
+              <canvas id="reset-pattern-canvas" width="240" height="240"></canvas>
+              <div class="pattern-dots-grid" id="reset-pattern-dots-grid">
+                <div class="pattern-dot" data-index="0" role="button" tabindex="0" aria-label="Dot 1, row 1 column 1"><span></span></div>
+                <div class="pattern-dot" data-index="1" role="button" tabindex="0" aria-label="Dot 2, row 1 column 2"><span></span></div>
+                <div class="pattern-dot" data-index="2" role="button" tabindex="0" aria-label="Dot 3, row 1 column 3"><span></span></div>
+                <div class="pattern-dot" data-index="3" role="button" tabindex="0" aria-label="Dot 4, row 2 column 1"><span></span></div>
+                <div class="pattern-dot" data-index="4" role="button" tabindex="0" aria-label="Dot 5, row 2 column 2"><span></span></div>
+                <div class="pattern-dot" data-index="5" role="button" tabindex="0" aria-label="Dot 6, row 2 column 3"><span></span></div>
+                <div class="pattern-dot" data-index="6" role="button" tabindex="0" aria-label="Dot 7, row 3 column 1"><span></span></div>
+                <div class="pattern-dot" data-index="7" role="button" tabindex="0" aria-label="Dot 8, row 3 column 2"><span></span></div>
+                <div class="pattern-dot" data-index="8" role="button" tabindex="0" aria-label="Dot 9, row 3 column 3"><span></span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-time Status / Feedback Line Below Grid -->
+          <div class="pattern-feedback" id="reset-pattern-feedback" role="status" aria-live="polite">
+            Connect dots in sequence
+          </div>
+        </div>
+
+        <!-- Security Note -->
+        <div class="pattern-security-note">
+          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+          <span><strong>Security Note:</strong> Pattern locks are fast and convenient, but easier to guess than a password. For your most sensitive land records and bank documents, we recommend a strong password or 6-digit PIN.</span>
         </div>
       </div>
 
