@@ -7310,6 +7310,51 @@ function setupPWAInstallPrompt() {
 }
 
 // ==========================================================================
+// Direct App Package Downloader (Fallback for Desktop & Non-PWA Browsers)
+// ==========================================================================
+function downloadKisanSahayApp() {
+  const isWindows = /Win32|Win64|Windows|WinCE/i.test(navigator.userAgent || '');
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '') && !window.MSStream;
+
+  if (isIOS) {
+    if (typeof switchPWADeviceTab === 'function') switchPWADeviceTab('ios');
+    return;
+  }
+
+  let downloadUrl = '/downloads/KisanSahay-Mac.zip';
+  let fileName = 'KisanSahay-Mac.zip';
+
+  if (isWindows) {
+    downloadUrl = '/downloads/KisanSahay-Windows.zip';
+    fileName = 'KisanSahay-Windows.zip';
+  }
+
+  // Trigger file download via temporary link
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  // Update button visual state
+  const btn = document.getElementById('btn-pwa-modal-install');
+  if (btn) {
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = `
+      <span class="btn-pwa-icon">📥</span>
+      <span class="btn-pwa-label-group">
+        <span class="btn-pwa-label">Downloading ${fileName}...</span>
+        <span class="btn-pwa-sub">Check your Downloads folder • Unzip to launch app</span>
+      </span>
+    `;
+    setTimeout(() => {
+      btn.innerHTML = originalHtml;
+    }, 5000);
+  }
+}
+
+// ==========================================================================
 // Global PWA Trigger Helper (Invoked by navbar, Switch Profile bar, or mobile bar)
 // ==========================================================================
 window.triggerPWAInstallOrModal = function() {
@@ -7328,6 +7373,13 @@ window.triggerPWAInstallOrModal = function() {
 
   // Otherwise, open the rich universal download modal
   openUniversalDownloadModal();
+
+  // On desktop (Mac / Windows), also automatically trigger direct app package download
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '') && !window.MSStream;
+  const isAndroid = /Android/i.test(navigator.userAgent || '');
+  if (!isIOS && !isAndroid) {
+    downloadKisanSahayApp();
+  }
 };
 
 function openUniversalDownloadModal() {
@@ -7488,14 +7540,16 @@ function setupUniversalPWADownloadModal() {
           const choiceResult = await deferredPrompt.userChoice;
           console.log('PWA: UserChoice outcome:', choiceResult.outcome);
           deferredPrompt = null;
-        } catch (err) {}
-        modal.style.display = 'none';
+          modal.style.display = 'none';
+        } catch (err) {
+          downloadKisanSahayApp();
+        }
       } else {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '') && !window.MSStream;
         if (isIOS) {
           switchPWADeviceTab('ios');
         } else {
-          switchPWADeviceTab('android');
+          downloadKisanSahayApp();
         }
       }
     });

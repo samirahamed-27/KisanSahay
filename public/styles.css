@@ -12296,6 +12296,52 @@ body.dark-mode .pwa-perk-item small {
   font-weight: 500;
 }
 
+/* Direct OS Downloads Row */
+.pwa-direct-downloads-row {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.btn-pwa-os-download {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 12px;
+  color: #15803d;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-pwa-os-download:hover {
+  background: #dcfce7;
+  border-color: #4ade80;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+}
+
+body.dark-mode .btn-pwa-os-download {
+  background: #052e16;
+  border-color: #059669;
+  color: #86efac;
+}
+
+body.dark-mode .btn-pwa-os-download:hover {
+  background: #064e3b;
+  border-color: #10b981;
+}
+
 /* Share Link Card */
 .pwa-share-link-card {
   background: #f0fdf4;
