@@ -1,12 +1,49 @@
+# Dependency Directories
 node_modules/
-.DS_Store
-*.log
-*.keystore
-scratch/
 .venv/
-chroma_db/
+venv/
+env/
+ENV/
 
-# RAG vector index (generated — run: node scripts/buildRagIndex.js)
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environment Variables & Secrets
+.env
+.env.*
+*.env
+!.env.example
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs & Temporary Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+scratch/
+tmp/
+*.keystore
+
+# Build Outputs & Archives
+dist/
+build/
+*.zip
+*.tar.gz
+
+# ChromaDB & Generated Vector Indexes
+chroma_db/
 src/data/rag_index.json
 
 # iOS / Capacitor
@@ -17,7 +54,7 @@ ios/DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 
-# Local reference docs (not pushed to GitHub)
+# Local Reference Docs (internal)
 MYGOGO
 MYGOGO.md
 

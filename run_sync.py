@@ -13,7 +13,7 @@ Scheduled task runner for automated agricultural data synchronization:
 
 Cron Examples:
     # Run hourly to check which sources are due for refresh:
-    0 * * * * cd /Users/veersingh1/OWN\ KISANSAHAY && .venv/bin/python run_sync.py >> /tmp/kisansahay_sync.log 2>&1
+    0 * * * * cd /path/to/kisansahay && python run_sync.py >> /tmp/kisansahay_sync.log 2>&1
 
     # Force immediate sync of all sources:
     python run_sync.py --force

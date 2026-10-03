@@ -4,6 +4,7 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const PYTHON_BACKEND_URL = process.env.FLASK_BACKEND_URL || process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8000';
 
 const apiRoutes = require('./src/routes/apiRoutes');
 const docsRoutes = require('./src/routes/docsRoutes');
@@ -14,10 +15,10 @@ const { startScheduledReminders } = require('./src/services/notificationService'
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Exact Lookups Proxy (KVK Directory, Events, Advisories, Mandi Prices) to Python FastAPI backend (http://127.0.0.1:8000)
+// Exact Lookups Proxy (KVK Directory, Events, Advisories, Mandi Prices) to Python FastAPI backend
 app.get(['/api/kvk', '/api/kvk/*', '/api/advisories', '/api/mandi'], async (req, res) => {
   try {
-    const backendUrl = `http://127.0.0.1:8000${req.originalUrl}`;
+    const backendUrl = `${PYTHON_BACKEND_URL}${req.originalUrl}`;
     const apiRes = await fetch(backendUrl);
     const contentType = apiRes.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
@@ -30,7 +31,7 @@ app.get(['/api/kvk', '/api/kvk/*', '/api/advisories', '/api/mandi'], async (req,
   } catch (err) {
     return res.status(503).json({
       status: 'error',
-      message: 'Could not connect to KisanSahay exact lookups backend (http://127.0.0.1:8000).',
+      message: `Could not connect to KisanSahay exact lookups backend (${PYTHON_BACKEND_URL}).`,
       details: err.message
     });
   }
@@ -40,21 +41,82 @@ app.get(['/api/kvk', '/api/kvk/*', '/api/advisories', '/api/mandi'], async (req,
 app.use('/api', docsRoutes);
 app.use('/api', apiRoutes);
 
-// Direct /chat proxy to Python FastAPI backend (http://127.0.0.1:8000/chat) with fallback
+// Direct /chat proxy to Python FastAPI backend (http://127.0.0.1:8000/chat) with timeout and fallback
 app.post('/chat', async (req, res) => {
+  const query = req.body?.user_query ?? req.body?.message ?? '';
+  const lang = req.body?.language || req.body?.lang || 'en';
+
+  console.log(`[Express /chat] Received query: "${query}" (lang: ${lang})`);
+
+  // Handle empty query gracefully
+  if (typeof query === 'string' && query.trim() === '') {
+    const emptyGuidance = lang === 'hi'
+      ? 'कृपया किसान ऋण, सरकारी योजनाओं या कृषि सहायता के बारे में अपना प्रश्न पूछें।'
+      : 'Please enter a question about farmer loans, government schemes, or subsidies.';
+    console.log('[Express /chat] Empty query received, returning guidance prompt');
+    return res.status(200).json({
+      answer: emptyGuidance,
+      user_query: '',
+      source_type: 'KisanSahay Guide',
+      confidence_score: 1.0,
+      status: 'error'
+    });
+  }
+
+  // 30s timeout abort controller
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
   try {
-    const apiRes = await fetch('http://127.0.0.1:8000/chat', {
+    const apiRes = await fetch(`${PYTHON_BACKEND_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(req.body),
+      signal: controller.signal
     });
-    const data = await apiRes.json();
-    return res.status(apiRes.status).json(data);
-  } catch (err) {
+    clearTimeout(timeoutId);
+
+    const rawText = await apiRes.text();
+    let data;
     try {
+      data = JSON.parse(rawText);
+    } catch (parseErr) {
+      console.error('[Express /chat] Non-JSON response from Python backend:', rawText);
+      return res.status(502).json({
+        answer: '⚠️ Received non-JSON response from backend AI service. Please try again.',
+        status: 'error',
+        detail: rawText
+      });
+    }
+
+    if (!apiRes.ok) {
+      console.warn(`[Express /chat] Backend returned non-200 status (${apiRes.status}):`, data);
+      return res.status(apiRes.status).json({
+        answer: data.answer || (typeof data.detail === 'string' ? data.detail : '⚠️ Backend service encountered an error processing your query.'),
+        status: 'error',
+        ...data
+      });
+    }
+
+    console.log(`[Express /chat] Python backend responded successfully (${apiRes.status})`);
+    return res.status(apiRes.status).json(data);
+
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.error('[Express /chat] Upstream proxy error:', err.name === 'AbortError' ? 'Request timed out after 30s' : err.message);
+
+    if (err.name === 'AbortError') {
+      return res.status(504).json({
+        answer: '⏳ Request timed out after 30 seconds while generating answer. Please try again.',
+        status: 'error',
+        detail: 'Gateway Timeout (30s)'
+      });
+    }
+
+    // Try fallback assistant service if Python service is down
+    try {
+      console.log('[Express /chat] Attempting local Node assistant fallback...');
       const { processAssistantQuery } = require('./src/services/assistantService');
-      const query = req.body?.user_query || req.body?.message || '';
-      const lang = req.body?.language || req.body?.lang || 'en';
       const result = await processAssistantQuery(query, { language: lang });
       return res.json({
         answer: result.reply || result.message || (lang === 'hi' ? 'क्षमा करें, उत्तर प्राप्त नहीं हो सका।' : 'Could not process query.'),
@@ -64,18 +126,20 @@ app.post('/chat', async (req, res) => {
         status: 'success'
       });
     } catch (fallbackErr) {
+      console.error('[Express /chat] Local assistant fallback also failed:', fallbackErr);
       return res.status(503).json({
-        answer: '⚠️ Could not connect to Sahay AI backend (`http://localhost:8000/chat`). Please ensure your local FastAPI server is running (`python app.py`).',
-        status: 'error'
+        answer: `⚠️ Could not connect to Sahay AI backend (\`${PYTHON_BACKEND_URL}/chat\`). Please ensure your local FastAPI server is running (\`python app.py\`).`,
+        status: 'error',
+        detail: err.message
       });
     }
   }
 });
 
-// Admin Review, Scheduler & Health Check Proxy to Python FastAPI backend (http://127.0.0.1:8000)
+// Admin Review, Scheduler & Health Check Proxy to Python FastAPI backend
 app.all(['/admin/*', '/api/admin/*'], async (req, res) => {
   try {
-    const backendUrl = `http://127.0.0.1:8000${req.originalUrl}`;
+    const backendUrl = `${PYTHON_BACKEND_URL}${req.originalUrl}`;
     const headers = { ...req.headers };
     delete headers.host;
     delete headers.connection;
@@ -107,7 +171,7 @@ app.all(['/admin/*', '/api/admin/*'], async (req, res) => {
     return res.status(503).json({
       success: false,
       error: 'Backend Service Unavailable',
-      message: 'Could not connect to KisanSahay Python backend (http://127.0.0.1:8000). Please ensure python app.py is running.',
+      message: `Could not connect to KisanSahay Python backend (${PYTHON_BACKEND_URL}). Please ensure python app.py is running.`,
       details: err.message
     });
   }

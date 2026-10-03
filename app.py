@@ -26,6 +26,8 @@ import time
 import logging
 import re
 import json
+import traceback
+import concurrent.futures
 import urllib.parse
 import asyncio
 from pathlib import Path
@@ -34,6 +36,8 @@ from typing import Optional, Tuple, Dict, Any, List
 import httpx
 import hmac
 from fastapi import FastAPI, HTTPException, status, Request, Response, Header, Depends, Query
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -435,16 +439,18 @@ def find_faq_match(query: str, lang: str = "en") -> Optional[Tuple[str, str]]:
         ):
             score += q_contains
 
-        # 2. Keyword matching with word boundaries
+        # 2. Keyword matching with word boundaries & plural/stem matching
+        q_stem = re.sub(r"\b(\w+?)s\b", r"\1", q_norm)
         for kw in item.get("keywords", []):
             kw_norm = _normalize_text_for_match(kw)
             if not kw_norm:
                 continue
-            if q_norm == kw_norm:
+            kw_stem = re.sub(r"\b(\w+?)s\b", r"\1", kw_norm)
+            if q_norm == kw_norm or q_stem == kw_stem:
                 score += kw_exact
-            elif re.search(r"\b" + re.escape(kw_norm) + r"\b", q_norm):
+            elif re.search(r"\b" + re.escape(kw_norm) + r"\b", q_norm) or re.search(r"\b" + re.escape(kw_stem) + r"\b", q_stem):
                 score += kw_partial
-            elif len(words) >= 2 and re.search(r"\b" + re.escape(q_norm) + r"\b", kw_norm):
+            elif len(words) >= 2 and (re.search(r"\b" + re.escape(q_norm) + r"\b", kw_norm) or re.search(r"\b" + re.escape(q_stem) + r"\b", kw_stem)):
                 score += kw_partial
 
         # 3. Content token overlap
@@ -503,6 +509,13 @@ def is_related_to_farmer_or_loans(text: str) -> bool:
     if len(words) <= 2 and any(g in q for g in ["hello", "hi", "namaste", "pranam", "hey", "ram ram"]):
         return True
 
+    # Explicit farmer tools / local services / personal vault
+    try:
+        if is_explicit_kvk_query(q) or is_explicit_soil_query(q) or is_explicit_training_query(q) or is_explicit_mandi_query(q) or is_vault_query(q):
+            return True
+    except Exception:
+        pass
+
     return False
 
 
@@ -513,12 +526,373 @@ def get_off_topic_response(lang: str = "en") -> str:
     return responses.get(lang, responses.get("en", "I can only help with agricultural loans, government schemes, and the KisanSahay app."))
 
 
+MAX_CHAT_QUERY_CHARS = 4000
+KVK_SEARCH_TIMEOUT_SEC = 7
+KVK_WEB_SEARCH_ENABLED = os.getenv("KVK_WEB_SEARCH", "1").strip().lower() not in ("0", "false", "off", "no")
+
+_PLACE_TO_STATE = {
+    "kanpur": "Uttar Pradesh",
+    "lucknow": "Uttar Pradesh",
+    "varanasi": "Uttar Pradesh",
+    "prayagraj": "Uttar Pradesh",
+    "allahabad": "Uttar Pradesh",
+    "agra": "Uttar Pradesh",
+    "meerut": "Uttar Pradesh",
+    "noida": "Uttar Pradesh",
+    "ghaziabad": "Uttar Pradesh",
+    "bareilly": "Uttar Pradesh",
+    "aligarh": "Uttar Pradesh",
+    "gorakhpur": "Uttar Pradesh",
+    "jhansi": "Uttar Pradesh",
+    "patna": "Bihar",
+    "gaya": "Bihar",
+    "muzaffarpur": "Bihar",
+    "jaipur": "Rajasthan",
+    "ludhiana": "Punjab",
+    "amritsar": "Punjab",
+    "jalandhar": "Punjab",
+    "chandigarh": "Chandigarh",
+    "nagpur": "Maharashtra",
+    "pune": "Maharashtra",
+    "nashik": "Maharashtra",
+    "ahmedabad": "Gujarat",
+    "surat": "Gujarat",
+    "hisar": "Haryana",
+    "karnal": "Haryana",
+    "rohtak": "Haryana",
+    "bhopal": "Madhya Pradesh",
+    "indore": "Madhya Pradesh",
+    "sehore": "Madhya Pradesh",
+    "dewas": "Madhya Pradesh",
+    "gwalior": "Madhya Pradesh",
+    "jabalpur": "Madhya Pradesh",
+    "ujjain": "Madhya Pradesh",
+    "raipur": "Chhattisgarh",
+    "ranchi": "Jharkhand",
+    "bhubaneswar": "Odisha",
+    "cuttack": "Odisha",
+    "kolkata": "West Bengal",
+    "howrah": "West Bengal",
+    "guwahati": "Assam",
+    "hyderabad": "Telangana",
+    "warangal": "Telangana",
+    "bengaluru": "Karnataka",
+    "bangalore": "Karnataka",
+    "mysuru": "Karnataka",
+    "chennai": "Tamil Nadu",
+    "coimbatore": "Tamil Nadu",
+    "madurai": "Tamil Nadu",
+}
+
+_KNOWN_PLACES = tuple(sorted(set(
+    [d.lower() for d in [
+        "Agar Malwa", "Alirajpur", "Anuppur", "Ashoknagar", "Balaghat", "Barwani",
+        "Betul", "Bhind", "Bhopal", "Burhanpur", "Chhatarpur", "Chhindwara",
+        "Damoh", "Datia", "Dewas", "Dhar", "Dindori", "Guna", "Gwalior",
+        "Harda", "Hoshangabad", "Indore", "Jabalpur", "Jhabua", "Katni",
+        "Khandwa", "Khargone", "Mandla", "Mandsaur", "Morena", "Narsinghpur",
+        "Neemuch", "Niwari", "Panna", "Raisen", "Rajgarh", "Ratlam", "Rewa",
+        "Sagar", "Satna", "Sehore", "Seoni", "Shahdol", "Shajapur", "Sheopur",
+        "Shivpuri", "Sidhi", "Singrauli", "Tikamgarh", "Ujjain", "Umaria", "Vidisha"
+    ]] + list(_PLACE_TO_STATE.keys())
+), key=len, reverse=True))
+
+
+def _friendly_chat_fallback(lang: str = "en") -> str:
+    if (lang or "en").lower() == "hi":
+        return "क्षमा करें, मुझे उत्तर नहीं मिल सका। कृपया पुनः प्रयास करें।"
+    return "Sorry, I couldn't get an answer. Please try again."
+
+
+def _ask_district_for_kvk(lang: str = "en") -> str:
+    if (lang or "en").lower() == "hi":
+        return (
+            "कृपया अपना ज़िला बताएं ताकि मैं आपके नजदीकी कृषि विज्ञान केंद्र (KVK) का पता बता सकूँ। "
+            "उदाहरण: कानपुर, सीहोर, भोपाल।"
+        )
+    return (
+        "Please tell me your district so I can find the nearest Krishi Vigyan Kendra (KVK). "
+        "For example: Kanpur, Sehore, or Bhopal."
+    )
+
+
+def extract_mentioned_location(query: str) -> Optional[str]:
+    """Extracts a district/city the user actually named. Never guesses Sehore/MP."""
+    if not query:
+        return None
+    q = query.strip()
+    q_low = q.lower()
+
+    from src.data_layer import extract_district_from_text
+    mp_hit = extract_district_from_text(q)
+    if mp_hit:
+        return mp_hit
+
+    for place in _KNOWN_PLACES:
+        if re.search(r"\b" + re.escape(place) + r"\b", q_low):
+            return place.title() if place not in ("noida",) else "Noida"
+
+    m = re.search(
+        r"(?:from|in|at|near|around|for)\s+([A-Za-z][A-Za-z\s]{2,40}?)(?:\s|$|,|\.|!|\?)",
+        q,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        candidate = re.sub(r"\b(district|city|town|area|market|india)\b", "", m.group(1), flags=re.IGNORECASE).strip(" ,.-")
+        if len(candidate) >= 3 and candidate.lower() not in ("the", "my", "our", "me", "here", "there"):
+            return candidate.title()
+    return None
+
+
+def _location_key(name: Optional[str]) -> str:
+    return re.sub(r"\s+", " ", (name or "").strip().lower())
+
+
+def is_explicit_kvk_query(query: str) -> bool:
+    q = (query or "").lower()
+    kvk_terms = ("kvk", "krishi vigyan kendra", "krishi vigyan kendr", "krishi vigyan")
+    loc_terms = ("nearest", "near me", "address", "contact", "phone", "where is", "location")
+    has_kvk = any(t in q for t in kvk_terms)
+    if not has_kvk:
+        return False
+    if any(t in q for t in loc_terms):
+        return True
+    return has_kvk and not any(w in q for w in ["pm-kisan", "pmkisan", "kcc", "loan", "subsidy", "tractor", "bima"])
+
+
+def is_explicit_soil_query(query: str) -> bool:
+    q = (query or "").lower()
+    return any(w in q for w in [
+        "soil test", "soil testing", "mitti ki janch", "mitti parikshan", "soil lab",
+        "testing lab", "soil health card lab", "soil sample"
+    ])
+
+
+def is_explicit_training_query(query: str) -> bool:
+    q = (query or "").lower()
+    if any(w in q for w in ["pm-kisan", "pmkisan", "kcc", "loan", "subsidy", "tractor", "bima"]):
+        return False
+    return any(w in q for w in [
+        "training", "demonstration", "demonstrations", "workshop",
+        "karyashala", "prashikshan", "training date", "training dates", "upcoming training"
+    ])
+
+
+def is_explicit_mandi_query(query: str) -> bool:
+    q = (query or "").lower()
+    if any(w in q for w in ["pm-kisan", "pmkisan", "kcc", "loan", "subsidy", "tractor", "bima", "eligible", "patra", "interest"]):
+        return False
+    return any(w in q for w in [
+        "mandi", "mandi price", "mandi bhav", "mandi rate", "today's price",
+        "todays price", "market price", "market rate"
+    ])
+
+
+def is_vault_query(query: str) -> bool:
+    q = (query or "").lower()
+    return any(p in q for p in [
+        "saved vault", "vault document", "my vault", "documents do i have",
+        "what documents do i have", "check my saved", "my saved document"
+    ])
+
+
+def format_vault_answer(farmer_profile: Optional[Dict[str, Any]], lang: str = "en") -> str:
+    docs = (farmer_profile or {}).get("documents") or {}
+    names: List[str] = []
+    if isinstance(docs, dict):
+        names = [str(k) for k, v in docs.items() if v]
+    elif isinstance(docs, list):
+        names = [str(d) for d in docs if d]
+    if not names:
+        if (lang or "en").lower() == "hi":
+            return "आपके दस्तावेज़ वॉल्ट में अभी कोई सहेजा गया दस्तावेज़ नहीं मिला। Document Vault में जाकर अपने कागजात सुरक्षित कर सकते हैं।"
+        return "I don't see any documents saved in your Document Vault yet. You can add them from the Document Vault tab."
+    listed = "\n".join(f"• {n}" for n in names)
+    if (lang or "en").lower() == "hi":
+        return f"**🔒 आपके सुरक्षित वॉल्ट दस्तावेज़**\n\n{listed}"
+    return f"**🔒 Your saved vault documents**\n\n{listed}"
+
+
+def _records_match_location(records: List[Dict[str, Any]], location: str) -> List[Dict[str, Any]]:
+    loc = _location_key(location)
+    if not loc:
+        return []
+    matched = []
+    for rec in records or []:
+        blob = " ".join([
+            str(rec.get("district") or ""),
+            str(rec.get("state") or ""),
+            str(rec.get("name") or ""),
+            str(rec.get("address") or ""),
+            str(rec.get("market_center") or ""),
+            json.dumps(rec, ensure_ascii=False) if isinstance(rec, dict) else "",
+        ]).lower()
+        if loc in blob:
+            matched.append(rec)
+    return matched
+
+
+def _run_with_timeout(func, timeout_sec: float, *args, **kwargs):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        fut = pool.submit(func, *args, **kwargs)
+        return fut.result(timeout=timeout_sec)
+
+
+def search_kvk_info(
+    query: str,
+    lang: str = "en",
+    requested_district: Optional[str] = None,
+    requested_state: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Isolated KVK/location lookup. Called ONLY for explicit KVK/address questions.
+    5–8s timeout, never raises, never guesses a district.
+    """
+    try:
+        logger.info("🔎 search_kvk_info() start for query: '%s'", query)
+        mentioned = extract_mentioned_location(query)
+        location = mentioned or (requested_district.strip() if requested_district and requested_district.strip() else None)
+        if not location:
+            logger.info("🔎 search_kvk_info: location unclear — asking for district")
+            return {
+                "answer": _ask_district_for_kvk(lang),
+                "source_type": "KisanSahay Guide",
+                "status": "success",
+                "last_updated": None,
+                "source_name": None,
+                "is_source_failing": False,
+                "citations": None,
+            }
+
+        loc_key = _location_key(location)
+        inferred_state = _PLACE_TO_STATE.get(loc_key)
+        state_for_lookup = inferred_state or requested_state
+        # Never force Madhya Pradesh when the user named a non-MP place.
+        if loc_key not in ("sehore", "bhopal", "dewas", "indore", "gwalior", "jabalpur", "ujjain") and _location_key(state_for_lookup) == "madhya pradesh" and inferred_state is None:
+            if mentioned:
+                state_for_lookup = inferred_state  # may be None — do not default to MP
+
+        from src.data_layer import (
+            get_kvk_directory,
+            format_kvk_direct_answer,
+        )
+        dl = get_admin_data_layer()
+        lookup_res = get_kvk_directory(district=location, state=state_for_lookup, data_layer=dl)
+        matched = _records_match_location(lookup_res.get("records") or [], location)
+        lookup_res = dict(lookup_res)
+        lookup_res["records"] = matched
+        lookup_res["district"] = location
+        if state_for_lookup:
+            lookup_res["state"] = state_for_lookup
+
+        if matched:
+            logger.info("🔎 search_kvk_info: DB hit for %s (%d records)", location, len(matched))
+            return {
+                "answer": format_kvk_direct_answer(lookup_res, lang=lang),
+                "source_type": "Direct Database Lookup (KVK Directory)",
+                "status": "success",
+                "last_updated": lookup_res.get("last_updated"),
+                "source_name": lookup_res.get("source_name"),
+                "is_source_failing": lookup_res.get("is_source_failing", False),
+                "citations": [{
+                    "record_id": lookup_res.get("source_name", "KVK Directory"),
+                    "source_url": lookup_res.get("source_url", "https://kvk.icar.gov.in"),
+                    "last_verified": lookup_res.get("last_updated", ""),
+                }],
+            }
+
+        if not KVK_WEB_SEARCH_ENABLED:
+            logger.info("🔎 search_kvk_info: web search disabled; no DB match for %s", location)
+            return None
+
+        search_q = f"Krishi Vigyan Kendra {location} India official address phone"
+        logger.info("🔎 search_kvk_info: timed web search for '%s'", search_q)
+        try:
+            web_results = _run_with_timeout(ddg_search_tool.run, KVK_SEARCH_TIMEOUT_SEC, search_q)
+        except Exception as search_err:
+            logger.warning("🔎 search_kvk_info web search failed/timed out: %s", search_err, exc_info=True)
+            return None
+
+        text = (web_results or "").strip()
+        if not text or loc_key not in text.lower():
+            logger.info("🔎 search_kvk_info: web results missing location '%s' — discarding", location)
+            return None
+        # Guard against a wrong district leaking through (e.g. Sehore for Kanpur)
+        if loc_key != "sehore" and "sehore" in text.lower() and loc_key not in text.lower():
+            return None
+
+        snippet = text[:900].strip()
+        if lang == "hi":
+            answer = (
+                f"**🏛️ {location} के नजदीकी कृषि विज्ञान केंद्र (KVK)**\n\n"
+                f"{snippet}\n\n"
+                f"कृपया आधिकारिक पोर्टल https://kvk.icar.gov.in पर भी सत्यापित करें।\n\n"
+                f"---\n🌐 **Source:** Web Search"
+            )
+        else:
+            answer = (
+                f"**🏛️ Nearest Krishi Vigyan Kendra (KVK) for {location}**\n\n"
+                f"{snippet}\n\n"
+                f"Please also verify on the official portal: https://kvk.icar.gov.in\n\n"
+                f"---\n🌐 **Source:** Web Search"
+            )
+        logger.info("🔎 search_kvk_info: web answer prepared for %s", location)
+        return {
+            "answer": answer,
+            "source_type": "Web Search",
+            "status": "success",
+            "last_updated": None,
+            "source_name": "Web Search (KVK)",
+            "is_source_failing": False,
+            "citations": [{"record_id": "ICAR KVK Portal", "source_url": "https://kvk.icar.gov.in", "last_verified": ""}],
+        }
+    except Exception as err:
+        logger.error("🔎 search_kvk_info crashed: %s", err, exc_info=True)
+        return None
+
+
+def _build_chat_response(
+    *,
+    answer: str,
+    query: str,
+    source_type: str,
+    start_time: float,
+    status_code: str = "success",
+    confidence_score: Optional[float] = None,
+    context: Optional[str] = None,
+    citations=None,
+    has_pending_updates: bool = False,
+    last_updated=None,
+    source_name=None,
+    is_source_failing: bool = False,
+    eligibility_result=None,
+) -> "ChatResponse":
+    elapsed = (time.time() - start_time) * 1000
+    if not isinstance(answer, str) or not answer.strip():
+        answer = _friendly_chat_fallback("en")
+        status_code = "error"
+    return ChatResponse(
+        answer=answer,
+        user_query=query or "",
+        source_type=source_type or "KisanSahay Guide",
+        confidence_score=confidence_score,
+        context=context,
+        duration_ms=round(elapsed, 2),
+        status=status_code,
+        citations=citations,
+        has_pending_updates=has_pending_updates,
+        last_updated=last_updated,
+        source_name=source_name,
+        is_source_failing=is_source_failing,
+        eligibility_result=eligibility_result,
+    )
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
     user_query: str = Field(
-        ...,
-        min_length=1,
+        default="",
         example="How much money is provided to farmer families under PM-KISAN?",
         description="The question or prompt submitted by the user."
     )
@@ -990,337 +1364,350 @@ def mandi_prices_endpoint(
     return get_mandi_prices(crop=target_crop, district=district, state=state, data_layer=dl)
 
 
+@app.exception_handler(RequestValidationError)
+async def chat_validation_handler(request: Request, exc: RequestValidationError):
+    if request.url.path.rstrip("/") == "/chat":
+        logger.warning("⚠️ /chat validation error: %s", exc.errors())
+        return JSONResponse(
+            status_code=200,
+            content={
+                "answer": "Please enter a question about farmer loans, government schemes, or subsidies.",
+                "user_query": "",
+                "source_type": "KisanSahay Guide",
+                "confidence_score": 1.0,
+                "context": None,
+                "duration_ms": 0,
+                "status": "error",
+            },
+        )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
+
 @app.post("/chat", response_model=ChatResponse, tags=["Hybrid RAG"])
 def chat_endpoint(request: ChatRequest):
     """
-    Hybrid RAG Endpoint:
-    1. First searches the local ChromaDB vector store.
-    2. If the local search returns a low-confidence result (distance > threshold)
-       OR the LLM decides the information is missing from the uploaded data:
-       --> Automatically performs a DuckDuckGo web search.
-    3. Returns the final answer with explicit source attribution:
-       - 'Official Uploaded Documents'
-       - 'Web Search'
+    Original chat pipeline (default path):
+      moderation -> identity -> FAQ -> domain check -> RAG/Gemini
+    Isolated KVK search runs only for explicit location/KVK questions, with timeout
+    and fallback, and never blocks the main loan/scheme path.
     """
     start_time = time.time()
-    query = request.user_query.strip()
+    lang = "en"
+    query = ""
+    try:
+        query = (request.user_query or "").strip()
+        lang = (request.lang or request.language or "en").strip().lower() or "en"
+        logger.info("═" * 60)
+        logger.info("📥 Incoming /chat query: '%s' (top_k=%d, lang=%s)", query, request.top_k, lang)
+        return _chat_pipeline(request, query, lang, start_time)
+    except Exception as err:
+        logger.error("💥 Top-level /chat failure: %s", err, exc_info=True)
+        traceback.print_exc()
+        return _build_chat_response(
+            answer=_friendly_chat_fallback(lang),
+            query=query,
+            source_type="KisanSahay Guide",
+            start_time=start_time,
+            status_code="error",
+            confidence_score=0.0,
+        )
 
-    # Enforce the UI-selected language: prepend a hard instruction so the LLM always
-    # responds in the language the user toggled, regardless of the RAG context language.
-    lang = (request.lang or request.language or "en").strip().lower()
+
+def _chat_pipeline(request: ChatRequest, query: str, lang: str, start_time: float) -> ChatResponse:
+    if not query:
+        logger.info("ℹ️ Empty query received in /chat — returning friendly guidance")
+        empty_msg = (
+            "कृपया किसान ऋण, सरकारी योजनाओं या कृषि सहायता के बारे में अपना प्रश्न पूछें।"
+            if lang == "hi"
+            else "Please enter a question about farmer loans, government schemes, or subsidies."
+        )
+        return _build_chat_response(
+            answer=empty_msg,
+            query="",
+            source_type="KisanSahay Guide",
+            start_time=start_time,
+            status_code="error",
+            confidence_score=1.0,
+        )
+
+    if len(query) > MAX_CHAT_QUERY_CHARS:
+        logger.info("ℹ️ Query too long (%d chars) — rejecting", len(query))
+        too_long = (
+            "कृपया अपना प्रश्न छोटा करें (अधिकतम 4000 अक्षर) और पुनः प्रयास करें।"
+            if lang == "hi"
+            else "Please shorten your question (max 4000 characters) and try again."
+        )
+        return _build_chat_response(
+            answer=too_long,
+            query=query[:200],
+            source_type="KisanSahay Guide",
+            start_time=start_time,
+            status_code="error",
+            confidence_score=1.0,
+        )
+
     if lang == "hi":
         lang_instruction = "[STRICT INSTRUCTION: You MUST respond ONLY in Hindi (हिंदी). Do NOT use English in your answer.] "
     else:
         lang_instruction = "[STRICT INSTRUCTION: You MUST respond ONLY in English. Do NOT use Hindi or any other language.] "
     query_for_llm = lang_instruction + query
 
-    logger.info("═" * 60)
-    logger.info("📥 Incoming /chat query: '%s' (top_k=%d, force_web=%s, lang=%s)", query, request.top_k, request.force_web_search, lang)
-
-    # ══════════════════════════════════════════════════════════════════════════
-    # DYNAMIC BACKEND PIPELINE (All rules loaded from backend JSON data)
-    # ══════════════════════════════════════════════════════════════════════════
-
-    # ── Step 1: DuckDuckGo-style bad text & content moderation limitation ────
+    # ── Step 1: Moderation ──────────────────────────────────────────────────
+    logger.info("🛡️ Stage: moderation")
     is_unsafe, safety_msg = check_duckduckgo_safety(query, lang)
     if is_unsafe:
-        logger.info("🚫 DuckDuckGo safety limitation triggered for query: '%s'", query)
-        elapsed = (time.time() - start_time) * 1000
-        return ChatResponse(
-            answer=safety_msg,
-            user_query=query,
+        logger.info("🚫 Safety limitation triggered for query: '%s'", query)
+        return _build_chat_response(
+            answer=safety_msg or get_off_topic_response(lang),
+            query=query,
             source_type="Content Safety Filter (DuckDuckGo Rules)",
+            start_time=start_time,
+            status_code="blocked",
             confidence_score=0.0,
-            context=None,
-            duration_ms=round(elapsed, 2),
-            status="blocked"
         )
 
-    # ── Step 2: KisanSahay App Identity & Capabilities check ─────────────────
+    # ── Step 2: Identity ────────────────────────────────────────────────────
+    logger.info("🛡️ Stage: identity")
     if is_identity_query(query):
-        logger.info("🤖 Identity query detected → Returning KisanSahay intro from domain_config.json")
-        elapsed = (time.time() - start_time) * 1000
-        return ChatResponse(
+        logger.info("🤖 Identity query → KisanSahay intro")
+        return _build_chat_response(
             answer=get_identity_response(lang),
-            user_query=query,
+            query=query,
             source_type="KisanSahay App Info",
+            start_time=start_time,
             confidence_score=1.0,
-            context=None,
-            duration_ms=round(elapsed, 2),
-            status="success"
         )
 
-    # ── Step 2b: Exact Database Lookups & Zero-Model Direct Answering (Prompt 6) ─
-    # Questions about the nearest KVK, soil testing, upcoming trainings or today's mandi price
-    # are answered directly from database records with NO model call and explicit "Updated on" date.
-    q_low = query.lower()
-
-    # 1. Soil Testing Facility intent
-    is_soil_testing_query = any(w in q_low for w in [
-        "soil test", "soil testing", "mitti ki janch", "mitti parikshan", "soil lab",
-        "testing lab", "soil health card lab", "soil sample"
-    ])
-
-    # 2. Upcoming Trainings / Demonstrations intent
-    is_training_query = any(w in q_low for w in [
-        "training", "demonstration", "demonstrations", "calendar", "workshop",
-        "karyashala", "prashikshan", "training date", "training dates", "upcoming training"
-    ]) and not any(w in q_low for w in ["pm-kisan", "pmkisan", "kcc", "loan", "subsidy", "tractor", "bima"])
-
-    # 3. Mandi Prices intent
-    is_mandi_query = any(w in q_low for w in [
-        "mandi", "mandi price", "mandi bhav", "mandi rate", "bhav", "today's price",
-        "todays price", "market price", "market rate"
-    ]) and not any(w in q_low for w in ["pm-kisan", "pmkisan", "kcc", "loan", "subsidy", "tractor", "bima", "eligible", "patra"])
-
-    # 4. Nearest KVK Directory intent
-    is_kvk_query = (
-        any(w in q_low for w in ["kvk", "krishi vigyan kendra", "krishi vigyan kendr", "krishi vigyan"]) and
-        not is_training_query and
-        not is_soil_testing_query
-    ) or any(w in q_low for w in ["nearest kvk", "kvk near me", "where is kvk", "kvk contact", "kvk phone", "kvk address"])
-
-    if is_soil_testing_query or is_training_query or is_mandi_query or is_kvk_query:
-        from src.data_layer import (
-            get_kvk_directory,
-            get_kvk_events,
-            get_mandi_prices,
-            format_kvk_direct_answer,
-            format_soil_testing_direct_answer,
-            format_events_direct_answer,
-            format_mandi_direct_answer,
-            extract_district_from_text,
-            extract_crop_from_text,
-        )
-        dl = get_admin_data_layer()
-        detected_dist = (
-            request.district or
-            extract_district_from_text(query) or
-            (request.farmer_profile.get("district") if request.farmer_profile else None)
-        )
-        target_state = request.state or (request.farmer_profile.get("state") if request.farmer_profile else "Madhya Pradesh")
-
-        if is_soil_testing_query:
-            logger.info("🧪 Soil Testing exact lookup query: '%s' (district: %s, state: %s)", query, detected_dist, target_state)
-            lookup_res = get_kvk_directory(district=detected_dist, state=target_state, data_layer=dl)
-            direct_ans = format_soil_testing_direct_answer(lookup_res, lang=lang)
-            direct_source_type = "Direct Database Lookup (Soil Testing Lab)"
-        elif is_training_query:
-            logger.info("📅 KVK Upcoming Trainings exact lookup query: '%s' (district: %s, state: %s)", query, detected_dist, target_state)
-            lookup_res = get_kvk_events(district=detected_dist, state=target_state, data_layer=dl)
-            direct_ans = format_events_direct_answer(lookup_res, lang=lang)
-            direct_source_type = "Direct Database Lookup (KVK Training Calendar)"
-        elif is_mandi_query:
-            detected_crop = extract_crop_from_text(query)
-            logger.info("🌾 Mandi Price exact lookup query: '%s' (crop: %s, district: %s, state: %s)", query, detected_crop, detected_dist, target_state)
-            lookup_res = get_mandi_prices(crop=detected_crop, district=detected_dist, state=target_state, data_layer=dl)
-            direct_ans = format_mandi_direct_answer(lookup_res, lang=lang)
-            direct_source_type = "Direct Database Lookup (Agmarknet Mandi)"
-        else: # is_kvk_query
-            logger.info("🏛️ KVK Directory exact lookup query: '%s' (district: %s, state: %s)", query, detected_dist, target_state)
-            lookup_res = get_kvk_directory(district=detected_dist, state=target_state, data_layer=dl)
-            direct_ans = format_kvk_direct_answer(lookup_res, lang=lang)
-            direct_source_type = "Direct Database Lookup (KVK Directory)"
-
-        elapsed = (time.time() - start_time) * 1000
-        logger.info("⚡ Exact database lookup answered with ZERO model calls in %.2f ms", elapsed)
-        return ChatResponse(
-            answer=direct_ans,
-            user_query=query,
-            source_type=direct_source_type,
+    # ── Step 2b: Personal Document Vault from profile (no search) ───────────
+    if is_vault_query(query):
+        logger.info("🔒 Stage: vault documents (main path)")
+        return _build_chat_response(
+            answer=format_vault_answer(request.farmer_profile, lang),
+            query=query,
+            source_type="KisanSahay Document Vault",
+            start_time=start_time,
             confidence_score=1.0,
-            context=None,
-            duration_ms=round(elapsed, 2),
-            status="success",
-            last_updated=lookup_res.get("last_updated"),
-            source_name=lookup_res.get("source_name"),
-            is_source_failing=lookup_res.get("is_source_failing", False),
-            citations=[
-                {
-                    "record_id": lookup_res.get("source_name", direct_source_type),
-                    "source_url": lookup_res.get("source_url", "https://farmer.gov.in"),
-                    "last_verified": lookup_res.get("last_updated", "")
-                }
-            ]
         )
 
-    # ── Step 3: First 50 Questions check (sahayKnowledgeBase.json) ───────────
-    # If the user is asking an eligibility question or time-sensitive query, bypass static 1-liner FAQ
-    # so the Python Eligibility Engine and fresh ChromaDB retrieval evaluate the query accurately.
-    is_elig_check = evaluate_eligibility(query, farmer_profile=request.farmer_profile).get("is_eligibility_query", False)
-    is_time_sensitive_check = any(w in query.lower() for w in ["mandi", "price", "bhav", "rate", "weather", "today", "tomorrow", "forecast", "calendar", "training", "latest"])
+    # ── Step 3: FAQ (do NOT skip for the word "rate" — that broke KCC interest) ─
+    logger.info("📚 Stage: FAQ match")
+    elig_preview = {"is_eligibility_query": False}
+    try:
+        elig_preview = evaluate_eligibility(query, farmer_profile=request.farmer_profile) or elig_preview
+    except Exception as elig_err:
+        logger.warning("Eligibility preview failed: %s", elig_err, exc_info=True)
+    is_elig_check = bool(elig_preview.get("is_eligibility_query"))
 
-    faq_match = find_faq_match(query, lang) if (not is_elig_check and not is_time_sensitive_check) else None
+    faq_match = None if is_elig_check else find_faq_match(query, lang)
     if faq_match:
         faq_answer, faq_id = faq_match
-        logger.info("📚 Match found in first 50 questions: '%s' — returning curated answer", faq_id)
-        elapsed = (time.time() - start_time) * 1000
-        return ChatResponse(
+        logger.info("📚 FAQ match '%s' — returning curated answer (main path)", faq_id)
+        return _build_chat_response(
             answer=faq_answer,
-            user_query=query,
+            query=query,
             source_type="KisanSahay FAQ Knowledge Base",
+            start_time=start_time,
             confidence_score=1.0,
-            context=None,
-            duration_ms=round(elapsed, 2),
-            status="success"
         )
 
-    # ── Step 4: Domain relevance check — Must relate to farmer, loans, schemes
-    # "and then go on web search and then if it related to farmer or somthing like loan and schemes then give the output to user.."
+    # ── Step 4: Domain check ────────────────────────────────────────────────
+    logger.info("🌾 Stage: domain check")
     if not is_related_to_farmer_or_loans(query):
-        logger.info("🚫 Off-topic query blocked: '%s' (not related to farmer/loans/schemes)", query)
-        elapsed = (time.time() - start_time) * 1000
-        return ChatResponse(
+        logger.info("🚫 Off-topic query blocked: '%s'", query)
+        return _build_chat_response(
             answer=get_off_topic_response(lang),
-            user_query=query,
+            query=query,
             source_type="Domain Restriction",
+            start_time=start_time,
             confidence_score=0.0,
-            context=None,
-            duration_ms=round(elapsed, 2),
-            status="success"
         )
 
-    # ── Steps 5 & 6: ChromaDB local search → DuckDuckGo web search fallback ─
+    # ── Isolated exact lookups (after FAQ so they cannot steal loan questions)
+    mentioned_loc = extract_mentioned_location(query)
+    profile_district = (request.farmer_profile or {}).get("district") if request.farmer_profile else None
+    profile_state = (request.farmer_profile or {}).get("state") if request.farmer_profile else None
+
+    if is_explicit_soil_query(query) or is_explicit_training_query(query) or is_explicit_mandi_query(query):
+        try:
+            from src.data_layer import (
+                get_kvk_directory,
+                get_kvk_events,
+                get_mandi_prices,
+                format_soil_testing_direct_answer,
+                format_events_direct_answer,
+                format_mandi_direct_answer,
+                extract_crop_from_text,
+            )
+            dl = get_admin_data_layer()
+            detected_dist = mentioned_loc or request.district
+            loc_key = _location_key(detected_dist)
+            inferred_state = _PLACE_TO_STATE.get(loc_key) if loc_key else None
+            target_state = inferred_state or request.state or profile_state
+            if not detected_dist:
+                logger.info("📍 Location-specific lookup without district — asking user")
+                return _build_chat_response(
+                    answer=_ask_district_for_kvk(lang),
+                    query=query,
+                    source_type="KisanSahay Guide",
+                    start_time=start_time,
+                    confidence_score=1.0,
+                )
+
+            if is_explicit_soil_query(query):
+                logger.info("🧪 Soil testing lookup: district=%s state=%s", detected_dist, target_state)
+                lookup_res = get_kvk_directory(district=detected_dist, state=target_state, data_layer=dl)
+                lookup_res["records"] = _records_match_location(lookup_res.get("records") or [], detected_dist)
+                lookup_res["district"] = detected_dist
+                direct_ans = format_soil_testing_direct_answer(lookup_res, lang=lang)
+                direct_source_type = "Direct Database Lookup (Soil Testing Lab)"
+            elif is_explicit_training_query(query):
+                logger.info("📅 KVK training lookup: district=%s state=%s", detected_dist, target_state)
+                lookup_res = get_kvk_events(district=detected_dist, state=target_state, data_layer=dl)
+                lookup_res["records"] = _records_match_location(lookup_res.get("records") or [], detected_dist)
+                lookup_res["district"] = detected_dist
+                direct_ans = format_events_direct_answer(lookup_res, lang=lang)
+                direct_source_type = "Direct Database Lookup (KVK Training Calendar)"
+            else:
+                detected_crop = extract_crop_from_text(query)
+                logger.info("🌾 Mandi lookup: crop=%s district=%s state=%s", detected_crop, detected_dist, target_state)
+                lookup_res = get_mandi_prices(crop=detected_crop, district=detected_dist, state=target_state, data_layer=dl)
+                lookup_res["records"] = _records_match_location(lookup_res.get("records") or [], detected_dist)
+                lookup_res["district"] = detected_dist
+                direct_ans = format_mandi_direct_answer(lookup_res, lang=lang)
+                direct_source_type = "Direct Database Lookup (Agmarknet Mandi)"
+
+            return _build_chat_response(
+                answer=direct_ans,
+                query=query,
+                source_type=direct_source_type,
+                start_time=start_time,
+                confidence_score=1.0,
+                last_updated=lookup_res.get("last_updated"),
+                source_name=lookup_res.get("source_name"),
+                is_source_failing=lookup_res.get("is_source_failing", False),
+                citations=[{
+                    "record_id": lookup_res.get("source_name", direct_source_type),
+                    "source_url": lookup_res.get("source_url", "https://farmer.gov.in"),
+                    "last_verified": lookup_res.get("last_updated", ""),
+                }],
+            )
+        except Exception as lookup_err:
+            logger.warning("Exact lookup failed; continuing original pipeline: %s", lookup_err, exc_info=True)
+
+    # ── Isolated KVK search (never on the loan/FAQ path) ────────────────────
+    if is_explicit_kvk_query(query):
+        logger.info("🏛️ Stage: isolated KVK search")
+        kvk_payload = search_kvk_info(
+            query,
+            lang=lang,
+            requested_district=mentioned_loc or request.district,
+            requested_state=(_PLACE_TO_STATE.get(_location_key(mentioned_loc)) if mentioned_loc else None) or request.state or profile_state,
+        )
+        if kvk_payload and kvk_payload.get("answer"):
+            return _build_chat_response(
+                answer=kvk_payload["answer"],
+                query=query,
+                source_type=kvk_payload.get("source_type") or "KisanSahay Guide",
+                start_time=start_time,
+                status_code=kvk_payload.get("status") or "success",
+                confidence_score=1.0,
+                last_updated=kvk_payload.get("last_updated"),
+                source_name=kvk_payload.get("source_name"),
+                is_source_failing=bool(kvk_payload.get("is_source_failing")),
+                citations=kvk_payload.get("citations"),
+            )
+        logger.warning("🏛️ search_kvk_info returned nothing — falling back to RAG")
+
+    # ── Step 5: ChromaDB RAG + Gemini (NO web search on this path) ──────────
+    logger.info("🔍 Stage: RAG retrieval")
     source_type = None
     final_answer = None
     context_used = None
     best_distance = None
+    citations = []
+    has_pending_updates = False
+    elig_result = elig_preview if isinstance(elig_preview, dict) else {"is_eligibility_query": False}
 
-
+    vector_store = None
     try:
         vector_store = get_vector_store(
             chroma_dir=CHROMA_DIR,
             collection_name=COLLECTION_NAME,
             ollama_url=OLLAMA_URL,
-            embed_model=EMBED_MODEL
+            embed_model=EMBED_MODEL,
         )
+    except Exception as store_err:
+        logger.warning("⚠️ ChromaDB vector store init failed: %s", store_err, exc_info=True)
 
-        # ─────────────────────────────────────────────────────────────────────
-        # Step 1: Search Local ChromaDB
-        # ─────────────────────────────────────────────────────────────────────
-        citations = []
-        has_pending_updates = False
-
-        if not request.force_web_search:
-            logger.info("🔍 Step 1: Executing fresh ChromaDB retrieve(question, state=%s, n=%d)...", request.state, request.top_k or 6)
-
-            # 1. Deterministic Python eligibility evaluation
+    if vector_store is not None:
+        try:
             profile_with_ctx = dict(request.farmer_profile or {})
             if request.state and "state" not in profile_with_ctx:
                 profile_with_ctx["state"] = request.state
-            elig_result = evaluate_eligibility(
-                query=query,
-                farmer_profile=profile_with_ctx
-            )
+            elig_result = evaluate_eligibility(query=query, farmer_profile=profile_with_ctx) or elig_result
 
-            # 2. Fresh ChromaDB retrieval with state and live status filtering, grouping, and freshness ranking
             retrieval_res = retrieve(
                 question=query,
                 state=request.state,
                 n=request.top_k or 6,
                 data_layer=get_admin_data_layer(),
-                vector_store=vector_store
+                vector_store=vector_store,
             )
-
-            citations = retrieval_res.get("citations", [])
+            citations = retrieval_res.get("citations", []) or []
             has_pending_updates = retrieval_res.get("has_pending_updates", False)
 
             if retrieval_res.get("records") or elig_result.get("is_eligibility_query"):
                 best_distance = min(r["best_score"] for r in retrieval_res["records"]) if retrieval_res.get("records") else 0.0
-                logger.info("   ChromaDB best match distance: %.4f (threshold: <= %.2f)", best_distance, SIMILARITY_DISTANCE_THRESHOLD)
-
-                # Generate grounded response with Gemini rules if confidence is sufficient or eligibility checked
+                logger.info("🔍 ChromaDB best distance: %.4f (threshold <= %.2f)", best_distance, SIMILARITY_DISTANCE_THRESHOLD)
                 if best_distance <= SIMILARITY_DISTANCE_THRESHOLD or elig_result.get("is_eligibility_query"):
-                    logger.info("   Synthesizing grounded answer with Gemini rules...")
-                    gemini_output = generate_with_gemini(
-                        query=query_for_llm,
-                        retrieval_result=retrieval_res,
-                        eligibility_result=elig_result,
-                        lang=lang
-                    )
-                    source_type = "Official Uploaded Documents"
-                    context_used = retrieval_res.get("formatted_context")
-                    final_answer = gemini_output["answer"]
-                    citations = gemini_output.get("citations", citations)
-                    has_pending_updates = gemini_output.get("has_pending_updates", has_pending_updates)
-                    logger.info("✅ Answer synthesized from Official Uploaded Documents via Gemini rules!")
+                    logger.info("✨ Stage: Gemini generation")
+                    try:
+                        gemini_output = generate_with_gemini(
+                            query=query_for_llm,
+                            retrieval_result=retrieval_res,
+                            eligibility_result=elig_result,
+                            lang=lang,
+                        )
+                        final_answer = (gemini_output or {}).get("answer")
+                        citations = (gemini_output or {}).get("citations", citations)
+                        has_pending_updates = (gemini_output or {}).get("has_pending_updates", has_pending_updates)
+                        source_type = "Official Uploaded Documents"
+                        context_used = retrieval_res.get("formatted_context")
+                        logger.info("✅ Gemini/grounded answer ready")
+                    except Exception as gem_err:
+                        logger.error("Gemini generation failed: %s", gem_err, exc_info=True)
                 else:
-                    logger.info("⚠️ Low-confidence match (distance: %.4f > %.2f). Triggering Web Search fallback...", best_distance, SIMILARITY_DISTANCE_THRESHOLD)
+                    logger.info("⚠️ Low-confidence RAG match — not calling web search")
             else:
-                logger.info("⚠️ ChromaDB returned 0 live records. Triggering Web Search fallback...")
-        else:
-            logger.info("⚡ force_web_search is enabled. Skipping local search...")
+                logger.info("⚠️ ChromaDB returned 0 live records — staying on main path (no web search)")
+        except Exception as rag_err:
+            logger.error("RAG retrieve failed: %s", rag_err, exc_info=True)
 
-        # ─────────────────────────────────────────────────────────────────────
-        # Step 2: Fallback to DuckDuckGo Web Search
-        # ─────────────────────────────────────────────────────────────────────
-        if source_type is None:
-            logger.info("🌐 Step 2: Executing DuckDuckGo Web Search for: '%s'...", query)
-            try:
-                web_results = ddg_search_tool.run(query)
-            except Exception as search_err:
-                logger.warning("DuckDuckGo search error: %s", search_err)
-                web_results = ""
-
-            if web_results and web_results.strip():
-                logger.info("   Web search returned %d characters. Synthesizing answer with Llama 3.2...", len(web_results))
-                raw_web_answer = generate_answer_from_web(
-                    query=query_for_llm,
-                    web_context=web_results,
-                    model=LLM_MODEL,
-                    ollama_url=OLLAMA_URL
-                )
-                # Verify synthesized text passes safety rules
-                is_web_unsafe, web_safety_msg = check_duckduckgo_safety(raw_web_answer, lang)
-                if is_web_unsafe:
-                    raw_web_answer = web_safety_msg or get_off_topic_response(lang)
-
-                source_type = "Web Search"
-                context_used = web_results
-                final_answer = (
-                    f"{raw_web_answer}\n\n"
-                    f"---\n"
-                    f"🌐 **Source:** Web Search"
-                )
-                logger.info("✅ Answer synthesized from Web Search!")
-            else:
-                logger.warning("❌ DuckDuckGo search yielded no results.")
-                source_type = "Web Search"
-                final_answer = (
-                    "I cannot find the specific answer to this in the official directives. "
-                    "Please verify this detail with your local bank branch or Krishi Vigyan Kendra.\n\n"
-                    "---\n"
-                    "🌐 **Source:** Web Search / Verification Required"
-                )
-
-        elapsed = (time.time() - start_time) * 1000
-        logger.info("⏱️ Request completed in %.2f ms (Source: %s)", elapsed, source_type)
-        logger.info("═" * 60)
-
-        return ChatResponse(
-            answer=final_answer,
-            user_query=query,
-            source_type=source_type,
-            confidence_score=round(best_distance, 4) if best_distance is not None else None,
-            context=context_used if request.include_context else None,
-            duration_ms=round(elapsed, 2),
-            status="success",
-            citations=citations if citations else None,
-            has_pending_updates=has_pending_updates,
-            eligibility_result=elig_result.get("eligibility_json") if elig_result.get("is_eligibility_query") else None
+    if not final_answer:
+        logger.info("ℹ️ Using official-directives fallback (search did not run on this path)")
+        final_answer = (
+            "मुझे आधिकारिक निर्देशों में इसका विशिष्ट उत्तर नहीं मिल सका। कृपया इस विवरण को अपनी स्थानीय बैंक शाखा या कृषि विज्ञान केंद्र से सत्यापित करें।"
+            if lang == "hi"
+            else (
+                "I cannot find the specific answer to this in the official directives. "
+                "Please verify this detail with your local bank branch or Krishi Vigyan Kendra."
+            )
         )
+        source_type = source_type or "Official Uploaded Documents"
 
-    except requests.exceptions.ConnectionError:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Ollama service is unreachable. Please ensure Ollama is running ('ollama serve')."
-        )
-    except Exception as err:
-        logger.error("Error processing /chat request: %s", err, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while generating the answer: {str(err)}"
-        )
+    logger.info("⏱️ /chat completed (Source: %s)", source_type)
+    logger.info("═" * 60)
+    return _build_chat_response(
+        answer=final_answer,
+        query=query,
+        source_type=source_type,
+        start_time=start_time,
+        confidence_score=round(best_distance, 4) if best_distance is not None else None,
+        context=context_used if request.include_context else None,
+        citations=citations if citations else None,
+        has_pending_updates=has_pending_updates,
+        eligibility_result=elig_result.get("eligibility_json") if elig_result.get("is_eligibility_query") else None,
+    )
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. Admin Review, Data Scheduling & Health Alerting Engine

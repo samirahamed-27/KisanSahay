@@ -1,3 +1,15 @@
 {
-    "liveServer.settings.port": 5501
+    "liveServer.settings.port": 5501,
+    "liveServer.settings.ignoreFiles": [
+        ".vscode/**",
+        "**/*.pyc",
+        "**/__pycache__/**",
+        "chroma_db/**",
+        "Data/**",
+        "src/data/**",
+        "tests/**",
+        "scratch/**",
+        "downloads/**",
+        "*.log"
+    ]
 }

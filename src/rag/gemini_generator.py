@@ -141,8 +141,15 @@ def generate_with_gemini(
             resp = requests.post(gemini_url, json=payload, timeout=12.0)
             if resp.status_code == 200:
                 data = resp.json()
-                text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                candidates = data.get("candidates") or []
+                if not candidates:
+                    raise ValueError("Gemini empty candidates (quota, safety block, or empty response)")
+                parts = ((candidates[0] or {}).get("content") or {}).get("parts") or []
+                text = ((parts[0] or {}).get("text") or "").strip() if parts else ""
+                if not text:
+                    raise ValueError("Gemini returned empty text")
                 return _post_process_answer(text, retrieval_result, eligibility_result, model_name=f"Google Gemini ({model})")
+            logger.warning("Gemini HTTP %s — falling back to Ollama / synthesis", resp.status_code)
         except Exception as e:
             logger.warning("Gemini API call failed (%s). Falling back to local Ollama / synthesis...", e)
 
@@ -181,9 +188,10 @@ def _synthesize_grounded_answer(
     lang: str = "en"
 ) -> str:
     """Synthesizes structured, strictly factual response from retrieved context blocks."""
+    is_hindi = (lang or "").lower() == "hi"
     records = retrieval_result.get("records", [])
     if not records and not (eligibility_result and eligibility_result.get("is_eligibility_query")):
-        return UNCERTAIN_FALLBACK_HI if lang == "hi" else UNCERTAIN_FALLBACK_EN
+        return UNCERTAIN_FALLBACK_HI if is_hindi else UNCERTAIN_FALLBACK_EN
 
     primary = records[0] if records else {}
     rec_id = primary.get("record_id", eligibility_result.get("scheme_name", "Official Scheme") if eligibility_result else "Official Rule")

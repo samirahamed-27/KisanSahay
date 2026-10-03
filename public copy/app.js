@@ -5720,19 +5720,39 @@ function setupSahayAI() {
     inputForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const text = userInput ? userInput.value.trim() : '';
-      if (!text) return;
       handleAssistantSend(text);
-      if (userInput) userInput.value = '';
+      if (userInput && text) userInput.value = '';
     });
   }
 
   async function handleAssistantSend(messageText) {
-    if (!messageText || !messageText.trim()) return;
+    const activeChatWindow = document.getElementById('sahay-chat-window') || chatWindow;
+    const keepChatOpen = () => {
+      if (activeChatWindow) {
+        activeChatWindow.style.display = 'flex';
+      }
+    };
+    keepChatOpen();
 
-    // 1. Append User Message
+    const farmerProfile = getComprehensiveFarmerProfile();
+
+    if (!messageText || !messageText.trim()) {
+      console.log('[Sahay AI] Empty message submitted — showing guidance prompt');
+      const emptyPrompt = sahayLang === 'hi'
+        ? 'कृपया किसान ऋण, सरकारी योजनाओं या कृषि सहायता के बारे में अपना प्रश्न पूछें।'
+        : 'Please enter a question about farmer loans, government schemes, or subsidies.';
+      appendMessage('assistant', emptyPrompt);
+      if (userInput) {
+        userInput.disabled = false;
+        userInput.focus();
+      }
+      keepChatOpen();
+      return;
+    }
+
+    console.log('[Sahay AI] Sending query:', messageText, '(lang:', sahayLang, ')');
     appendMessage('user', messageText);
 
-    // 2. Append Loading State ('AI is thinking...')
     const typingId = 'sahay-typing-' + Date.now();
     const typingBubble = document.createElement('div');
     typingBubble.className = 'sahay-msg assistant';
@@ -5743,67 +5763,82 @@ function setupSahayAI() {
         <span><em>Sahay AI is thinking...</em></span>
       </div>
     `;
-    messageStream.appendChild(typingBubble);
-    messageStream.scrollTop = messageStream.scrollHeight;
+    if (messageStream) {
+      messageStream.appendChild(typingBubble);
+      messageStream.scrollTop = messageStream.scrollHeight;
+    }
 
     if (userInput) userInput.disabled = true;
-    const farmerProfile = getComprehensiveFarmerProfile();
+
+    const removeTyping = () => {
+      const typingEl = document.getElementById(typingId);
+      if (typingEl) typingEl.remove();
+    };
 
     try {
-      // 3. Send query to local FastAPI RAG endpoint (or Node /chat proxy fallback)
-      let res = null;
+      let data = null;
       const chatPayload = JSON.stringify({
         user_query: messageText,
         top_k: 3,
         include_context: false,
-        language: sahayLang
+        language: sahayLang,
+        farmer_profile: farmerProfile
       });
 
-      const endpointsToTry = [
-        `http://${window.location.hostname || 'localhost'}:8000/chat`,
-        'http://localhost:8000/chat',
-        'http://127.0.0.1:8000/chat',
-        '/chat',
-        'http://localhost:3000/chat',
-        'http://127.0.0.1:3000/chat',
-        'http://localhost:3001/chat',
-        'http://127.0.0.1:3001/chat'
-      ];
+      const endpointsToTry = [];
+      const seen = new Set();
+      const addEndpoint = (url) => {
+        if (url && !seen.has(url)) {
+          seen.add(url);
+          endpointsToTry.push(url);
+        }
+      };
+      addEndpoint(`http://${window.location.hostname || '127.0.0.1'}:8000/chat`);
+      addEndpoint('http://127.0.0.1:8000/chat');
+      addEndpoint('/chat');
+      addEndpoint('http://127.0.0.1:3000/chat');
+      addEndpoint('http://127.0.0.1:3001/chat');
 
+      const overallDeadline = Date.now() + 30000;
       for (const endpoint of endpointsToTry) {
+        const remaining = overallDeadline - Date.now();
+        if (remaining < 800) break;
         try {
-          const fetchPromise = fetch(endpoint, {
+          console.log(`[Sahay AI] Attempting endpoint: ${endpoint} (${Math.round(remaining)}ms left)`);
+          const controller = new AbortController();
+          const timeoutTimer = setTimeout(() => controller.abort(), remaining);
+          const candidate = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: chatPayload
+            body: chatPayload,
+            signal: controller.signal
           });
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout')), 2500)
-          );
-          const candidate = await Promise.race([fetchPromise, timeoutPromise]);
-          if (candidate && candidate.ok) {
-            res = candidate;
+          clearTimeout(timeoutTimer);
+          const rawText = await candidate.text();
+          let parsed = null;
+          try {
+            parsed = JSON.parse(rawText);
+          } catch (parseErr) {
+            console.warn(`[Sahay AI] Non-JSON from ${endpoint}`);
+            continue;
+          }
+          if (parsed && typeof parsed.answer === 'string' && parsed.answer.trim()) {
+            data = parsed;
+            console.log(`[Sahay AI] Connected successfully via: ${endpoint}`);
             break;
           }
-        } catch (e) {
-          // Continue to next endpoint fallback
+          console.warn(`[Sahay AI] Endpoint ${endpoint} returned status ${candidate.status} without a usable answer`);
+        } catch (endpointErr) {
+          console.warn(`[Sahay AI] Endpoint ${endpoint} failed:`, endpointErr.message || endpointErr);
         }
       }
 
-      if (!res || !res.ok) {
-        throw new Error('All chat endpoints failed');
-      }
+      removeTyping();
+      keepChatOpen();
 
-      const data = await res.json();
-      const typingEl = document.getElementById(typingId);
-      if (typingEl) typingEl.remove();
-
-      // 4. Display AI answer in Chat UI
       if (data && data.answer) {
-        const answerText = data.answer;
+        const answerText = String(data.answer);
         appendMessage('assistant', answerText, data);
-
-        // TTS Read Aloud if active
         if (isTtsActive && 'speechSynthesis' in window) {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(answerText.replace(/[•*#_`]/g, ' '));
@@ -5812,45 +5847,77 @@ function setupSahayAI() {
           window.speechSynthesis.speak(utterance);
         }
       } else {
-        const fallbackMsg = {
-          en: "I cannot find the specific answer to this in the official directives. Please verify this detail with your local bank branch or Krishi Vigyan Kendra.",
-          hi: "मुझे आधिकारिक निर्देशों में इसका विशिष्ट उत्तर नहीं मिल सका। कृपया इस विवरण को अपनी स्थानीय बैंक शाखा या कृषि विज्ञान केंद्र से सत्यापित करें।"
-        };
-        appendMessage('assistant', fallbackMsg[sahayLang] || fallbackMsg.en);
+        throw new Error('All chat endpoints failed or timed out');
+      }
+    } catch (err) {
+      console.error('[Sahay AI] Chat error occurred:', err);
+      removeTyping();
+      keepChatOpen();
+
+      let localMatch = null;
+      try {
+        localMatch = (typeof window.findSahayAnswer === 'function')
+          ? window.findSahayAnswer(messageText, sahayLang, farmerProfile)
+          : null;
+      } catch (localErr) {
+        console.warn('[Sahay AI] Local FAQ fallback failed:', localErr);
       }
 
-    } catch (err) {
-      console.warn('Local RAG API error, falling back:', err);
-      const typingEl = document.getElementById(typingId);
-      if (typingEl) typingEl.remove();
-
-      // Fallback: Check local knowledge base if local API server is unreachable
-      const localMatch = (typeof window.findSahayAnswer === 'function')
-        ? window.findSahayAnswer(messageText, sahayLang, farmerProfile)
-        : null;
-
-      if (localMatch) {
-        appendAssistantReply(localMatch);
-      } else {
-        const lowerText = messageText.toLowerCase().trim();
-        const isGreeting = /^(hi|hello|hey|namaste|pranam|ram ram|kisan sahay|sahay ai|नमस्ते|प्रणाम|राम राम)/i.test(lowerText);
-        if (isGreeting) {
-          const greetingReply = sahayLang === 'hi'
-            ? "🌱 **नमस्ते! मैं सहाय AI हूँ — किसानसहाय का आधिकारिक डिजिटल सहायक।**\n\nमैं कृषि ऋण (KCC, फसली ऋण), सरकारी योजनाओं (PM-KISAN, कृषि यंत्रीकरण), ब्याज दरों और दस्तावेज़ चेकलिस्ट में आपकी सहायता कर सकता हूँ।\n\nआप मुझसे क्या पूछना चाहते हैं?"
-            : "🌱 **Hello! I'm Sahay AI — the official agricultural assistant for KisanSahay.**\n\nI can help you with farm loans (KCC, crop loans), government schemes (PM-KISAN, tractor subsidies), interest rate comparisons, and document checklists.\n\nHow can I assist your farming today?";
-          appendMessage('assistant', greetingReply);
-        } else {
-          appendMessage(
-            'assistant',
-            '⚠️ **Could not connect to Sahay AI backend (`http://localhost:8000/chat`).**\nPlease ensure your local FastAPI server is running (`python app.py`).'
-          );
+      if (localMatch && localMatch.reply) {
+        console.log('[Sahay AI] Found answer in local knowledge base fallback');
+        try {
+          appendAssistantReply(localMatch);
+        } catch (replyErr) {
+          console.warn('[Sahay AI] appendAssistantReply failed:', replyErr);
+          appendChatErrorWithRetry(messageText);
         }
+      } else {
+        appendChatErrorWithRetry(messageText);
       }
     } finally {
+      keepChatOpen();
       if (userInput) {
         userInput.disabled = false;
         userInput.focus();
       }
+    }
+  }
+
+  function appendChatErrorWithRetry(failedQuery) {
+    if (!messageStream) return;
+    const errorBubble = document.createElement('div');
+    errorBubble.className = 'sahay-msg assistant sahay-error-bubble';
+    const errorTitle = sahayLang === 'hi'
+      ? "क्षमा करें, मुझे उत्तर नहीं मिल सका।"
+      : "Sorry, I couldn't get an answer.";
+    const errorSub = sahayLang === 'hi'
+      ? "कृपया पुनः प्रयास करें।"
+      : "Please try again.";
+    const retryBtnText = sahayLang === 'hi' ? "🔄 पुनः प्रयास करें" : "🔄 Retry";
+
+    errorBubble.innerHTML = `
+      <div class="sahay-msg-content" style="border-left: 3px solid #ef4444; background: rgba(239, 68, 68, 0.07); padding: 0.8rem 1rem; border-radius: 8px;">
+        <div style="color: #dc2626; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.25rem;">
+          ${escapeHtml(errorTitle)}
+        </div>
+        <div style="color: #64748b; font-size: 0.82rem; margin-bottom: 0.65rem;">
+          ${escapeHtml(errorSub)}
+        </div>
+        <button type="button" class="btn-sahay-retry" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.38rem 0.85rem; background: #15803d; color: #ffffff; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease;">
+          <span>${escapeHtml(retryBtnText)}</span>
+        </button>
+      </div>
+    `;
+
+    messageStream.appendChild(errorBubble);
+    messageStream.scrollTop = messageStream.scrollHeight;
+
+    const retryBtn = errorBubble.querySelector('.btn-sahay-retry');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        errorBubble.remove();
+        handleAssistantSend(failedQuery);
+      });
     }
   }
 
@@ -5861,6 +5928,7 @@ function setupSahayAI() {
     // For assistant messages render basic markdown (bold, bullets, newlines).
     // User messages are always escaped for XSS safety.
     let content;
+    text = (text == null) ? '' : String(text);
     if (role === 'assistant') {
       content = text
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
