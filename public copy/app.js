@@ -1977,8 +1977,12 @@ function setupDocumentVault() {
   const tabBtns = [el.secTabWord, el.secTabNumber, el.secTabPattern].filter(Boolean);
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      tabBtns.forEach(b => b.classList.remove('active'));
+      tabBtns.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
 
       const targetTab = btn.getAttribute('data-tab');
       state.activeSecTab = targetTab;
@@ -1994,6 +1998,9 @@ function setupDocumentVault() {
 
   // 3. Pattern Lock Setup
   initPatternLock();
+
+  // 3b. Real-time Security Field Enhancements (Password Strength & Live Match)
+  initVaultSecurityEnhancements();
 
   // 4. Vault Nav Button in Header
   if (el.btnVaultNav) {
@@ -2137,13 +2144,17 @@ function initPinKeypad() {
       if (!activeField) activeField = el.vaultPinPass;
       if (activeField && activeField.value.length < 6) {
         activeField.value += key.getAttribute('data-digit');
+        activeField.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
   });
 
   if (el.btnPinClear) {
     el.btnPinClear.addEventListener('click', () => {
-      if (activeField) activeField.value = '';
+      if (activeField) {
+        activeField.value = '';
+        activeField.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     });
   }
 
@@ -2151,6 +2162,7 @@ function initPinKeypad() {
     el.btnPinBack.addEventListener('click', () => {
       if (activeField && activeField.value.length > 0) {
         activeField.value = activeField.value.slice(0, -1);
+        activeField.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
   }
@@ -2313,18 +2325,126 @@ async function hashVaultPasswordClient(password, salt) {
   }
 }
 
-// Global Show/Hide password toggle function
+// Global Show/Hide password toggle function with Accessible Label and FA Icons
 window.togglePasswordVisibility = function(inputId, btn) {
   const input = document.getElementById(inputId);
   if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (btn) btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    if (btn) btn.textContent = '👁️';
+  const isNowText = input.type === 'password';
+  input.type = isNowText ? 'text' : 'password';
+  if (btn) {
+    const isPin = inputId.toLowerCase().includes('pin');
+    const label = isNowText
+      ? (isPin ? 'Hide PIN' : 'Hide password')
+      : (isPin ? 'Show PIN' : 'Show password');
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.className = isNowText ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    } else {
+      btn.innerHTML = `<i class="fa-solid ${isNowText ? 'fa-eye-slash' : 'fa-eye'}" aria-hidden="true"></i>`;
+    }
   }
 };
+
+// Real-time security field helpers: Password strength and live match
+function initVaultSecurityEnhancements() {
+  if (el.vaultWordPass) {
+    el.vaultWordPass.addEventListener('input', () => {
+      updateVaultPasswordStrength(el.vaultWordPass.value);
+      updateVaultWordMatch();
+    });
+  }
+  if (el.vaultWordConfirm) {
+    el.vaultWordConfirm.addEventListener('input', () => {
+      updateVaultWordMatch();
+    });
+  }
+  if (el.vaultPinPass) {
+    el.vaultPinPass.addEventListener('input', () => {
+      updateVaultPinMatch();
+    });
+  }
+  if (el.vaultPinConfirm) {
+    el.vaultPinConfirm.addEventListener('input', () => {
+      updateVaultPinMatch();
+    });
+  }
+}
+
+function updateVaultPasswordStrength(val) {
+  const wrap = document.getElementById('vault-pw-strength');
+  const bar = document.getElementById('pw-bar-fill');
+  const text = document.getElementById('pw-strength-text');
+  if (!wrap || !bar || !text) return;
+
+  if (!val) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+
+  let score = 0;
+  if (val.length >= 4) score++;
+  if (val.length >= 7) score++;
+  if (/[0-9]/.test(val) && /[a-zA-Z]/.test(val)) score++;
+  if (/[^a-zA-Z0-9]/.test(val) || val.length >= 10) score++;
+
+  bar.className = 'pw-strength-bar strength-' + score;
+  if (score <= 1) {
+    text.textContent = 'Weak: minimum 4 characters required';
+    text.className = 'pw-strength-caption caption-weak';
+  } else if (score === 2) {
+    text.textContent = 'Fair: add numbers or symbols for better security';
+    text.className = 'pw-strength-caption caption-fair';
+  } else if (score === 3) {
+    text.textContent = 'Good: secure password for farm records';
+    text.className = 'pw-strength-caption caption-good';
+  } else {
+    text.textContent = 'Strong: excellent document protection';
+    text.className = 'pw-strength-caption caption-strong';
+  }
+}
+
+function updateVaultWordMatch() {
+  const pass = el.vaultWordPass ? el.vaultWordPass.value : '';
+  const confirm = el.vaultWordConfirm ? el.vaultWordConfirm.value : '';
+  const badge = document.getElementById('vault-word-match-badge');
+  if (!badge) return;
+
+  if (!confirm) {
+    badge.style.display = 'none';
+    return;
+  }
+  badge.style.display = 'inline-flex';
+  if (pass === confirm) {
+    badge.className = 'pw-match-badge match-yes';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> <span>Passwords match</span>';
+  } else {
+    badge.className = 'pw-match-badge match-no';
+    badge.innerHTML = '<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> <span>Passwords do not match</span>';
+  }
+}
+
+function updateVaultPinMatch() {
+  const pass = el.vaultPinPass ? el.vaultPinPass.value : '';
+  const confirm = el.vaultPinConfirm ? el.vaultPinConfirm.value : '';
+  const badge = document.getElementById('vault-pin-match-badge');
+  if (!badge) return;
+
+  if (!confirm) {
+    badge.style.display = 'none';
+    return;
+  }
+  badge.style.display = 'inline-flex';
+  if (pass === confirm) {
+    badge.className = 'pw-match-badge match-yes';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> <span>PINs match</span>';
+  } else {
+    badge.className = 'pw-match-badge match-no';
+    badge.innerHTML = '<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> <span>PINs do not match</span>';
+  }
+}
 
 // UI helper to display incorrect password feedback
 function showUnlockError(msg) {
@@ -2359,7 +2479,7 @@ function openVaultModal(scheme = null, isOverview = false) {
   const headerStatus = document.getElementById('vault-header-status');
 
   if (state.vaultState.isUnlocked) {
-    if (btnLockNow) btnLockNow.style.display = 'inline-block';
+    if (btnLockNow) btnLockNow.style.display = 'inline-flex';
     if (btnResetTrigger) btnResetTrigger.style.display = 'inline-flex';
     if (btnSaveText) btnSaveText.textContent = 'Update & Secure Documents';
     if (headerStatus) headerStatus.textContent = '✓ Unlocked & Verified';
@@ -2411,6 +2531,14 @@ function clearAllVaultFields() {
   if (pwPin) pwPin.value = '';
   if (pwPinConfirm) pwPinConfirm.value = '';
 
+  // Clear live strength and match indicators
+  const pwStrengthWrap = document.getElementById('vault-pw-strength');
+  const wordMatchBadge = document.getElementById('vault-word-match-badge');
+  const pinMatchBadge = document.getElementById('vault-pin-match-badge');
+  if (pwStrengthWrap) pwStrengthWrap.style.display = 'none';
+  if (wordMatchBadge) wordMatchBadge.style.display = 'none';
+  if (pinMatchBadge) pinMatchBadge.style.display = 'none';
+
   state.patternSequence = [];
   const patternCanvas = document.getElementById('pattern-canvas');
   if (patternCanvas) {
@@ -2457,7 +2585,9 @@ function openVaultUnlockModal(vaultMeta = {}, scheme = null) {
         <label class="input-label-clean" for="unlock-word-input">Enter Secret Password *</label>
         <div class="password-input-wrap">
           <input type="password" id="unlock-word-input" class="input-clean" placeholder="Enter your secret password" autocomplete="current-password">
-          <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('unlock-word-input', this)" title="Show/Hide Password" aria-label="Show/Hide Password">👁️</button>
+          <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('unlock-word-input', this)" title="Show password" aria-label="Show password">
+            <i class="fa-solid fa-eye" aria-hidden="true"></i>
+          </button>
         </div>
       `;
     } else if (pwType === 'number') {
@@ -2465,7 +2595,9 @@ function openVaultUnlockModal(vaultMeta = {}, scheme = null) {
         <label class="input-label-clean" for="unlock-pin-input">Enter PIN (4-6 Digits) *</label>
         <div class="password-input-wrap">
           <input type="password" id="unlock-pin-input" class="input-clean" placeholder="• • • •" maxlength="6" style="letter-spacing: 0.35rem; font-size: 1.3rem; text-align: center;" autocomplete="current-password">
-          <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('unlock-pin-input', this)" title="Show/Hide PIN" aria-label="Show/Hide PIN">👁️</button>
+          <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('unlock-pin-input', this)" title="Show PIN" aria-label="Show PIN">
+            <i class="fa-solid fa-eye" aria-hidden="true"></i>
+          </button>
         </div>
       `;
     } else if (pwType === 'pattern') {

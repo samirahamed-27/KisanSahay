@@ -4164,65 +4164,153 @@ body.dark-mode .btn-install-pwa:hover {
   padding-left: 2.5rem;
 }
 
-/* Security Box & Password Tabs */
+/* ==========================================================================
+   Vault Security Box & Lock Method Selector (Prompt 1 Redesign)
+   Farm palette: Rich agricultural greens (#15803d, #166534), warm cream & wheat
+   Polished borders, clear selected state, visible focus rings, gentle transitions
+   ========================================================================== */
+
 .vault-security-box {
-  background: var(--bg-card-hover);
-  border: 1.5px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 1.25rem;
+  background: #fffdfa;
+  border: 1.5px solid #e5dccb;
+  border-radius: 16px;
+  padding: 1.35rem 1.4rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 4px 18px rgba(30, 27, 24, 0.04), 0 1px 3px rgba(30, 27, 24, 0.03);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vault-security-box:hover {
+  border-color: #d6caaf;
+  box-shadow: 0 6px 22px rgba(21, 128, 61, 0.06), 0 2px 6px rgba(30, 27, 24, 0.04);
 }
 
 .security-box-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
+  gap: 0.85rem;
+  margin-bottom: 1.15rem;
 }
 
+.security-box-header-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #15803d;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.12);
+}
+
+.security-box-header-icon .farm-vault-svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.security-box-header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.security-choice-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #1e1b18;
+  line-height: 1.25;
+}
+
+.security-choice-subtitle {
+  font-size: 0.8rem;
+  color: #6b6255;
+  font-weight: 400;
+  margin-top: 0.15rem;
+  line-height: 1.3;
+}
+
+/* 3-Way Segmented Method Tabs (Password, PIN, Pattern) */
 .security-type-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 6px;
+  background: #f4ecdf;
+  border: 1px solid #e2d7c3;
+  border-radius: 12px;
+  padding: 5px;
+  margin-bottom: 1.15rem;
 }
 
 .sec-tab-btn {
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.65rem 0.5rem;
-  font-size: 0.84rem;
-  font-weight: 700;
-  color: var(--text-muted);
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 9px;
+  padding: 0.72rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #5d5345;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  transition: var(--transition);
+  gap: 0.45rem;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.sec-tab-btn .sec-tab-icon {
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8c806f;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .sec-tab-btn:hover {
-  border-color: var(--primary-main);
-  color: var(--primary-main);
+  background: rgba(255, 255, 255, 0.7);
+  color: #15803d;
+  border-color: rgba(22, 163, 74, 0.25);
+}
+
+.sec-tab-btn:hover .sec-tab-icon {
+  color: #15803d;
+  transform: translateY(-1px);
+}
+
+.sec-tab-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.35);
 }
 
 .sec-tab-btn.active {
-  background: var(--primary-main);
-  border-color: var(--primary-main);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.25);
+  background: #ffffff;
+  border-color: #86efac;
+  color: #15803d;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(21, 128, 61, 0.12), 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
+.sec-tab-btn.active .sec-tab-icon {
+  color: #16a34a;
+}
+
+/* Security Content Panes */
 .sec-pane {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 1.1rem;
+  background: #ffffff;
+  border: 1.5px solid #ece4d6;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.25s ease;
 }
 
-/* Password Input with Show/Hide Eye Toggle */
+/* Password Input & Show/Hide Eye Toggle */
 .password-input-wrap {
   position: relative;
   display: flex;
@@ -4231,98 +4319,261 @@ body.dark-mode .btn-install-pwa:hover {
 }
 
 .password-input-wrap .input-clean {
-  padding-right: 2.8rem;
   width: 100%;
+  padding: 0.78rem 2.85rem 0.78rem 1rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  border: 1.5px solid #dcd3c4;
+  border-radius: 10px;
+  background: #faf8f5;
+  color: #1e1b18;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.password-input-wrap .input-clean:hover {
+  border-color: #b8ab96;
+  background: #ffffff;
+}
+
+.password-input-wrap .input-clean:focus {
+  border-color: #16a34a;
+  background: #ffffff;
+  box-shadow: 0 0 0 3.5px rgba(22, 163, 74, 0.16);
+}
+
+.password-input-wrap .input-clean.input-pin-display {
+  letter-spacing: 0.35rem;
+  font-size: 1.2rem;
+  text-align: center;
+  font-weight: 700;
+  padding-left: 2rem;
 }
 
 .btn-toggle-pw {
   position: absolute;
-  right: 0.5rem;
+  right: 0.45rem;
+  width: 34px;
+  height: 34px;
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0.35rem;
-  font-size: 1.05rem;
-  color: var(--text-muted);
+  color: #78716c;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
-  transition: var(--transition);
+  font-size: 0.95rem;
+  border-radius: 8px;
+  transition: background-color 0.15s ease, color 0.15s ease;
   user-select: none;
 }
 
 .btn-toggle-pw:hover {
-  color: var(--text-primary);
-  background: rgba(0, 0, 0, 0.06);
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.btn-toggle-pw:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2.5px rgba(22, 163, 74, 0.35);
+}
+
+/* Password Strength Meter */
+.pw-strength-container {
+  margin-top: 0.45rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.pw-strength-track {
+  height: 5px;
+  background: #ece5d8;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.pw-strength-bar {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+}
+
+.pw-strength-bar.strength-0 { width: 0%; background: transparent; }
+.pw-strength-bar.strength-1 { width: 25%; background: #ef4444; }
+.pw-strength-bar.strength-2 { width: 50%; background: #f59e0b; }
+.pw-strength-bar.strength-3 { width: 75%; background: #10b981; }
+.pw-strength-bar.strength-4 { width: 100%; background: #15803d; }
+
+.pw-strength-caption {
+  font-size: 0.77rem;
+  font-weight: 600;
+  margin-top: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pw-strength-caption.caption-weak { color: #dc2626; }
+.pw-strength-caption.caption-fair { color: #d97706; }
+.pw-strength-caption.caption-good { color: #059669; }
+.pw-strength-caption.caption-strong { color: #15803d; }
+
+/* Passwords & PIN Match Indicators */
+.pw-match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 0.45rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 6px;
+  animation: fadeIn 0.2s ease;
+}
+
+.pw-match-badge.match-yes {
+  color: #15803d;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
+
+.pw-match-badge.match-no {
+  color: #dc2626;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
+.sec-helper-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #6b6255;
+  font-size: 0.8rem;
+  margin-top: 0.65rem;
+  line-height: 1.35;
+}
+
+.sec-helper-hint .sec-hint-icon {
+  color: #16a34a;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* Tab Pane 2: PIN Layout & Interactive Keypad */
+.pin-layout-wrap {
+  display: flex;
+  gap: 1.35rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.pin-inputs-col {
+  flex: 1;
+  min-width: 220px;
+}
+
+.pin-keypad-card {
+  background: #faf7f2;
+  border: 1.5px solid #e3dac9;
+  border-radius: 14px;
+  padding: 0.95rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.pin-keypad-header {
+  font-size: 0.77rem;
+  font-weight: 700;
+  color: #6b6255;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pin-keypad-header i {
+  color: #15803d;
+}
+
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+  width: 185px;
+}
+
+.keypad-key {
+  height: 42px;
+  background: #ffffff;
+  border: 1.5px solid #dcd3c4;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e1b18;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.keypad-key:hover {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(22, 163, 74, 0.1);
+}
+
+.keypad-key:active {
+  transform: scale(0.95);
+  background: #dcfce7;
+  border-color: #22c55e;
+}
+
+.keypad-key.action-clear {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+  font-size: 0.95rem;
+}
+
+.keypad-key.action-clear:hover {
+  background: #ffedd5;
+  border-color: #fdba74;
+  color: #9a3412;
+}
+
+.keypad-key.action-backspace {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+  font-size: 0.95rem;
+}
+
+.keypad-key.action-backspace:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
 }
 
 /* Shake Animation on Wrong Password */
 @keyframes shakeInput {
-
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  20%,
-  60% {
-    transform: translateX(-6px);
-  }
-
-  40%,
-  80% {
-    transform: translateX(6px);
-  }
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
 }
 
 .input-error-shake {
   animation: shakeInput 0.4s ease-in-out;
   border-color: #ef4444 !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  box-shadow: 0 0 0 3.5px rgba(239, 68, 68, 0.2) !important;
 }
 
-/* PIN Keypad */
-.pin-keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.45rem;
-  width: 170px;
-}
-
-.keypad-key {
-  height: 40px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--radius-sm);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #0f172a;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-  user-select: none;
-}
-
-.keypad-key:hover {
-  background: #e2e8f0;
-  border-color: #94a3b8;
-}
-
-.keypad-key:active {
-  transform: scale(0.95);
-  background: #cbd5e1;
-}
-
-.keypad-key.action {
-  background: #fee2e2;
-  color: #b91c1c;
-  font-size: 0.95rem;
-}
-
-/* 3x3 Pattern Lock Canvas & Grid */
+/* Tab Pane 3: 3x3 Visual Pattern Lock */
 .pattern-lock-wrap {
   display: flex;
   flex-direction: column;
@@ -4330,17 +4581,29 @@ body.dark-mode .btn-install-pwa:hover {
   padding: 0.5rem 0;
 }
 
+.pattern-lock-instruction {
+  font-size: 0.85rem;
+  color: #475569;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
 .pattern-container {
   position: relative;
   width: 240px;
   height: 240px;
-  background: #f8fafc;
-  border: 2px solid #cbd5e1;
-  border-radius: var(--radius-md);
-  margin-bottom: 0.75rem;
+  background: #faf8f5;
+  border: 2px solid #dcd3c4;
+  border-radius: 16px;
+  margin-bottom: 0.85rem;
   touch-action: none;
   user-select: none;
   cursor: crosshair;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 #pattern-canvas {
@@ -4376,7 +4639,7 @@ body.dark-mode .btn-install-pwa:hover {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #64748b;
+  background: #a89c89;
   transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
   pointer-events: none;
 }
@@ -4396,54 +4659,231 @@ body.dark-mode .btn-install-pwa:hover {
   font-size: 0.86rem;
   font-weight: 700;
   color: #15803d;
-  margin-bottom: 0.5rem;
-  min-height: 1.2rem;
+  margin-bottom: 0.65rem;
+  min-height: 1.25rem;
   text-align: center;
 }
 
 .btn-reset-pattern {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: #faf7f2;
+  border: 1.5px solid #dcd3c4;
   border-radius: var(--radius-pill);
-  padding: 0.4rem 1rem;
-  font-size: 0.82rem;
+  padding: 0.5rem 1.25rem;
+  font-family: inherit;
+  font-size: 0.84rem;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
-  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.2s ease;
 }
 
 .btn-reset-pattern:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #15803d;
+  transform: translateY(-1px);
 }
 
-/* Vault Modal Footer */
+/* ==========================================================================
+   Vault Modal Footer: 4 Buttons with Proper Padding, Equal Height,
+   No Text Wrapping, and Clear Visual Hierarchy (Prompt 1)
+   1. Update & Secure Documents: Dominant Primary Button
+   2. Reset Password: Soft Blue Secondary Button
+   3. Lock Vault Now: Soft Red Caution Button
+   4. Cancel: Quiet Ghost Button with Clean Hover
+   ========================================================================== */
+
 .vault-modal-footer {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 0.85rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--border-subtle);
 }
 
+/* Base button properties ensuring equal height and no text wrapping */
+.vault-modal-footer button,
+.btn-vault-cancel,
+.btn-vault-reset-pw,
+.btn-vault-lock-caution,
 .btn-vault-save-action {
-  background: linear-gradient(135deg, #15803d, #16a34a);
-  color: #ffffff;
-  border: none;
+  height: 42px;
+  min-height: 42px;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.88rem;
   border-radius: var(--radius-pill);
-  padding: 0.65rem 1.6rem;
-  font-size: 0.92rem;
-  font-weight: 700;
+  white-space: nowrap !important;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
-  transition: var(--transition);
+  justify-content: center;
+  gap: 0.45rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  line-height: 1;
+  text-decoration: none;
 }
 
-.btn-vault-save-action:hover {
+/* 4. Cancel Button: Quiet ghost or text button with clean hover state */
+.btn-vault-cancel,
+#btn-vault-cancel {
+  margin-right: auto;
+  padding: 0 1.25rem;
+  background: transparent;
+  border: 1.5px solid transparent;
+  color: #6b6255;
+  font-weight: 600;
+  width: auto !important;
+}
+
+.btn-vault-cancel:hover,
+#btn-vault-cancel:hover {
+  background: #f5efe6;
+  border-color: #e2d7c3;
+  color: #1e1b18;
+}
+
+.btn-vault-cancel:focus-visible,
+#btn-vault-cancel:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(107, 98, 85, 0.2);
+}
+
+/* 2. Reset Password Button: Soft Blue Secondary */
+.btn-vault-reset-pw,
+#btn-vault-reset-trigger {
+  padding: 0 1.25rem;
+  background: #f0f9ff;
+  border: 1.5px solid #bae6fd;
+  color: #0284c7;
+  font-weight: 700;
+  width: auto !important;
+}
+
+.btn-vault-reset-pw:hover,
+#btn-vault-reset-trigger:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0369a1;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35);
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.15);
+}
+
+.btn-vault-reset-pw:active,
+#btn-vault-reset-trigger:active {
+  transform: translateY(0);
+}
+
+.btn-vault-reset-pw:focus-visible,
+#btn-vault-reset-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.3);
+}
+
+/* 3. Lock Vault Now Button: Soft Red Caution */
+.btn-vault-lock-caution,
+#btn-vault-lock-now {
+  padding: 0 1.25rem;
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #dc2626;
+  font-weight: 700;
+  width: auto !important;
+}
+
+.btn-vault-lock-caution:hover,
+#btn-vault-lock-now:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.15);
+}
+
+.btn-vault-lock-caution:active,
+#btn-vault-lock-now:active {
+  transform: translateY(0);
+}
+
+.btn-vault-lock-caution:focus-visible,
+#btn-vault-lock-now:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+}
+
+/* 1. Update & Secure Documents: Dominant Primary Button */
+.btn-vault-save-action,
+#btn-vault-save-submit {
+  padding: 0 1.6rem;
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  border: 1.5px solid transparent;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.92rem;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+  width: auto !important;
+}
+
+.btn-vault-save-action:hover,
+#btn-vault-save-submit:hover {
+  background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.4);
+}
+
+.btn-vault-save-action:active,
+#btn-vault-save-submit:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+}
+
+.btn-vault-save-action:focus-visible,
+#btn-vault-save-submit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3.5px rgba(22, 163, 74, 0.35);
+}
+
+/* Responsive Action Row for Small Mobile Screens */
+@media (max-width: 580px) {
+  .vault-modal-footer {
+    flex-direction: column-reverse;
+    gap: 0.6rem;
+    width: 100%;
+  }
+
+  .vault-modal-footer button,
+  .btn-vault-cancel,
+  .btn-vault-reset-pw,
+  .btn-vault-lock-caution,
+  .btn-vault-save-action,
+  #btn-vault-cancel,
+  #btn-vault-reset-trigger,
+  #btn-vault-lock-now,
+  #btn-vault-save-submit {
+    width: 100% !important;
+    margin-right: 0 !important;
+    justify-content: center !important;
+  }
+
+  .security-type-tabs {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .pin-keypad-card {
+    width: 100%;
+  }
+
+  .pin-keypad {
+    width: 100%;
+  }
 }
 
 /* Soil 300km Dynamics Badge */
@@ -7143,29 +7583,100 @@ body.dark-mode #vault-status-nav-text {
 
 body.dark-mode .vault-security-box {
   background: #111c2e;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .security-box-header-icon {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+body.dark-mode .security-choice-title {
+  color: #f8fafc;
+}
+
+body.dark-mode .security-choice-subtitle {
+  color: #94a3b8;
+}
+
+body.dark-mode .security-type-tabs {
+  background: #0f172a;
   border-color: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-mode .sec-tab-btn {
-  background: #17243b;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  border-color: transparent;
   color: #94a3b8;
 }
 
+body.dark-mode .sec-tab-btn .sec-tab-icon {
+  color: #64748b;
+}
+
 body.dark-mode .sec-tab-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
+  background: #1e293b;
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+body.dark-mode .sec-tab-btn:hover .sec-tab-icon {
+  color: #34d399;
 }
 
 body.dark-mode .sec-tab-btn.active {
-  background: #10b981;
+  background: #1e293b;
   border-color: #10b981;
-  color: #ffffff;
+  color: #34d399;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .sec-tab-btn.active .sec-tab-icon {
+  color: #34d399;
 }
 
 body.dark-mode .sec-pane {
   background: #0b131e;
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .password-input-wrap .input-clean {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+body.dark-mode .password-input-wrap .input-clean:hover {
+  border-color: #475569;
+}
+
+body.dark-mode .password-input-wrap .input-clean:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3.5px rgba(16, 185, 129, 0.2);
+}
+
+body.dark-mode .btn-toggle-pw {
+  color: #94a3b8;
+}
+
+body.dark-mode .btn-toggle-pw:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #34d399;
+}
+
+body.dark-mode .pw-strength-track {
+  background: #1e293b;
+}
+
+body.dark-mode .pin-keypad-card {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .pin-keypad-header {
+  color: #94a3b8;
 }
 
 body.dark-mode .keypad-key {
@@ -7176,9 +7687,17 @@ body.dark-mode .keypad-key {
 
 body.dark-mode .keypad-key:hover {
   background: #1e2e4a;
+  border-color: #10b981;
+  color: #34d399;
 }
 
-body.dark-mode .keypad-key.action {
+body.dark-mode .keypad-key.action-clear {
+  background: rgba(234, 88, 12, 0.2);
+  color: #fdba74;
+  border-color: rgba(234, 88, 12, 0.35);
+}
+
+body.dark-mode .keypad-key.action-backspace {
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
   border-color: rgba(239, 68, 68, 0.3);
@@ -7189,8 +7708,56 @@ body.dark-mode .pattern-container {
   border-color: rgba(255, 255, 255, 0.12);
 }
 
-body.dark-mode .btn-toggle-pw:hover {
-  background: rgba(255, 255, 255, 0.1);
+body.dark-mode .btn-reset-pattern {
+  background: #17243b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+body.dark-mode .btn-reset-pattern:hover {
+  background: #1e293b;
+  border-color: #10b981;
+  color: #34d399;
+}
+
+body.dark-mode .btn-vault-cancel,
+body.dark-mode #btn-vault-cancel {
+  color: #94a3b8;
+}
+
+body.dark-mode .btn-vault-cancel:hover,
+body.dark-mode #btn-vault-cancel:hover {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+body.dark-mode .btn-vault-reset-pw,
+body.dark-mode #btn-vault-reset-trigger {
+  background: #0c4a6e;
+  border-color: #0284c7;
+  color: #e0f2fe;
+}
+
+body.dark-mode .btn-vault-reset-pw:hover,
+body.dark-mode #btn-vault-reset-trigger:hover {
+  background: #075985;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+body.dark-mode .btn-vault-lock-caution,
+body.dark-mode #btn-vault-lock-now {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+body.dark-mode .btn-vault-lock-caution:hover,
+body.dark-mode #btn-vault-lock-now:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #f87171;
+  color: #ffffff;
 }
 
 body.dark-mode .lang-select-btn {

@@ -8,6 +8,7 @@
   <meta name="description"
     content="Empowering Indian farmers to check government scheme eligibility, get required document checklists, and track multiple loans, EMIs, and paid amounts in one place.">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
   <link rel="manifest" href="/manifest.json">
@@ -1823,17 +1824,17 @@
        ========================================================================== -->
   <div class="modal-overlay" id="vault-modal" style="z-index: 170;">
     <div class="modal-dialog modal-vault-dialog" style="max-width: 650px;">
-      <button class="modal-close-x" id="vault-modal-close">✕</button>
+      <button class="modal-close-x" id="vault-modal-close" aria-label="Close document vault"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 
       <!-- Header Banner -->
       <div class="vault-modal-header">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
           <div class="vault-modal-badge" style="margin-bottom: 0;">
-            <span id="vault-header-icon">🔒</span>
+            <span id="vault-header-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
             <span id="vault-header-status">Encrypted Farmer Vault</span>
           </div>
           <button type="button" class="btn-clear-vault" id="btn-vault-clear-all" title="Clear all fields to enter your own documents">
-            <span>✨</span> <span>Clear All Fields</span>
+            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> <span>Clear All Fields</span>
           </button>
         </div>
         <h2 class="vault-modal-title" data-i18n="vaultTitle">Farmer Document Vault & Verification</h2>
@@ -1935,25 +1936,53 @@
       <!-- Security Lock Password Choice (Word, PIN, Pattern) -->
       <div class="vault-security-box">
         <div class="security-box-header">
-          <span style="font-size: 1.15rem;">🔐</span>
-          <span class="security-choice-title" data-i18n="vaultPasswordChoice">Choose Security Lock Method:</span>
+          <div class="security-box-header-icon" aria-hidden="true">
+            <!-- Bespoke Farm Vault Shield with Wheat / Leaf motif inline SVG -->
+            <svg class="farm-vault-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.5L4.5 6v6.2c0 5.1 3.2 9.8 7.5 10.8 4.3-1 7.5-5.7 7.5-10.8V6L12 2.5z" />
+              <path d="M12 7.5v9" stroke-width="1.6" />
+              <path d="M12 9.5c1.4-.9 2.5-.7 3.2.2-.4 1.2-1.6 1.7-3.2 1.3" fill="currentColor" fill-opacity="0.25" />
+              <path d="M12 12c-1.4-.9-2.5-.7-3.2.2.4 1.2 1.6 1.7 3.2 1.3" fill="currentColor" fill-opacity="0.25" />
+              <circle cx="12" cy="14" r="1.5" fill="currentColor" />
+            </svg>
+          </div>
+          <div class="security-box-header-titles">
+            <span class="security-choice-title" data-i18n="vaultPasswordChoice">Choose Security Lock Method:</span>
+            <span class="security-choice-subtitle">Select how you want to encrypt and safeguard your personal farm documents</span>
+          </div>
         </div>
 
         <!-- 3 Password Tabs: Word, PIN, Pattern -->
-        <div class="security-type-tabs">
-          <button type="button" class="sec-tab-btn active" data-tab="word" id="sec-tab-word">
-            <span>🔤</span> <span data-i18n="tabWord">Password (Word)</span>
+        <div class="security-type-tabs" role="tablist" aria-label="Security lock methods">
+          <button type="button" class="sec-tab-btn active" data-tab="word" id="sec-tab-word" role="tab" aria-selected="true" aria-controls="sec-pane-word">
+            <span class="sec-tab-icon"><i class="fa-solid fa-key" aria-hidden="true"></i></span>
+            <span data-i18n="tabWord">Password (Word)</span>
           </button>
-          <button type="button" class="sec-tab-btn" data-tab="number" id="sec-tab-number">
-            <span>🔢</span> <span data-i18n="tabNumber">PIN (4-6 Digits)</span>
+          <button type="button" class="sec-tab-btn" data-tab="number" id="sec-tab-number" role="tab" aria-selected="false" aria-controls="sec-pane-number">
+            <span class="sec-tab-icon"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></span>
+            <span data-i18n="tabNumber">PIN (4-6 Digits)</span>
           </button>
-          <button type="button" class="sec-tab-btn" data-tab="pattern" id="sec-tab-pattern">
-            <span>⚡</span> <span data-i18n="tabPattern">Pattern Lock</span>
+          <button type="button" class="sec-tab-btn" data-tab="pattern" id="sec-tab-pattern" role="tab" aria-selected="false" aria-controls="sec-pane-pattern">
+            <span class="sec-tab-icon">
+              <!-- 3x3 Dot Grid Pattern Icon -->
+              <svg class="pattern-tab-svg" viewBox="0 0 18 18" width="15" height="15" fill="currentColor" aria-hidden="true">
+                <circle cx="3" cy="3" r="1.7" />
+                <circle cx="9" cy="3" r="1.7" />
+                <circle cx="15" cy="3" r="1.7" />
+                <circle cx="3" cy="9" r="1.7" />
+                <circle cx="9" cy="9" r="1.7" />
+                <circle cx="15" cy="9" r="1.7" />
+                <circle cx="3" cy="15" r="1.7" />
+                <circle cx="9" cy="15" r="1.7" />
+                <circle cx="15" cy="15" r="1.7" />
+              </svg>
+            </span>
+            <span data-i18n="tabPattern">Pattern Lock</span>
           </button>
         </div>
 
         <!-- Tab Pane 1: Word Passphrase -->
-        <div class="sec-pane active" id="sec-pane-word">
+        <div class="sec-pane active" id="sec-pane-word" role="tabpanel" aria-labelledby="sec-tab-word">
           <div class="form-row-2">
             <div>
               <label class="input-label-clean" for="vault-word-pass">Secret Password *</label>
@@ -1961,7 +1990,16 @@
                 <input type="password" id="vault-word-pass" class="input-clean" placeholder="Create secret password"
                   autocomplete="new-password">
                 <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-word-pass', this)"
-                  title="Show/Hide Password" aria-label="Show/Hide Password">👁️</button>
+                  title="Show password" aria-label="Show password">
+                  <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                </button>
+              </div>
+              <!-- Helpful Touch: Password Strength Meter -->
+              <div class="pw-strength-container" id="vault-pw-strength" style="display: none;" aria-live="polite">
+                <div class="pw-strength-track">
+                  <div class="pw-strength-bar" id="pw-bar-fill"></div>
+                </div>
+                <div class="pw-strength-caption" id="pw-strength-text">Password strength</div>
               </div>
             </div>
             <div>
@@ -1970,95 +2008,127 @@
                 <input type="password" id="vault-word-confirm" class="input-clean"
                   placeholder="Re-enter secret password" autocomplete="new-password">
                 <button type="button" class="btn-toggle-pw"
-                  onclick="togglePasswordVisibility('vault-word-confirm', this)" title="Show/Hide Password"
-                  aria-label="Show/Hide Password">👁️</button>
+                  onclick="togglePasswordVisibility('vault-word-confirm', this)" title="Show password"
+                  aria-label="Show password">
+                  <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                </button>
               </div>
+              <!-- Helpful Touch: Live Passwords Match Indicator -->
+              <div class="pw-match-badge" id="vault-word-match-badge" style="display: none;" aria-live="polite"></div>
             </div>
           </div>
-          <small style="color: #64748b; margin-top: 0.45rem; display: block;">Minimum 4 characters. Use letters,
-            numbers, or symbols you remember easily.</small>
+          <small class="sec-helper-hint">
+            <i class="fa-solid fa-shield-halved sec-hint-icon" aria-hidden="true"></i>
+            Minimum 4 characters. Use letters, numbers, or symbols you remember easily.
+          </small>
         </div>
 
         <!-- Tab Pane 2: Number PIN -->
-        <div class="sec-pane" id="sec-pane-number" style="display: none;">
-          <div style="display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 200px;">
-              <label class="input-label-clean" for="vault-pin-pass">4 to 6 Digit PIN *</label>
-              <div class="password-input-wrap">
-                <input type="password" id="vault-pin-pass" class="input-clean" placeholder="• • • •" maxlength="6"
-                  style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
-                <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-pin-pass', this)"
-                  title="Show/Hide PIN" aria-label="Show/Hide PIN">👁️</button>
-              </div>
-              <div style="margin-top: 0.75rem;">
-                <label class="input-label-clean" for="vault-pin-confirm">Confirm PIN *</label>
+        <div class="sec-pane" id="sec-pane-number" style="display: none;" role="tabpanel" aria-labelledby="sec-tab-number">
+          <div class="pin-layout-wrap">
+            <div class="pin-inputs-col">
+              <div>
+                <label class="input-label-clean" for="vault-pin-pass">4 to 6 Digit PIN *</label>
                 <div class="password-input-wrap">
-                  <input type="password" id="vault-pin-confirm" class="input-clean" placeholder="• • • •" maxlength="6"
-                    style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
-                  <button type="button" class="btn-toggle-pw"
-                    onclick="togglePasswordVisibility('vault-pin-confirm', this)" title="Show/Hide PIN"
-                    aria-label="Show/Hide PIN">👁️</button>
+                  <input type="password" id="vault-pin-pass" class="input-clean input-pin-display" placeholder="• • • •" maxlength="6"
+                    inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
+                  <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-pin-pass', this)"
+                    title="Show PIN" aria-label="Show PIN">
+                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                  </button>
                 </div>
               </div>
+              <div style="margin-top: 0.85rem;">
+                <label class="input-label-clean" for="vault-pin-confirm">Confirm PIN *</label>
+                <div class="password-input-wrap">
+                  <input type="password" id="vault-pin-confirm" class="input-clean input-pin-display" placeholder="• • • •" maxlength="6"
+                    inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
+                  <button type="button" class="btn-toggle-pw"
+                    onclick="togglePasswordVisibility('vault-pin-confirm', this)" title="Show PIN"
+                    aria-label="Show PIN">
+                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                  </button>
+                </div>
+                <!-- Helpful Touch: Live PIN Match Indicator -->
+                <div class="pw-match-badge" id="vault-pin-match-badge" style="display: none;" aria-live="polite"></div>
+              </div>
+              <small class="sec-helper-hint" style="margin-top: 0.65rem;">
+                <i class="fa-solid fa-hashtag sec-hint-icon" aria-hidden="true"></i>
+                Enter 4 to 6 numbers using your keyboard or the keypad.
+              </small>
             </div>
             <!-- Interactive Keypad -->
-            <div class="pin-keypad" id="pin-keypad">
-              <button type="button" class="keypad-key" data-digit="1">1</button>
-              <button type="button" class="keypad-key" data-digit="2">2</button>
-              <button type="button" class="keypad-key" data-digit="3">3</button>
-              <button type="button" class="keypad-key" data-digit="4">4</button>
-              <button type="button" class="keypad-key" data-digit="5">5</button>
-              <button type="button" class="keypad-key" data-digit="6">6</button>
-              <button type="button" class="keypad-key" data-digit="7">7</button>
-              <button type="button" class="keypad-key" data-digit="8">8</button>
-              <button type="button" class="keypad-key" data-digit="9">9</button>
-              <button type="button" class="keypad-key action" id="btn-pin-clear">C</button>
-              <button type="button" class="keypad-key" data-digit="0">0</button>
-              <button type="button" class="keypad-key action" id="btn-pin-back">⌫</button>
+            <div class="pin-keypad-card">
+              <div class="pin-keypad-header">
+                <i class="fa-solid fa-table-cells" aria-hidden="true"></i>
+                <span>Quick PIN Keypad</span>
+              </div>
+              <div class="pin-keypad" id="pin-keypad" role="group" aria-label="Numeric PIN keypad">
+                <button type="button" class="keypad-key" data-digit="1" aria-label="1">1</button>
+                <button type="button" class="keypad-key" data-digit="2" aria-label="2">2</button>
+                <button type="button" class="keypad-key" data-digit="3" aria-label="3">3</button>
+                <button type="button" class="keypad-key" data-digit="4" aria-label="4">4</button>
+                <button type="button" class="keypad-key" data-digit="5" aria-label="5">5</button>
+                <button type="button" class="keypad-key" data-digit="6" aria-label="6">6</button>
+                <button type="button" class="keypad-key" data-digit="7" aria-label="7">7</button>
+                <button type="button" class="keypad-key" data-digit="8" aria-label="8">8</button>
+                <button type="button" class="keypad-key" data-digit="9" aria-label="9">9</button>
+                <button type="button" class="keypad-key action-clear" id="btn-pin-clear" title="Clear PIN" aria-label="Clear PIN">C</button>
+                <button type="button" class="keypad-key" data-digit="0" aria-label="0">0</button>
+                <button type="button" class="keypad-key action-backspace" id="btn-pin-back" title="Backspace" aria-label="Backspace">
+                  <i class="fa-solid fa-delete-left" aria-hidden="true"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Tab Pane 3: 3x3 Visual Pattern Lock -->
-        <div class="sec-pane" id="sec-pane-pattern" style="display: none;">
+        <div class="sec-pane" id="sec-pane-pattern" style="display: none;" role="tabpanel" aria-labelledby="sec-tab-pattern">
           <div class="pattern-lock-wrap">
-            <p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.6rem; text-align: center;">
+            <p class="pattern-lock-instruction">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true" style="color: #16a34a; margin-right: 0.35rem;"></i>
               Connect at least 4 dots in sequence to create your secret pattern lock:
             </p>
             <!-- 3x3 Pattern Grid Container with Canvas Overlay -->
-            <div class="pattern-container" id="pattern-container">
+            <div class="pattern-container" id="pattern-container" aria-label="Pattern lock drawing canvas">
               <canvas id="pattern-canvas" width="240" height="240"></canvas>
               <div class="pattern-dots-grid" id="pattern-dots-grid">
-                <div class="pattern-dot" data-index="0"><span></span></div>
-                <div class="pattern-dot" data-index="1"><span></span></div>
-                <div class="pattern-dot" data-index="2"><span></span></div>
-                <div class="pattern-dot" data-index="3"><span></span></div>
-                <div class="pattern-dot" data-index="4"><span></span></div>
-                <div class="pattern-dot" data-index="5"><span></span></div>
-                <div class="pattern-dot" data-index="6"><span></span></div>
-                <div class="pattern-dot" data-index="7"><span></span></div>
-                <div class="pattern-dot" data-index="8"><span></span></div>
+                <div class="pattern-dot" data-index="0" role="button" aria-label="Dot 1"><span></span></div>
+                <div class="pattern-dot" data-index="1" role="button" aria-label="Dot 2"><span></span></div>
+                <div class="pattern-dot" data-index="2" role="button" aria-label="Dot 3"><span></span></div>
+                <div class="pattern-dot" data-index="3" role="button" aria-label="Dot 4"><span></span></div>
+                <div class="pattern-dot" data-index="4" role="button" aria-label="Dot 5"><span></span></div>
+                <div class="pattern-dot" data-index="5" role="button" aria-label="Dot 6"><span></span></div>
+                <div class="pattern-dot" data-index="6" role="button" aria-label="Dot 7"><span></span></div>
+                <div class="pattern-dot" data-index="7" role="button" aria-label="Dot 8"><span></span></div>
+                <div class="pattern-dot" data-index="8" role="button" aria-label="Dot 9"><span></span></div>
               </div>
             </div>
             <div class="pattern-feedback" id="pattern-feedback">Connect dots in sequence to draw pattern</div>
-            <button type="button" class="btn-reset-pattern" id="btn-reset-pattern">🔄 Reset Pattern</button>
+            <button type="button" class="btn-reset-pattern" id="btn-reset-pattern">
+              <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+              <span>Reset Pattern</span>
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Action Footer -->
+      <!-- Action Footer: Proper padding, equal height, no text wrapping, clear visual hierarchy -->
       <div class="vault-modal-footer">
-        <button type="button" class="btn-icon-secondary" id="btn-vault-cancel"
-          style="padding: 0.65rem 1.4rem; border-radius: var(--radius-pill);">Cancel</button>
-        <button type="button" class="btn-clean-reset-pw" id="btn-vault-reset-trigger" style="display: none;">
-          <span>🔑</span> Reset Password
+        <button type="button" class="btn-vault-cancel" id="btn-vault-cancel">
+          Cancel
         </button>
-        <button type="button" class="btn-clean" id="btn-vault-lock-now"
-          style="display: none; padding: 0.65rem 1.2rem; border-radius: var(--radius-pill); background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-weight: 700; cursor: pointer;">
-          🔒 Lock Vault Now
+        <button type="button" class="btn-vault-reset-pw" id="btn-vault-reset-trigger" style="display: none;">
+          <i class="fa-solid fa-key" aria-hidden="true"></i>
+          <span>Reset Password</span>
+        </button>
+        <button type="button" class="btn-vault-lock-caution" id="btn-vault-lock-now" style="display: none;">
+          <i class="fa-solid fa-lock" aria-hidden="true"></i>
+          <span>Lock Vault Now</span>
         </button>
         <button type="button" class="btn-vault-save-action" id="btn-vault-save-submit">
-          <span id="btn-vault-save-icon">🔒</span>
+          <span id="btn-vault-save-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
           <span id="btn-vault-save-text" data-i18n="btnEncryptVault">Encrypt & Secure Documents</span>
         </button>
       </div>
@@ -2068,11 +2138,11 @@
   <!-- Vault Unlock Prompt Modal (When locked vault exists) -->
   <div class="modal-overlay" id="vault-unlock-modal" style="z-index: 180;">
     <div class="modal-dialog" style="max-width: 440px;">
-      <button class="modal-close-x" id="vault-unlock-close">✕</button>
+      <button class="modal-close-x" id="vault-unlock-close" aria-label="Close unlock modal"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       <div style="text-align: center; margin-bottom: 1.2rem;">
         <div
-          style="width: 52px; height: 52px; background: #dcfce7; color: #15803d; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.6rem;">
-          🔒</div>
+          style="width: 52px; height: 52px; background: #dcfce7; color: #15803d; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.6rem;">
+          <i class="fa-solid fa-lock" aria-hidden="true"></i></div>
         <h2 style="font-size: 1.3rem; color: #0f172a; margin-bottom: 0.3rem;">Unlock Your Document Vault</h2>
         <p style="font-size: 0.85rem; color: #64748b;" id="unlock-modal-desc">Enter your secret password to decrypt and
           access your documents.</p>
@@ -2089,15 +2159,16 @@
       <div
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; padding: 0 0.2rem;">
         <button type="button" class="btn-link-reset-pw" id="btn-vault-forgot-pass">
-          <span>🔄</span> Forgot / Reset Password?
+          <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> <span>Forgot / Reset Password?</span>
         </button>
       </div>
 
       <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
-        <button type="button" class="btn-icon-secondary" id="btn-unlock-cancel"
-          style="padding: 0.6rem 1.2rem; border-radius: var(--radius-pill);">Cancel</button>
-        <button type="button" class="btn-add-payment-action" id="btn-unlock-submit" style="padding: 0.6rem 1.6rem;">🔓
-          Unlock Vault</button>
+        <button type="button" class="btn-vault-cancel" id="btn-unlock-cancel">Cancel</button>
+        <button type="button" class="btn-vault-save-action" id="btn-unlock-submit">
+          <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
+          <span>Unlock Vault</span>
+        </button>
       </div>
     </div>
   </div>
@@ -2105,11 +2176,11 @@
   <!-- Vault Password Reset Modal -->
   <div class="modal-overlay" id="vault-reset-modal" style="z-index: 190;">
     <div class="modal-dialog" style="max-width: 460px;">
-      <button class="modal-close-x" id="vault-reset-close">✕</button>
+      <button class="modal-close-x" id="vault-reset-close" aria-label="Close reset modal"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       <div style="text-align: center; margin-bottom: 1.2rem;">
         <div
-          style="width: 52px; height: 52px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.6rem;">
-          🔄</div>
+          style="width: 52px; height: 52px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.6rem;">
+          <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></div>
         <h2 style="font-size: 1.3rem; color: #0f172a; margin-bottom: 0.3rem;">Reset Vault Password</h2>
         <p style="font-size: 0.85rem; color: #64748b;">Set a new secret password, PIN, or pattern to protect your
           sensitive documents.</p>
@@ -2120,15 +2191,28 @@
       </div>
 
       <!-- Lock Method Choice for Reset -->
-      <div class="security-type-tabs" style="margin-bottom: 1.2rem;">
-        <button type="button" class="sec-tab-btn active" data-tab="word" id="reset-tab-word">
-          <span>🔤</span> <span>Password</span>
+      <div class="security-type-tabs" style="margin-bottom: 1.2rem;" role="tablist" aria-label="Reset security lock methods">
+        <button type="button" class="sec-tab-btn active" data-tab="word" id="reset-tab-word" role="tab" aria-selected="true">
+          <span class="sec-tab-icon"><i class="fa-solid fa-key" aria-hidden="true"></i></span> <span>Password</span>
         </button>
-        <button type="button" class="sec-tab-btn" data-tab="number" id="reset-tab-number">
-          <span>🔢</span> <span>PIN</span>
+        <button type="button" class="sec-tab-btn" data-tab="number" id="reset-tab-number" role="tab" aria-selected="false">
+          <span class="sec-tab-icon"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></span> <span>PIN</span>
         </button>
-        <button type="button" class="sec-tab-btn" data-tab="pattern" id="reset-tab-pattern">
-          <span>⚡</span> <span>Pattern</span>
+        <button type="button" class="sec-tab-btn" data-tab="pattern" id="reset-tab-pattern" role="tab" aria-selected="false">
+          <span class="sec-tab-icon">
+            <svg class="pattern-tab-svg" viewBox="0 0 18 18" width="15" height="15" fill="currentColor" aria-hidden="true">
+              <circle cx="3" cy="3" r="1.7"/>
+              <circle cx="9" cy="3" r="1.7"/>
+              <circle cx="15" cy="3" r="1.7"/>
+              <circle cx="3" cy="9" r="1.7"/>
+              <circle cx="9" cy="9" r="1.7"/>
+              <circle cx="15" cy="9" r="1.7"/>
+              <circle cx="3" cy="15" r="1.7"/>
+              <circle cx="9" cy="15" r="1.7"/>
+              <circle cx="15" cy="15" r="1.7"/>
+            </svg>
+          </span>
+          <span>Pattern</span>
         </button>
       </div>
 
@@ -2140,7 +2224,9 @@
             <input type="password" id="vault-reset-word-pass" class="input-clean"
               placeholder="Enter new secret password" autocomplete="new-password">
             <button type="button" class="btn-toggle-pw"
-              onclick="togglePasswordVisibility('vault-reset-word-pass', this)" title="Show/Hide Password">👁️</button>
+              onclick="togglePasswordVisibility('vault-reset-word-pass', this)" title="Show password" aria-label="Show password">
+              <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
         <div style="margin-bottom: 0.9rem;">
@@ -2150,7 +2236,9 @@
               autocomplete="new-password">
             <button type="button" class="btn-toggle-pw"
               onclick="togglePasswordVisibility('vault-reset-word-confirm', this)"
-              title="Show/Hide Password">👁️</button>
+              title="Show password" aria-label="Show password">
+              <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -2160,19 +2248,23 @@
         <div style="margin-bottom: 0.9rem;">
           <label class="input-label-clean" for="vault-reset-pin-pass">New 4 to 6 Digit PIN *</label>
           <div class="password-input-wrap">
-            <input type="password" id="vault-reset-pin-pass" class="input-clean" placeholder="• • • •" maxlength="6"
-              style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
+            <input type="password" id="vault-reset-pin-pass" class="input-clean input-pin-display" placeholder="• • • •" maxlength="6"
+              inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
             <button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility('vault-reset-pin-pass', this)"
-              title="Show/Hide PIN">👁️</button>
+              title="Show PIN" aria-label="Show PIN">
+              <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
         <div style="margin-bottom: 0.9rem;">
           <label class="input-label-clean" for="vault-reset-pin-confirm">Confirm New PIN *</label>
           <div class="password-input-wrap">
-            <input type="password" id="vault-reset-pin-confirm" class="input-clean" placeholder="• • • •" maxlength="6"
-              style="letter-spacing: 0.35rem; font-size: 1.2rem; text-align: center;" autocomplete="new-password">
+            <input type="password" id="vault-reset-pin-confirm" class="input-clean input-pin-display" placeholder="• • • •" maxlength="6"
+              inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
             <button type="button" class="btn-toggle-pw"
-              onclick="togglePasswordVisibility('vault-reset-pin-confirm', this)" title="Show/Hide PIN">👁️</button>
+              onclick="togglePasswordVisibility('vault-reset-pin-confirm', this)" title="Show PIN" aria-label="Show PIN">
+              <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -2198,15 +2290,18 @@
             </div>
           </div>
           <div class="pattern-feedback" id="reset-pattern-feedback">Connect dots in sequence</div>
-          <button type="button" class="btn-reset-pattern" id="btn-clear-reset-pattern">🔄 Redraw Pattern</button>
+          <button type="button" class="btn-reset-pattern" id="btn-clear-reset-pattern">
+            <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+            <span>Redraw Pattern</span>
+          </button>
         </div>
       </div>
 
       <div style="display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1.4rem;">
-        <button type="button" class="btn-icon-secondary" id="btn-reset-modal-cancel"
-          style="padding: 0.6rem 1.2rem; border-radius: var(--radius-pill);">Cancel</button>
-        <button type="button" class="btn-vault-save-action" id="btn-submit-vault-reset" style="padding: 0.6rem 1.6rem;">
-          <span>🔒</span> <span>Save New Password</span>
+        <button type="button" class="btn-vault-cancel" id="btn-reset-modal-cancel">Cancel</button>
+        <button type="button" class="btn-vault-save-action" id="btn-submit-vault-reset">
+          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+          <span>Save New Password</span>
         </button>
       </div>
     </div>
