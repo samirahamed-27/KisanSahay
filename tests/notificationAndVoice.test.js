@@ -208,7 +208,6 @@ test('Feature 7: Neural TTS Service & Speed Rate Options', async () => {
 
 test('Feature 8: Top Bar Internet Speed Monitor (WiFi Icon with Green, Yellow, and Red States)', () => {
   const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-  const copyHtml = fs.readFileSync(path.join(__dirname, '../public copy/index.html'), 'utf8');
   const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
   const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
 
@@ -217,9 +216,6 @@ test('Feature 8: Top Bar Internet Speed Monitor (WiFi Icon with Green, Yellow, a
   assert.ok(indexHtml.includes('id="net-speed-val"'), 'index.html must contain net-speed-val');
   assert.ok(indexHtml.includes('class="net-wifi-icon"'), 'index.html must contain WiFi SVG icon');
   assert.ok(indexHtml.includes('header-left-wrap'), 'index.html must position speed pill in top bar left corner');
-
-  // 2. Parity check with public copy/
-  assert.equal(indexHtml, copyHtml, 'public/index.html and public copy/index.html must match exactly');
 
   // 3. CSS styles verification (Normal, Yellow/Slow, Red/Too Slow, Dark Mode)
   assert.ok(stylesCss.includes('.net-speed-pill.status-fast'), 'styles.css must style fast status');
@@ -240,17 +236,9 @@ test('Feature 8: Top Bar Internet Speed Monitor (WiFi Icon with Green, Yellow, a
 
 test('Feature 9: All-India State Selector, High-Contrast Cards & Multi-Step Qualification Questionnaire', () => {
   const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-  const copyHtml = fs.readFileSync(path.join(__dirname, '../public copy/index.html'), 'utf8');
   const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
-  const copyStylesCss = fs.readFileSync(path.join(__dirname, '../public copy/styles.css'), 'utf8');
   const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
-  const copyAppJs = fs.readFileSync(path.join(__dirname, '../public copy/app.js'), 'utf8');
   const schemesData = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/data/schemesDatabase.json'), 'utf8'));
-
-  // 1. Parity checks between public and public copy
-  assert.equal(indexHtml, copyHtml, 'public/index.html and public copy/index.html must match exactly');
-  assert.equal(stylesCss, copyStylesCss, 'public/styles.css and public copy/styles.css must match exactly');
-  assert.equal(appJs, copyAppJs, 'public/app.js and public copy/app.js must match exactly');
 
   // 2. High-Contrast Scheme Card Descriptions in Light & Dark Mode
   assert.ok(stylesCss.includes('.scheme-card-desc'), 'styles.css must style scheme-card-desc');
@@ -293,25 +281,13 @@ test('Feature 9: All-India State Selector, High-Contrast Cards & Multi-Step Qual
 
 test('Feature 10: Progressive Web App (PWA) Manifest, Service Worker & Install Button Parity', () => {
   const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-  const copyHtml = fs.readFileSync(path.join(__dirname, '../public copy/index.html'), 'utf8');
   const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
-  const copyStylesCss = fs.readFileSync(path.join(__dirname, '../public copy/styles.css'), 'utf8');
   const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
-  const copyAppJs = fs.readFileSync(path.join(__dirname, '../public copy/app.js'), 'utf8');
   const swJs = fs.readFileSync(path.join(__dirname, '../public/sw.js'), 'utf8');
-  const copySwJs = fs.readFileSync(path.join(__dirname, '../public copy/sw.js'), 'utf8');
-
-  // 1. Strict parity between public/ and public copy/
-  assert.equal(indexHtml, copyHtml, 'public/index.html and public copy/index.html must match exactly');
-  assert.equal(stylesCss, copyStylesCss, 'public/styles.css and public copy/styles.css must match exactly');
-  assert.equal(appJs, copyAppJs, 'public/app.js and public copy/app.js must match exactly');
-  assert.equal(swJs, copySwJs, 'public/sw.js and public copy/sw.js must match exactly');
 
   // 2. Manifest file verification
   const manifestPath = path.join(__dirname, '../public/manifest.json');
-  const copyManifestPath = path.join(__dirname, '../public copy/manifest.json');
   assert.ok(fs.existsSync(manifestPath), 'public/manifest.json must exist');
-  assert.ok(fs.existsSync(copyManifestPath), 'public copy/manifest.json must exist');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(manifest.name, 'KisanSahay');
   assert.equal(manifest.short_name, 'KisanSahay');
@@ -326,8 +302,6 @@ test('Feature 10: Progressive Web App (PWA) Manifest, Service Worker & Install B
   // 3. Icons files verification
   assert.ok(fs.existsSync(path.join(__dirname, '../public/icons/icon-192.png')), 'public/icons/icon-192.png must exist');
   assert.ok(fs.existsSync(path.join(__dirname, '../public/icons/icon-512.png')), 'public/icons/icon-512.png must exist');
-  assert.ok(fs.existsSync(path.join(__dirname, '../public copy/icons/icon-192.png')), 'public copy/icons/icon-192.png must exist');
-  assert.ok(fs.existsSync(path.join(__dirname, '../public copy/icons/icon-512.png')), 'public copy/icons/icon-512.png must exist');
 
   // 4. HTML Meta Tags and Elements
   assert.ok(indexHtml.includes('<link rel="manifest" href="/manifest.json">'), 'index.html must include manifest link');
@@ -359,8 +333,6 @@ test('Feature 10: Progressive Web App (PWA) Manifest, Service Worker & Install B
 
   // 8. Download App Bar inside Switch Profile Column
   const multiuserJs = fs.readFileSync(path.join(__dirname, '../public/multiuser.js'), 'utf8');
-  const copyMultiuserJs = fs.readFileSync(path.join(__dirname, '../public copy/multiuser.js'), 'utf8');
-  assert.equal(multiuserJs, copyMultiuserJs, 'public/multiuser.js and public copy/multiuser.js must match exactly');
   assert.ok(multiuserJs.includes('dropdown-pwa-download-bar'), 'multiuser.js must include dropdown-pwa-download-bar');
   assert.ok(multiuserJs.includes('id="dropdown-btn-download-app"'), 'multiuser.js must include #dropdown-btn-download-app');
   assert.ok(stylesCss.includes('.dropdown-pwa-download-bar'), 'styles.css must style .dropdown-pwa-download-bar');

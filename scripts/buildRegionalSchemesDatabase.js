@@ -9,7 +9,6 @@ const path = require('path');
 const SCHEMES_SRC_FILE = path.join(__dirname, '..', 'src', 'data', 'schemesDatabase.json');
 const SCHEMES_DATA_DIR_FILE = path.join(__dirname, '..', 'Data', 'Data', 'schemes.json');
 const PUBLIC_SCHEMES_JS = path.join(__dirname, '..', 'public', 'schemes_data.js');
-const PUBLIC_COPY_SCHEMES_JS = path.join(__dirname, '..', 'public copy', 'schemes_data.js');
 
 // Load base existing schemes
 let baseSchemes = [];
@@ -1284,7 +1283,5 @@ const jsContent = `window.KISAN_SCHEMES_DATA = ${JSON.stringify(allSchemes, null
 fs.writeFileSync(PUBLIC_SCHEMES_JS, jsContent, 'utf8');
 console.log(`✓ Saved to: ${PUBLIC_SCHEMES_JS}`);
 
-fs.writeFileSync(PUBLIC_COPY_SCHEMES_JS, jsContent, 'utf8');
-console.log(`✓ Saved to: ${PUBLIC_COPY_SCHEMES_JS}`);
 
 console.log('All regional schemes compiled successfully!');

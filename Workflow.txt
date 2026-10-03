@@ -38,9 +38,6 @@ KisanSahay/
 │   ├── manifest.json                  ← PWA manifest (name, icons, shortcuts)
 │   └── icons/                         ← App icons (192x192, 512x512)
 │
-├── public copy/                       ← Exact mirror of public/ (test parity)
-│   └── [identical files as public/]
-│
 ├── src/                               ← Backend source code
 │   ├── routes/
 │   │   ├── apiRoutes.js               ← All /api/* route definitions
@@ -880,7 +877,7 @@ multiuserAndCategories.test.js       4   Profile engine, OTP generation, 15 cate
 notificationAndVoice.test.js        10   EMI reminders, Voice input, Loan validation,
                                          Aadhaar linking, Document checklist,
                                          Active loan protection, TTS, State selector,
-                                         PWA parity, public/ & public copy/ identity
+                                         PWA assets, Service Worker & Web App
 regionalSchemesAndCrops.test.js      4   Crops catalog, Schemes DB (679+),
                                          Data sync mirror, Territorial coverage
 scoringEngine.test.js                4   Multi-factor scoring, Strict sequence,

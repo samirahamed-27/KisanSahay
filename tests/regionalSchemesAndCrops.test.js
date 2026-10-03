@@ -56,9 +56,6 @@ test('Data Synchronization - Mirror Files Consistency', () => {
 
   const publicSchemesFile = fs.readFileSync(path.join(__dirname, '..', 'public', 'schemes_data.js'), 'utf8');
   assert.ok(publicSchemesFile.includes('window.KISAN_SCHEMES_DATA = ['), 'public/schemes_data.js must export window.KISAN_SCHEMES_DATA');
-
-  const publicCopySchemesFile = fs.readFileSync(path.join(__dirname, '..', 'public copy', 'schemes_data.js'), 'utf8');
-  assert.ok(publicCopySchemesFile.includes('window.KISAN_SCHEMES_DATA = ['), 'public copy/schemes_data.js must export window.KISAN_SCHEMES_DATA');
 });
 
 test('Territorial Coverage - UP, MP, and Bihar Soil Profiles & Land Circle Rates', () => {

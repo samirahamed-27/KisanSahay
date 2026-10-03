@@ -1029,8 +1029,7 @@ def _init_translations():
     """Initializes the multi-language translation dictionaries and reverse text lookup."""
     global TRANSLATIONS_DICT, TEXT_LOOKUP_DICT
     js_paths = [
-        BASE_DIR / "public" / "different_languages.js",
-        BASE_DIR / "public copy" / "different_languages.js"
+        BASE_DIR / "public" / "different_languages.js"
     ]
     for p in js_paths:
         if p.exists():
@@ -1505,7 +1504,12 @@ def _chat_pipeline(request: ChatRequest, query: str, lang: str, start_time: floa
         logger.warning("Eligibility preview failed: %s", elig_err, exc_info=True)
     is_elig_check = bool(elig_preview.get("is_eligibility_query"))
 
-    faq_match = None if is_elig_check else find_faq_match(query, lang)
+    is_direct_exact_query = bool(
+        (extract_mentioned_location(query) or request.district)
+        and (is_explicit_soil_query(query) or is_explicit_training_query(query) or is_explicit_mandi_query(query))
+    )
+
+    faq_match = None if (is_elig_check or is_direct_exact_query) else find_faq_match(query, lang)
     if faq_match:
         faq_answer, faq_id = faq_match
         logger.info("📚 FAQ match '%s' — returning curated answer (main path)", faq_id)
