@@ -1,0 +1,1 @@
+../ingest_static.py

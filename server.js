@@ -13,6 +13,10 @@ const { startScheduledIngestion } = require('./src/services/ingestionService');
 const { startScheduledReminders } = require('./src/services/notificationService');
 
 app.use(express.json());
+const frontendDir = fs.existsSync(path.join(__dirname, 'frontend'))
+  ? path.join(__dirname, 'frontend')
+  : path.join(__dirname, 'public');
+app.use(express.static(frontendDir));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Exact Lookups Proxy (KVK Directory, Events, Advisories, Mandi Prices) to Python FastAPI backend
@@ -536,7 +540,10 @@ app.use(errorHandler);
 
 // Fallback to index.html for SPA routing
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const indexPath = fs.existsSync(path.join(__dirname, 'frontend', 'index.html'))
+    ? path.join(__dirname, 'frontend', 'index.html')
+    : path.join(__dirname, 'public', 'index.html');
+  res.sendFile(indexPath);
 });
 
 // Start Server

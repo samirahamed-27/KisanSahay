@@ -45,6 +45,7 @@ build/
 # ChromaDB & Generated Vector Indexes
 chroma_db/
 src/data/rag_index.json
+backend/src/data/rag_index.json
 
 # iOS / Capacitor
 ios/App/Pods/
