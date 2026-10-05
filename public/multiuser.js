@@ -135,8 +135,14 @@
 
           <!-- Download KisanSahay App Bar inside Switch Profile Column -->
           <div class="dropdown-pwa-download-bar" id="dropdown-btn-download-app" role="button" tabindex="0" title="Download & Install KisanSahay App on your phone or PC">
-            <div class="pwa-download-icon-wrap">
-              <img src="/icons/icon-192.png" alt="KisanSahay" class="pwa-bar-mini-icon">
+            <div class="pwa-download-icon-wrap" aria-hidden="true">
+              <div class="pwa-vector-badge">
+                <svg class="pwa-download-svg-logo" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </div>
               <span class="pwa-pulse-dot"></span>
             </div>
             <div class="pwa-download-meta">
@@ -144,9 +150,15 @@
                 <span class="pwa-download-title">Download App</span>
                 <span class="pwa-free-pill">PWA</span>
               </div>
-              <span class="pwa-download-sub">Install on Mobile or PC • 0 MB Storage</span>
+              <span class="pwa-download-sub">Fast &amp; Offline • Mobile &amp; PC</span>
             </div>
-            <span class="pwa-download-btn-pill">⬇️ Install</span>
+            <span class="pwa-download-btn-pill">
+              <svg class="pwa-btn-svg" viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+              </svg>
+              <span>Install</span>
+            </span>
           </div>
 
           <div class="dropdown-profiles-list">

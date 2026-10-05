@@ -11938,37 +11938,60 @@ body.dark-mode .btn-clean-reset-pw {
 }
 
 /* ==========================================================================
-   PWA Download Bar in Switch Profile Dropdown (Removed from UI per user request)
+   PWA Download Bar in Switch Profile Dropdown
    ========================================================================== */
 .dropdown-pwa-download-bar {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin: 0.45rem 0.6rem;
-  padding: 0.65rem 0.75rem;
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-  border: 1.5px solid #86efac;
-  border-radius: 12px;
+  margin: 0.45rem 0.25rem 0.55rem;
+  padding: 0.7rem 0.85rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(22, 163, 74, 0.06);
 }
 
 .dropdown-pwa-download-bar:hover {
-  background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
-  border-color: #4ade80;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.22);
+  background: linear-gradient(135deg, #ffffff 0%, #dcfce7 100%);
+  border-color: #22c55e;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.16), 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .pwa-download-icon-wrap {
   position: relative;
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pwa-vector-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropdown-pwa-download-bar:hover .pwa-vector-badge {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.pwa-download-svg-logo {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 .pwa-bar-mini-icon {
@@ -11987,6 +12010,7 @@ body.dark-mode .btn-clean-reset-pw {
   background: #22c55e;
   border: 1.5px solid #ffffff;
   border-radius: 50%;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
   animation: pulseDot 2s infinite;
 }
 
@@ -12018,31 +12042,35 @@ body.dark-mode .btn-clean-reset-pw {
 .pwa-download-title-row {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .pwa-download-title {
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: #15803d;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #0f172a;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .pwa-free-pill {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  padding: 0.1rem 0.4rem;
-  background: #15803d;
-  color: #ffffff;
-  border-radius: 9999px;
+  padding: 0.1rem 0.45rem;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.2;
 }
 
 .pwa-download-sub {
-  font-size: 0.7rem;
-  color: #475569;
-  line-height: 1.2;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -12050,41 +12078,65 @@ body.dark-mode .btn-clean-reset-pw {
 
 .pwa-download-btn-pill {
   flex-shrink: 0;
-  padding: 0.35rem 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
   background: linear-gradient(135deg, #16a34a, #15803d);
   color: #ffffff;
   border: none;
   border-radius: 9999px;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.35);
-  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.28);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pwa-btn-svg {
+  display: block;
 }
 
 .dropdown-pwa-download-bar:hover .pwa-download-btn-pill {
   background: linear-gradient(135deg, #22c55e, #16a34a);
   transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
 }
 
 body.dark-mode .dropdown-pwa-download-bar {
   display: flex;
-  background: linear-gradient(135deg, #052e16 0%, #064e3b 100%);
-  border-color: #059669;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+  border-color: rgba(52, 211, 153, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .dropdown-pwa-download-bar:hover {
-  background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
-  border-color: #10b981;
+  background: linear-gradient(135deg, #1e293b 0%, #047857 100%);
+  border-color: #34d399;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 14px rgba(52, 211, 153, 0.2);
+}
+
+body.dark-mode .pwa-vector-badge {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
 body.dark-mode .pwa-download-title {
-  color: #86efac;
+  color: #f8fafc;
+}
+
+body.dark-mode .pwa-free-pill {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.35);
 }
 
 body.dark-mode .pwa-download-sub {
-  color: #cbd5e1;
+  color: #94a3b8;
+}
+
+body.dark-mode .pwa-pulse-dot {
+  border-color: #0f172a;
 }
 
 /* ==========================================================================
@@ -12672,6 +12724,9 @@ body.dark-mode .pwa-qr-desc span {
 }
 
 .btn-mobile-bar-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.45rem 0.85rem;
   background: linear-gradient(135deg, #16a34a, #15803d);
   border: 1px solid #4ade80;
@@ -12682,6 +12737,12 @@ body.dark-mode .pwa-qr-desc span {
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
   white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-mobile-bar-download:hover {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  transform: scale(1.03);
 }
 
 .btn-mobile-bar-close {

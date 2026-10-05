@@ -3145,15 +3145,26 @@
     <!-- Floating Mobile App Download Bar (Visible on mobile screens) -->
     <aside class="mobile-app-download-bar" id="mobile-app-download-bar" aria-label="Download KisanSahay Mobile App">
       <div class="mobile-bar-left">
-        <img src="/icons/icon-192.png" alt="KisanSahay" class="mobile-bar-icon" width="36" height="36">
+        <div class="pwa-vector-badge mobile-bar-icon" aria-hidden="true">
+          <svg class="pwa-download-svg-logo" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+            <path d="M12 18h.01" stroke-width="2.5"></path>
+            <path d="M12 6v6"></path>
+            <path d="M9 9.5l3 3 3-3"></path>
+          </svg>
+        </div>
         <div class="mobile-bar-text">
           <span class="mobile-bar-title">KisanSahay App</span>
-          <span class="mobile-bar-sub">0 MB • Offline • 15 Languages</span>
+          <span class="mobile-bar-sub">Fast &amp; Offline • 15 Languages</span>
         </div>
       </div>
       <div class="mobile-bar-right">
         <button type="button" class="btn-mobile-bar-download" id="btn-mobile-bar-download">
-          <span>⬇️ Download App</span>
+          <svg class="pwa-btn-svg" viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+          </svg>
+          <span>Download App</span>
         </button>
         <button type="button" class="btn-mobile-bar-close" id="btn-mobile-bar-close"
           aria-label="Dismiss banner">✕</button>
