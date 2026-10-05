@@ -8,12 +8,12 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 
-const { translationCache, TranslationCache } = require('../src/services/translationCache');
-const { translationService } = require('../src/services/translationService');
-const apiRoutes = require('../src/routes/apiRoutes');
+const { translationCache, TranslationCache } = require('../backend/src/services/translationCache');
+const { translationService } = require('../backend/src/services/translationService');
+const apiRoutes = require('../backend/src/routes/apiRoutes');
 
 test('Translation Suite — 1. Single Source of Truth Base Strings Extraction', () => {
-  const stringsPath = path.join(__dirname, '../src/data/strings.json');
+  const stringsPath = path.join(__dirname, '../backend/src/data/strings.json');
   assert.ok(fs.existsSync(stringsPath), 'src/data/strings.json must exist');
 
   const strings = JSON.parse(fs.readFileSync(stringsPath, 'utf8'));
@@ -29,7 +29,7 @@ test('Translation Suite — 1. Single Source of Truth Base Strings Extraction', 
   assert.ok(strings.heroTitle, 'Must have heroTitle key');
 
   // Verify public/different_languages.js exports matching BASE_STRINGS
-  const clientLang = require('../public/different_languages.js');
+  const clientLang = require('../frontend/different_languages.js');
   assert.ok(clientLang.BASE_STRINGS, 'Client different_languages.js must export BASE_STRINGS');
   assert.strictEqual(clientLang.BASE_STRINGS.navHome, strings.navHome);
   assert.ok(Array.isArray(clientLang.INDIAN_LANGUAGES), 'INDIAN_LANGUAGES must be an array');

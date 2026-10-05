@@ -5,7 +5,7 @@ const {
   getSoilProfile,
   getLandValuation,
   getCropSoilSuitability
-} = require('../src/services/locationContext');
+} = require('../backend/src/services/locationContext');
 
 test('Location Context - Direct district & state lookup', () => {
   const context = getLocationContext({

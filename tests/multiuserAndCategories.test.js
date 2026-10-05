@@ -4,7 +4,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const multiuserService = require('../src/services/multiuserService');
+const multiuserService = require('../backend/src/services/multiuserService');
 
 test('Multi-User Engine — Initial State & Default Profile', () => {
   const data = multiuserService.loadProfiles();
@@ -77,7 +77,7 @@ test('National 15 Categories — Schema, Metadata & Flagship Schemes', () => {
   // Load categories_data.js in mock browser environment
   const fs = require('fs');
   const path = require('path');
-  const catCode = fs.readFileSync(path.join(__dirname, '../public/categories_data.js'), 'utf8');
+  const catCode = fs.readFileSync(path.join(__dirname, '../frontend/categories_data.js'), 'utf8');
 
   const mockWindow = {};
   const fn = new Function('window', catCode);

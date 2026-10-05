@@ -9,9 +9,9 @@ const path = require('path');
 
 test('translateBatch UI Loading Indicator Suite', async (t) => {
   // Read public/app.js to verify implementation
-  const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
-  const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
-  const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+  const appJs = fs.readFileSync(path.join(__dirname, '../frontend/app.js'), 'utf8');
+  const stylesCss = fs.readFileSync(path.join(__dirname, '../frontend/styles.css'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '../frontend/index.html'), 'utf8');
 
   await t.test('1. HTML includes progress bar and floating indicator elements', () => {
     assert.ok(indexHtml.includes('id="translation-progress-bar"'), 'Must include #translation-progress-bar in index.html');

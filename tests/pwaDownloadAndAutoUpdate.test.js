@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 test('PWA Download App in Profile Switch & Auto-Update Suite', async (t) => {
-  const publicPath = path.join(__dirname, '../public');
+  const publicPath = path.join(__dirname, '../frontend');
   const indexHtml = fs.readFileSync(path.join(publicPath, 'index.html'), 'utf8');
   const stylesCss = fs.readFileSync(path.join(publicPath, 'styles.css'), 'utf8');
   const multiuserJs = fs.readFileSync(path.join(publicPath, 'multiuser.js'), 'utf8');
@@ -53,8 +53,8 @@ test('PWA Download App in Profile Switch & Auto-Update Suite', async (t) => {
   await t.test('6. Direct OS downloadable packages exist for macOS and Windows', () => {
     const macZip = path.join(publicPath, 'downloads/KisanSahay-Mac.zip');
     const winZip = path.join(publicPath, 'downloads/KisanSahay-Windows.zip');
-    assert.ok(fs.existsSync(macZip), 'public/downloads/KisanSahay-Mac.zip must exist');
-    assert.ok(fs.existsSync(winZip), 'public/downloads/KisanSahay-Windows.zip must exist');
+    assert.ok(fs.existsSync(macZip), 'frontend/downloads/KisanSahay-Mac.zip must exist');
+    assert.ok(fs.existsSync(winZip), 'frontend/downloads/KisanSahay-Windows.zip must exist');
 
     assert.ok(fs.statSync(macZip).size > 1000, 'macOS zip must be non-empty valid package');
     assert.ok(fs.statSync(winZip).size > 100, 'Windows zip must be non-empty valid package');

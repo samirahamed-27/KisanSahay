@@ -37,7 +37,8 @@ test('Live Backend Translation & Fallback Integration Suite', async (t) => {
     const res = await fetch(`${API_URL}?target_lang=hi`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(3000)
     });
 
     assert.strictEqual(res.ok, true, `API returned status ${res.status}`);
@@ -65,7 +66,8 @@ test('Live Backend Translation & Fallback Integration Suite', async (t) => {
     const res = await fetch(`${API_URL}?target_lang=pa`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(3000)
     });
 
     assert.strictEqual(res.ok, true, `API returned status ${res.status}`);
@@ -90,7 +92,8 @@ test('Live Backend Translation & Fallback Integration Suite', async (t) => {
         const res = await fetch(`http://localhost:8000/api/nonexistent_route?target_lang=${targetLang}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fields)
+          body: JSON.stringify(fields),
+          signal: AbortSignal.timeout(3000)
         });
 
         if (!res.ok) {

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { assessDebtSafety } = require('../src/services/debtSafetyEngine');
+const { assessDebtSafety } = require('../backend/src/services/debtSafetyEngine');
 
 test('Debt Safety Engine - Safe DTI calculation', () => {
   const annualIncome = 300000; // Monthly income = 25,000

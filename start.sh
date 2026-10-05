@@ -82,9 +82,9 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM EXIT
 
-# 5. Start Python Backend (app.py) in background
+# 5. Start Python Backend (backend/app.py) in background
 echo -e "${BLUE}🚀 Starting Python AI Backend on port ${FASTAPI_PORT}...${NC}"
-"$PYTHON_EXEC" app.py &
+"$PYTHON_EXEC" backend/app.py &
 PY_PID=$!
 
 # Wait for backend health check
@@ -111,4 +111,4 @@ echo -e "=================================================================="
 echo -e "Press ${YELLOW}Ctrl+C${NC} to stop both servers."
 echo -e ""
 
-node server.js
+node backend/server.js

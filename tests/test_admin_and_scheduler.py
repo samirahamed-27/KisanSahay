@@ -25,6 +25,11 @@ from unittest.mock import patch, MagicMock
 
 from fastapi.testclient import TestClient
 
+import sys
+_backend_dir = Path(__file__).resolve().parent.parent / "backend"
+if str(_backend_dir) not in sys.path:
+    sys.path.insert(0, str(_backend_dir))
+
 from app import app, ADMIN_API_KEY
 from src.admin import (
     get_pending_changes,

@@ -3,11 +3,11 @@ const assert = require('node:assert/strict');
 const path = require('path');
 const fs = require('fs');
 
-const { scoreScheme, calculateFilterFacets, rankSchemes } = require('../src/services/scoringEngine');
-const { retrieveRelevantSchemes, generateGroundedAnswer, processAssistantQuery } = require('../src/services/assistantService');
-const { assessDebtCapacity, evaluateSchemeSafety } = require('../src/services/debtSafetyEngine');
+const { scoreScheme, calculateFilterFacets, rankSchemes } = require('../backend/src/services/scoringEngine');
+const { retrieveRelevantSchemes, generateGroundedAnswer, processAssistantQuery } = require('../backend/src/services/assistantService');
+const { assessDebtCapacity, evaluateSchemeSafety } = require('../backend/src/services/debtSafetyEngine');
 
-const schemesPath = path.join(__dirname, '..', 'src', 'data', 'schemesDatabase.json');
+const schemesPath = path.join(__dirname, '..', 'backend', 'src', 'data', 'schemesDatabase.json');
 const schemesDatabase = JSON.parse(fs.readFileSync(schemesPath, 'utf8'));
 
 test('Explainable Criteria Breakdown & 95% Hard Cap Rule', () => {
@@ -104,7 +104,7 @@ test('Sahay AI Assistant — Hindi Language Grounding', async () => {
 });
 
 test('Human Review Gate — Staged Scheme Queue & Verification', () => {
-  const stagedFilePath = path.join(__dirname, '..', 'src', 'data', 'stagedSchemes.json');
+  const stagedFilePath = path.join(__dirname, '..', 'backend', 'src', 'data', 'stagedSchemes.json');
   assert.ok(fs.existsSync(stagedFilePath), 'stagedSchemes.json must exist');
 
   const stagedRecords = JSON.parse(fs.readFileSync(stagedFilePath, 'utf8'));

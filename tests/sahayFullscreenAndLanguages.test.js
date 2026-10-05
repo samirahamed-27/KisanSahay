@@ -4,9 +4,9 @@ const fs = require('fs');
 const path = require('path');
 
 test('Sahay AI — Full Screen Mode UI & Keybindings Verification', () => {
-  const html = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-  const css = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
-  const js = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '../frontend/index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../frontend/styles.css'), 'utf8');
+  const js = fs.readFileSync(path.join(__dirname, '../frontend/app.js'), 'utf8');
 
   // 1. HTML element exists and has inline click handler & pointer-events guard
   assert.ok(html.includes('id="sahay-fullscreen-btn"'), 'Full screen button must be present in index.html');
@@ -28,8 +28,8 @@ test('Sahay AI — Full Screen Mode UI & Keybindings Verification', () => {
 });
 
 test('Sahay AI — Chatbox Languages (English & Hindi strictly, Punjabi and Bengali removed)', () => {
-  const js = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
-  const html = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+  const js = fs.readFileSync(path.join(__dirname, '../frontend/app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '../frontend/index.html'), 'utf8');
 
   // 1. Chatbox language toggle must support English and Hindi
   assert.ok(html.includes('title="Switch Language (English / हिन्दी)"'), 'Language button tooltip must only mention English and Hindi');
@@ -44,7 +44,7 @@ test('Sahay AI — Chatbox Languages (English & Hindi strictly, Punjabi and Beng
 });
 
 test('Sahay AI — Dark Mode Microphone Styling is Crisp White', () => {
-  const css = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../frontend/styles.css'), 'utf8');
 
   // 1. Dark mode selectors for the bottom mic
   assert.ok(css.includes('body.dark-mode .btn-sahay-mic') || css.includes('body.dark-mode #sahay-mic-btn'), 'CSS must define dark mode mic selector');
@@ -53,7 +53,7 @@ test('Sahay AI — Dark Mode Microphone Styling is Crisp White', () => {
 });
 
 test('Sahay AI — Light / White Mode Background Image Styling', () => {
-  const css = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../frontend/styles.css'), 'utf8');
 
   // 1. Light mode background image applied to sahay-chat-window
   assert.ok(css.includes('body:not(.dark-mode) .sahay-chat-window'), 'Must target sahay-chat-window in non-dark/light mode');

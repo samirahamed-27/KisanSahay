@@ -5,7 +5,7 @@ const {
   unlockUserVault,
   resetUserVaultPassword,
   getVaultStatus
-} = require('../src/services/vaultService');
+} = require('../backend/src/services/vaultService');
 
 test('Document Vault - Word password encryption and unlock', () => {
   const userId = 'test-farmer-word';

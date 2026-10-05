@@ -49,7 +49,16 @@ DEFAULT_STALE_ACTION: Dict[str, str] = {
 }
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent.parent / "Data" / "kisansahay.db"
+if not DEFAULT_DB_PATH.exists():
+    _repo_db = Path(__file__).resolve().parent.parent.parent.parent / "Data" / "kisansahay.db"
+    if _repo_db.exists():
+        DEFAULT_DB_PATH = _repo_db
+
 DEFAULT_SOURCES_PATH = Path(__file__).resolve().parent.parent.parent / "sources.yaml"
+if not DEFAULT_SOURCES_PATH.exists():
+    _repo_sources = Path(__file__).resolve().parent.parent.parent.parent / "sources.yaml"
+    if _repo_sources.exists():
+        DEFAULT_SOURCES_PATH = _repo_sources
 
 
 def get_utc_now() -> datetime:

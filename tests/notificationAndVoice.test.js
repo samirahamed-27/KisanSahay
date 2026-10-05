@@ -3,9 +3,9 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 
-const notificationService = require('../src/services/notificationService');
-const ttsService = require('../src/services/ttsService');
-const recommendController = require('../src/controllers/recommendController');
+const notificationService = require('../backend/src/services/notificationService');
+const ttsService = require('../backend/src/services/ttsService');
+const recommendController = require('../backend/src/controllers/recommendController');
 
 test('Feature 1: Notification Engine — Due EMI Reminders & Mark Read', async () => {
   const testLoanId = 'test-loan-7d-' + Date.now();
@@ -54,7 +54,7 @@ test('Feature 1: Notification Engine — Due EMI Reminders & Mark Read', async (
 
 test('Feature 2: Voice Input — Spoken Number to Digits Conversion & Yes/No', () => {
   // Load voice_input.js helper in sandbox or test logic
-  const voiceScript = fs.readFileSync(path.join(__dirname, '../public/voice_input.js'), 'utf8');
+  const voiceScript = fs.readFileSync(path.join(__dirname, '../frontend/voice_input.js'), 'utf8');
   assert.ok(voiceScript.includes('convertSpokenNumberToDigits'));
   assert.ok(voiceScript.includes('parseYesNo'));
   assert.ok(voiceScript.includes('VoiceGuidedAssistant'));
@@ -207,9 +207,9 @@ test('Feature 7: Neural TTS Service & Speed Rate Options', async () => {
 });
 
 test('Feature 8: Top Bar Internet Speed Monitor (WiFi Icon with Green, Yellow, and Red States)', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-  const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
-  const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '../frontend/index.html'), 'utf8');
+  const stylesCss = fs.readFileSync(path.join(__dirname, '../frontend/styles.css'), 'utf8');
+  const appJs = fs.readFileSync(path.join(__dirname, '../frontend/app.js'), 'utf8');
 
   // 1. Verify Top Bar structure & elements
   assert.ok(indexHtml.includes('id="net-speed-pill"'), 'index.html must contain net-speed-pill in top bar');
@@ -235,10 +235,10 @@ test('Feature 8: Top Bar Internet Speed Monitor (WiFi Icon with Green, Yellow, a
 });
 
 test('Feature 9: All-India State Selector, High-Contrast Cards & Multi-Step Qualification Questionnaire', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-  const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
-  const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
-  const schemesData = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/data/schemesDatabase.json'), 'utf8'));
+  const indexHtml = fs.readFileSync(path.join(__dirname, '../frontend/index.html'), 'utf8');
+  const stylesCss = fs.readFileSync(path.join(__dirname, '../frontend/styles.css'), 'utf8');
+  const appJs = fs.readFileSync(path.join(__dirname, '../frontend/app.js'), 'utf8');
+  const schemesData = JSON.parse(fs.readFileSync(path.join(__dirname, '../backend/src/data/schemesDatabase.json'), 'utf8'));
 
   // 2. High-Contrast Scheme Card Descriptions in Light & Dark Mode
   assert.ok(stylesCss.includes('.scheme-card-desc'), 'styles.css must style scheme-card-desc');
@@ -280,13 +280,13 @@ test('Feature 9: All-India State Selector, High-Contrast Cards & Multi-Step Qual
 });
 
 test('Feature 10: Progressive Web App (PWA) Manifest, Service Worker & Install Button Parity', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-  const stylesCss = fs.readFileSync(path.join(__dirname, '../public/styles.css'), 'utf8');
-  const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
-  const swJs = fs.readFileSync(path.join(__dirname, '../public/sw.js'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '../frontend/index.html'), 'utf8');
+  const stylesCss = fs.readFileSync(path.join(__dirname, '../frontend/styles.css'), 'utf8');
+  const appJs = fs.readFileSync(path.join(__dirname, '../frontend/app.js'), 'utf8');
+  const swJs = fs.readFileSync(path.join(__dirname, '../frontend/sw.js'), 'utf8');
 
   // 2. Manifest file verification
-  const manifestPath = path.join(__dirname, '../public/manifest.json');
+  const manifestPath = path.join(__dirname, '../frontend/manifest.json');
   assert.ok(fs.existsSync(manifestPath), 'public/manifest.json must exist');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(manifest.name, 'KisanSahay');
@@ -300,8 +300,8 @@ test('Feature 10: Progressive Web App (PWA) Manifest, Service Worker & Install B
   assert.ok(manifest.icons.some(i => i.sizes === '512x512'));
 
   // 3. Icons files verification
-  assert.ok(fs.existsSync(path.join(__dirname, '../public/icons/icon-192.png')), 'public/icons/icon-192.png must exist');
-  assert.ok(fs.existsSync(path.join(__dirname, '../public/icons/icon-512.png')), 'public/icons/icon-512.png must exist');
+  assert.ok(fs.existsSync(path.join(__dirname, '../frontend/icons/icon-192.png')), 'public/icons/icon-192.png must exist');
+  assert.ok(fs.existsSync(path.join(__dirname, '../frontend/icons/icon-512.png')), 'public/icons/icon-512.png must exist');
 
   // 4. HTML Meta Tags and Elements
   assert.ok(indexHtml.includes('<link rel="manifest" href="/manifest.json">'), 'index.html must include manifest link');
@@ -325,14 +325,14 @@ test('Feature 10: Progressive Web App (PWA) Manifest, Service Worker & Install B
   assert.ok(appJs.includes('setupPWAInstallPrompt()'), 'app.js must define setupPWAInstallPrompt()');
 
   // 7. Digital Asset Links verification
-  const assetlinksPath = path.join(__dirname, '../public/.well-known/assetlinks.json');
+  const assetlinksPath = path.join(__dirname, '../frontend/.well-known/assetlinks.json');
   assert.ok(fs.existsSync(assetlinksPath), 'public/.well-known/assetlinks.json must exist');
   const assetlinks = JSON.parse(fs.readFileSync(assetlinksPath, 'utf8'));
   assert.ok(Array.isArray(assetlinks) && assetlinks.length > 0);
   assert.equal(assetlinks[0].target.package_name, 'com.kisansahay.app');
 
   // 8. Download App Bar inside Switch Profile Column
-  const multiuserJs = fs.readFileSync(path.join(__dirname, '../public/multiuser.js'), 'utf8');
+  const multiuserJs = fs.readFileSync(path.join(__dirname, '../frontend/multiuser.js'), 'utf8');
   assert.ok(multiuserJs.includes('dropdown-pwa-download-bar'), 'multiuser.js must include dropdown-pwa-download-bar');
   assert.ok(multiuserJs.includes('id="dropdown-btn-download-app"'), 'multiuser.js must include #dropdown-btn-download-app');
   assert.ok(stylesCss.includes('.dropdown-pwa-download-bar'), 'styles.css must style .dropdown-pwa-download-bar');

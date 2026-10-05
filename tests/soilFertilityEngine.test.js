@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const {
   getSoilFertilityProfile,
   calculateHaversineDistance
-} = require('../src/services/soilFertilityEngine');
+} = require('../backend/src/services/soilFertilityEngine');
 
 test('Soil Fertility Engine - Haversine distance accuracy', () => {
   // Ludhiana (30.9010, 75.8573) to Bathinda (30.2110, 74.9455) is approx ~115 km

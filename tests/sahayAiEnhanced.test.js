@@ -3,8 +3,8 @@ const assert = require('node:assert/strict');
 const path = require('path');
 const fs = require('fs');
 
-const { processAssistantQuery, generateGroundedAnswer } = require('../src/services/assistantService');
-const knowledgeBase = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/data/sahayKnowledgeBase.json'), 'utf8'));
+const { processAssistantQuery, generateGroundedAnswer } = require('../backend/src/services/assistantService');
+const knowledgeBase = JSON.parse(fs.readFileSync(path.join(__dirname, '../backend/src/data/sahayKnowledgeBase.json'), 'utf8'));
 
 test('Sahay AI Enhanced — 50 FAQ Knowledge Base Completeness across 9 Categories', () => {
   assert.strictEqual(knowledgeBase.length, 50, 'Knowledge base must contain exactly 50 curated agricultural FAQs');

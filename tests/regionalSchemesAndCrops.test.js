@@ -3,13 +3,13 @@ const assert = require('node:assert/strict');
 const path = require('path');
 const fs = require('fs');
 
-const cropsData = require('../src/data/cropsData.json');
-const schemesDatabase = require('../src/data/schemesDatabase.json');
-const soilAgriData = require('../src/data/soilAgriData.json');
-const landPricesData = require('../src/data/landPricesData.json');
-const cropTrendsData = require('../src/data/cropTrendsData.json');
-const { getLocationContext } = require('../src/services/locationContext');
-const { rankSchemes } = require('../src/services/scoringEngine');
+const cropsData = require('../backend/src/data/cropsData.json');
+const schemesDatabase = require('../backend/src/data/schemesDatabase.json');
+const soilAgriData = require('../backend/src/data/soilAgriData.json');
+const landPricesData = require('../backend/src/data/landPricesData.json');
+const cropTrendsData = require('../backend/src/data/cropTrendsData.json');
+const { getLocationContext } = require('../backend/src/services/locationContext');
+const { rankSchemes } = require('../backend/src/services/scoringEngine');
 
 test('Crops Catalog - 50+ Curated Crop Types across Seasons and Categories', () => {
   assert.ok(Array.isArray(cropsData), 'cropsData must be an array');
@@ -54,8 +54,8 @@ test('Data Synchronization - Mirror Files Consistency', () => {
   const dataDataSchemes = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'Data', 'Data', 'schemes.json'), 'utf8'));
   assert.equal(schemesDatabase.length, dataDataSchemes.length, 'Data/Data/schemes.json must match src/data/schemesDatabase.json');
 
-  const publicSchemesFile = fs.readFileSync(path.join(__dirname, '..', 'public', 'schemes_data.js'), 'utf8');
-  assert.ok(publicSchemesFile.includes('window.KISAN_SCHEMES_DATA = ['), 'public/schemes_data.js must export window.KISAN_SCHEMES_DATA');
+  const publicSchemesFile = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'schemes_data.js'), 'utf8');
+  assert.ok(publicSchemesFile.includes('window.KISAN_SCHEMES_DATA = ['), 'frontend/schemes_data.js must export window.KISAN_SCHEMES_DATA');
 });
 
 test('Territorial Coverage - UP, MP, and Bihar Soil Profiles & Land Circle Rates', () => {

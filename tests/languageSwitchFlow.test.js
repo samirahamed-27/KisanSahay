@@ -15,7 +15,7 @@ const path = require('path');
 
 test('Language Switch Full Flow Suite', async (t) => {
   // Load base strings from single source of truth
-  const stringsPath = path.join(__dirname, '../src/data/strings.json');
+  const stringsPath = path.join(__dirname, '../backend/src/data/strings.json');
   const baseStrings = JSON.parse(fs.readFileSync(stringsPath, 'utf8'));
 
   // Setup simulated environment mimicking browser runtime

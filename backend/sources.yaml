@@ -1,1 +1,348 @@
-../sources.yaml
+# =============================================================================
+# KisanSahay - Automated Source Registry (sources.yaml)
+# =============================================================================
+# Defines official agricultural data sources for automated harvesting,
+# validation, freshness monitoring, and RAG ingestion.
+#
+# Placeholder Convention:
+#   [STATE] can be substituted at runtime with any target Indian State
+#   (e.g., "Madhya Pradesh", "Uttar Pradesh", "Maharashtra", "Rajasthan").
+#   District-level parameters inherit the state context.
+# =============================================================================
+
+version: "1.0.0"
+registry_name: "KisanSahay Automated Agri-Data Registry"
+description: "Government and official institutional data pipelines for Indian farmers"
+
+# -----------------------------------------------------------------------------
+# Global Time-To-Live (TTL) Policies
+# Used by the SQLite data layer to flag stale records and trigger re-harvesting.
+# -----------------------------------------------------------------------------
+ttl_policies:
+  mandi_prices:
+    ttl_days: 1
+    ttl_hours: 24
+    stale_action: "flag_stale"
+    description: "Daily APMC/Mandi modal prices expire after 24 hours"
+
+  imd_weather_advisory:
+    ttl_days: 3
+    ttl_hours: 72
+    stale_action: "flag_stale"
+    description: "IMD Agromet bulletins are issued twice weekly (Tue/Fri), expire after 72 hours"
+
+  crop_advisory:
+    ttl_days: 14
+    ttl_hours: 336
+    stale_action: "flag_stale"
+    description: "Agronomic crop advisories expire bi-weekly with seasonal growth stages"
+
+  kvk_training_calendar:
+    ttl_days: 30
+    ttl_hours: 720
+    stale_action: "flag_stale"
+    description: "KVK demonstration and training schedules refresh monthly"
+
+  gov_schemes_loans:
+    ttl_days: 90
+    ttl_hours: 2160
+    stale_action: "pending_review"
+    description: "Schemes & credit rules change quarterly; expired items require review"
+
+  kvk_directory:
+    ttl_days: 180
+    ttl_hours: 4320
+    stale_action: "flag_stale"
+    description: "KVK institutional contact & facility directory refreshes every 6 months"
+
+# -----------------------------------------------------------------------------
+# Default Target State (Overrideable via CLI or ENV)
+# -----------------------------------------------------------------------------
+target_state:
+  code: "MP"
+  name: "Madhya Pradesh"
+  alternative_states:
+    - "Uttar Pradesh"
+    - "Maharashtra"
+    - "Rajasthan"
+    - "Punjab"
+    - "Haryana"
+
+# -----------------------------------------------------------------------------
+# Official Data Sources Registry
+# -----------------------------------------------------------------------------
+sources:
+
+  # ===========================================================================
+  # 1. KVK Directory (Krishi Vigyan Kendra)
+  # Schema: name, district, address, phone, website, soil-testing facility
+  # ===========================================================================
+  - id: "src_kvk_directory_[STATE]"
+    name: "ICAR Krishi Vigyan Kendra (KVK) Directory - [STATE]"
+    official_url: "https://kvk.icar.gov.in/directory/[STATE]"
+    fallback_urls:
+      - "https://icar.org.in/krishi-vigyan-kendras"
+      - "https://soilhealth.dac.gov.in/soil-testing-laboratories"
+    data_type: "kvk_directory"
+    fetch_method: "html"
+    refresh_interval: "180d"
+    risk_level: "low"
+    parser_name: "KVKDirectoryParser"
+    state: "[STATE]"
+    district: "all"
+    schema_fields:
+      - name: "name"
+        type: "string"
+        description: "Official KVK institution name (e.g. KVK Sehore, KVK Barabanki)"
+      - name: "district"
+        type: "string"
+        description: "Administrative district"
+      - name: "address"
+        type: "string"
+        description: "Physical postal address with PIN code"
+      - name: "phone"
+        type: "string"
+        description: "Official landline/helpline/mobile number"
+      - name: "website"
+        type: "string"
+        description: "KVK or host Agricultural University website URL"
+      - name: "soil_testing_facility"
+        type: "boolean"
+        description: "Whether on-premise soil and water testing laboratory exists"
+      - name: "host_organization"
+        type: "string"
+        description: "Host SAU/ICAR institute/NGO"
+    tags: ["kvk", "extension", "soil_testing", "advisory", "contacts"]
+
+  # ===========================================================================
+  # 2. KVK Training & Demonstration Calendar
+  # Schema: training_topic, dates, target_audience, venue, fees, coordinator
+  # ===========================================================================
+  - id: "src_kvk_calendar_[STATE]"
+    name: "KVK Seasonal Training & Demonstration Calendar - [STATE]"
+    official_url: "https://kvk.icar.gov.in/training_schedule.aspx?state=[STATE]"
+    fallback_urls:
+      - "https://atarikanpur.icar.gov.in/trainings"
+      - "https://atarijabalpur.icar.gov.in/events"
+    data_type: "kvk_training_calendar"
+    fetch_method: "html"
+    refresh_interval: "30d"
+    risk_level: "low"
+    parser_name: "KVKCalendarParser"
+    state: "[STATE]"
+    district: "all"
+    schema_fields:
+      - name: "kvk_name"
+        type: "string"
+        description: "Name of the organizing KVK"
+      - name: "district"
+        type: "string"
+        description: "District where training takes place"
+      - name: "training_topic"
+        type: "string"
+        description: "Course title (e.g. Organic Farming, Drip Irrigation Setup)"
+      - name: "start_date"
+        type: "string"
+        description: "Training start date (YYYY-MM-DD)"
+      - name: "end_date"
+        type: "string"
+        description: "Training end date (YYYY-MM-DD)"
+      - name: "target_audience"
+        type: "string"
+        description: "Eligible cohort (e.g. Small & Marginal Farmers, Rural Youth, Women)"
+      - name: "venue"
+        type: "string"
+        description: "KVK campus, demonstration field or village hall"
+      - name: "fees"
+        type: "string"
+        description: "Fee structure (Free, sponsored, or nominal lab fee)"
+      - name: "coordinator_contact"
+        type: "string"
+        description: "SMS / Scientist in-charge name and mobile"
+    tags: ["training", "demonstration", "capacity_building", "farmer_school"]
+
+  # ===========================================================================
+  # 3. Seasonal Crop Advisories
+  # Schema: crop, growth_stage, advisories, pest_alerts, fertilizer/irrigation
+  # ===========================================================================
+  - id: "src_crop_advisories_[STATE]"
+    name: "Seasonal Agronomic Crop Advisory Bulletin - [STATE]"
+    official_url: "https://farmer.gov.in/CropAdvisories.aspx?state=[STATE]"
+    fallback_urls:
+      - "https://agricoop.nic.in/en/crop-weather-watch-group"
+      - "https://mpkrishi.mp.gov.in/advisories"
+    data_type: "crop_advisory"
+    fetch_method: "rss"
+    refresh_interval: "14d"
+    risk_level: "low"
+    parser_name: "CropAdvisoryParser"
+    state: "[STATE]"
+    district: "all"
+    schema_fields:
+      - name: "crop_name"
+        type: "string"
+        description: "Crop name (e.g. Soybean, Wheat, Mustard, Paddy, Cotton)"
+      - name: "season"
+        type: "string"
+        description: "Cropping season: Kharif, Rabi, or Zaid"
+      - name: "growth_stage"
+        type: "string"
+        description: "Current stage: Sowing, Vegetative, Flowering, Pod formation, Harvesting"
+      - name: "advisory_text"
+        type: "string"
+        description: "Detailed actionable field guidance"
+      - name: "pest_disease_alerts"
+        type: "array"
+        description: "Detected pests/diseases and bio/chemical control dosages"
+      - name: "irrigation_guidance"
+        type: "string"
+        description: "Moisture conservation and irrigation frequency"
+      - name: "fertilizer_guidance"
+        type: "string"
+        description: "Top-dressing and micronutrient spray recommendations"
+    tags: ["crops", "advisory", "pest_control", "irrigation", "rabi", "kharif"]
+
+  # ===========================================================================
+  # 4. Government Schemes and Loan Products (HIGH RISK)
+  # Schema: eligibility, documents, benefits, how to apply, deadlines, interest
+  # ===========================================================================
+  - id: "src_gov_schemes_loans_[STATE]"
+    name: "Central & [STATE] Government Schemes and Agricultural Credit Products"
+    official_url: "https://agricoop.nic.in/en/Major-Schemes"
+    fallback_urls:
+      - "https://pmkisan.gov.in"
+      - "https://pmfby.gov.in"
+      - "https://www.nabard.org/content1.aspx?id=598"
+      - "https://jansamarth.in/agricultural-loan-schemes"
+    data_type: "gov_schemes_loans"
+    fetch_method: "html"
+    refresh_interval: "90d"
+    risk_level: "high"
+    parser_name: "GovSchemeLoanParser"
+    state: "[STATE]"
+    district: "all"
+    schema_fields:
+      - name: "scheme_name"
+        type: "string"
+        description: "Official title of scheme or credit facility (e.g. PM-KISAN, KCC, PMFBY)"
+      - name: "scheme_type"
+        type: "string"
+        description: "Classification: 'Direct Subsidy', 'Subsidized Credit', 'Crop Insurance', 'Asset Mechanization'"
+      - name: "eligibility"
+        type: "array"
+        description: "Explicit qualification criteria (landholding size, farmer category, Aadhaar seeding)"
+      - name: "documents"
+        type: "array"
+        description: "Required papers: Khasra/Khatauni, Aadhaar, Bank Passbook, Land possession certificate"
+      - name: "benefits"
+        type: "string"
+        description: "Exact payout, subsidy percentage, loan limit, or interest rate subvention (e.g. 4% effective interest)"
+      - name: "how_to_apply"
+        type: "string"
+        description: "Step-by-step procedure: CSC center, online portal, or bank branch submission"
+      - name: "deadlines"
+        type: "string"
+        description: "Application window or cut-off date (e.g. PMFBY cut-off dates for Kharif/Rabi)"
+      - name: "helpline"
+        type: "string"
+        description: "Official toll-free grievance and helpline contact number"
+    tags: ["schemes", "loans", "kcc", "subsidies", "pmkisan", "insurance", "high_risk"]
+
+  # ===========================================================================
+  # 5. Mandi Prices from Agmarknet or data.gov.in
+  # Schema: commodity, variety, arrivals, min/max/modal prices, market center
+  # ===========================================================================
+  - id: "src_mandi_prices_[STATE]"
+    name: "Agmarknet Daily Mandi Wholesale Prices - [STATE]"
+    official_url: "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
+    fallback_urls:
+      - "https://agmarknet.gov.in/SearchCddb.aspx"
+      - "https://enam.gov.in/web/dashboard/trade-data"
+    data_type: "mandi_prices"
+    fetch_method: "api"
+    refresh_interval: "24h"
+    risk_level: "low"
+    parser_name: "AgmarknetMandiParser"
+    state: "[STATE]"
+    district: "all"
+    api_query_params:
+      format: "json"
+      api-key: "${DATA_GOV_IN_API_KEY}"
+      filters[state]: "[STATE]"
+      limit: 1000
+    schema_fields:
+      - name: "market_center"
+        type: "string"
+        description: "APMC Mandi Yard name (e.g. Sehore, Ujjain, Indore, Hapur)"
+      - name: "district"
+        type: "string"
+        description: "District location of the APMC"
+      - name: "commodity"
+        type: "string"
+        description: "Agricultural crop commodity (e.g. Wheat, Gram, Soybean, Mustard)"
+      - name: "variety"
+        type: "string"
+        description: "Commercial variety / trade grade"
+      - name: "arrival_date"
+        type: "string"
+        description: "Date of arrival recording (YYYY-MM-DD)"
+      - name: "min_price"
+        type: "number"
+        description: "Minimum recorded price in INR per quintal (100 kg)"
+      - name: "max_price"
+        type: "number"
+        description: "Maximum recorded price in INR per quintal"
+      - name: "modal_price"
+        type: "number"
+        description: "Most frequent (modal) transaction price in INR per quintal"
+      - name: "arrivals_tonnes"
+        type: "number"
+        description: "Total arrivals in metric tonnes for the trading session"
+    tags: ["mandi", "prices", "agmarknet", "apmc", "enam", "market"]
+
+  # ===========================================================================
+  # 6. IMD Agromet Weather Advisories
+  # Schema: block/district agromet bulletin, rainfall, temperature, spray window
+  # ===========================================================================
+  - id: "src_imd_agromet_[STATE]"
+    name: "IMD Gramin Krishi Mausam Sewa (GKMS) Agromet Advisories - [STATE]"
+    official_url: "https://imdagrimet.gov.in/bulletin"
+    fallback_urls:
+      - "https://mausam.imd.gov.in/responsive/agromet.php"
+      - "https://meghdoot.imd.gov.in/api/v1/advisory"
+    data_type: "imd_weather_advisory"
+    fetch_method: "rss"
+    refresh_interval: "72h"
+    risk_level: "low"
+    parser_name: "IMDAgrometParser"
+    state: "[STATE]"
+    district: "all"
+    schema_fields:
+      - name: "district"
+        type: "string"
+        description: "Target agricultural district"
+      - name: "bulletin_date"
+        type: "string"
+        description: "Bulletin publication date (YYYY-MM-DD)"
+      - name: "valid_until"
+        type: "string"
+        description: "Validity expiration timestamp (YYYY-MM-DD)"
+      - name: "forecast_summary"
+        type: "string"
+        description: "5-day synoptic forecast summary (clouds, humidity, winds)"
+      - name: "rainfall_forecast_mm"
+        type: "number"
+        description: "Predicted cumulative precipitation in mm"
+      - name: "temp_max_c"
+        type: "number"
+        description: "Expected maximum temperature in Celsius"
+      - name: "temp_min_c"
+        type: "number"
+        description: "Expected minimum temperature in Celsius"
+      - name: "agricultural_advisory"
+        type: "string"
+        description: "Field-level advisory corresponding to forecast conditions"
+      - name: "spray_conditions"
+        type: "string"
+        description: "Favorable or unfavorable window for pesticide/herbicide spraying"
+    tags: ["weather", "agromet", "imd", "monsoon", "rainfall", "frost", "advisory"]

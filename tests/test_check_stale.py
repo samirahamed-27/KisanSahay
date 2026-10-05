@@ -23,6 +23,11 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch, MagicMock
 
+import sys
+_backend_dir = Path(__file__).resolve().parent.parent / "backend"
+if str(_backend_dir) not in sys.path:
+    sys.path.insert(0, str(_backend_dir))
+
 import check_stale
 from check_stale import (
     load_ttl_policies,

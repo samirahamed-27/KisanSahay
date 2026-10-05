@@ -3,9 +3,9 @@ const assert = require('node:assert/strict');
 const path = require('path');
 const fs = require('fs');
 
-const { rankAndSequenceSchemes, calculateSchemeScore } = require('../src/services/scoringEngine');
+const { rankAndSequenceSchemes, calculateSchemeScore } = require('../backend/src/services/scoringEngine');
 
-const schemesPath = path.join(__dirname, '..', 'src', 'data', 'schemesDatabase.json');
+const schemesPath = path.join(__dirname, '..', 'backend', 'src', 'data', 'schemesDatabase.json');
 const schemesDatabase = JSON.parse(fs.readFileSync(schemesPath, 'utf8'));
 
 test('Scoring Engine - Score bounds and structure', () => {
